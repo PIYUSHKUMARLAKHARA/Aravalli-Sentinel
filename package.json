@@ -1,0 +1,13 @@
+{
+  "name": "aravalli-sentinel-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ARAVALLI SENTINEL: AI-Powered Ecological Early-Warning and Action Platform",
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "test:backend": "npm --prefix backend run test",
+    "build:frontend": "npm --prefix frontend run build"
+  }
+}

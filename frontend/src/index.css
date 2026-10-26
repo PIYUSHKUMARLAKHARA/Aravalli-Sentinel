@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #090d12;
+  color: #e2e8f0;
+  overflow-x: hidden;
+}
+
+/* Custom ecological scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d131a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Leaflet dark styling */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #0b1118;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #111827 !important;
+  color: #f3f4f6 !important;
+  border: 1px solid #374151 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
+}
+
+.leaflet-popup-tip {
+  background: #111827 !important;
+}
+
+/* Print styling for Incident Dossier */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-card {
+    border: 1px solid #e5e7eb !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+}

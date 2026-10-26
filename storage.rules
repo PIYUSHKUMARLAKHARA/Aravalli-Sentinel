@@ -1,0 +1,17 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /evidence/{fileName} {
+      // Evidence photos can be read publicly or by verified officers
+      allow read: if true;
+
+      // Uploads restricted to authenticated users, image mimes only, max 10MB
+      allow create: if request.auth != null &&
+                    request.resource.size < 10 * 1024 * 1024 &&
+                    request.resource.contentType.matches('image/(jpeg|png|webp|heic)');
+
+      // Evidence cannot be overwritten or deleted to maintain forensic integrity
+      allow update, delete: if false;
+    }
+  }
+}
