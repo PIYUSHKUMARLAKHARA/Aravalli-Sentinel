@@ -104,7 +104,10 @@ app.use((req, res) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('Unhandled Application Error:', err);
-  const statusCode = err.status || 500;
+  let statusCode = err.status || 500;
+  if (err.name === 'MulterError' || err.code === 'LIMIT_FILE_SIZE' || err.message?.includes('Unsupported file type')) {
+    statusCode = 400;
+  }
   res.status(statusCode).json({
     success: false,
     error: err.message || 'An internal server error occurred.',

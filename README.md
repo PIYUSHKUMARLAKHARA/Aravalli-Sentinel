@@ -1,249 +1,643 @@
 # 🌿 ARAVALLI SENTINEL
 
 > **See the Threat. Predict the Risk. Protect the Aravallis.**  
-> *An AI-Powered Ecological Early-Warning and Action Platform for the Aravalli Ecosystem.*
+> *An AI-Assisted Environmental Threat Reporting & Explainable Ecological Risk Platform for the Aravalli Range.*
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Tests: Vitest](https://img.shields.io/badge/Tests-33%20Passed-success.svg)]()
-[![Backend: Node.js 24](https://img.shields.io/badge/Backend-Node.js%2024%20Express-emerald.svg)]()
-[![Frontend: React 18 / Vite](https://img.shields.io/badge/Frontend-React%2018%20Vite%20Tailwind-cyan.svg)]()
-[![AI: Google Gemini](https://img.shields.io/badge/AI-Gemini%202.0%20Flash-blue.svg)]()
-
----
-
-## 🎯 Project Overview & Vision
-
-The **Aravalli Mountain Range** spans over 690 km across Gujarat, Rajasthan, Haryana, and Delhi NCR. It is India’s most ancient geological formation and the primary barrier preventing the eastward expansion of the Thar Desert into northern India's fertile agrarian plains and the National Capital Region.
-
-Despite repeated bans by the **Supreme Court of India** (*M.C. Mehta vs Union of India*), the Aravalli range faces relentless threats from unauthorized open-pit quarrying, commercial deforestation of native *Anogeissus pendula* (Dhau) woodlands, unpermitted construction, and toxic leachate contamination.
-
-**ARAVALLI SENTINEL** bridges grassroots citizen vigilance with satellite remote sensing and Google Gemini AI to equip Forest Departments and District Task Forces with defensible, explainable intelligence.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Tests: Vitest](https://img.shields.io/badge/Tests-42%20Passed-success.svg)](TESTING.md)
+[![Backend: Node.js 24](https://img.shields.io/badge/Backend-Node.js%2024%20Express-emerald.svg)](backend/)
+[![Frontend: React 18 / Vite](https://img.shields.io/badge/Frontend-React%2018%20Vite%20Tailwind-cyan.svg)](frontend/)
+[![AI: Google Gemini](https://img.shields.io/badge/AI-Gemini%202.0%20Flash-blue.svg)](https://aistudio.google.com/)
+[![Geospatial: Sentinel-2 & Leaflet](https://img.shields.io/badge/Geospatial-Copernicus%20MSI%20%2F%20Leaflet-green.svg)](https://browser.dataspace.copernicus.eu/)
 
 ---
 
-## 🔄 Core Operational Workflow
-
-```mermaid
-flowchart LR
-    DETECT["<b>1. DETECT</b><br/>Citizen Ground Evidence &<br/>Threat Photographs"] --> VERIFY["<b>2. VERIFY</b><br/>Gemini 2.0 Flash Vision &<br/>Sentinel-2 NDVI Telemetry"]
-    VERIFY --> PRIORITIZE["<b>3. PRIORITIZE</b><br/>Explainable Risk Engine<br/>Weighted Formula (0–100)"]
-    PRIORITIZE --> ACT["<b>4. ACT</b><br/>Forest Officers & Task Force<br/>Raids, Seizures & Dossiers"]
-
-    classDef step stroke:#10b981,stroke-width:2px;
-    DETECT:::step
-    VERIFY:::step
-    PRIORITIZE:::step
-    ACT:::step
-```
-
-<details>
-<summary>View ASCII Workflow Diagram</summary>
-
-```
-   ┌──────────┐         ┌──────────┐         ┌──────────────┐         ┌──────────┐
-   │  DETECT  │   ──►   │  VERIFY  │   ──►   │  PRIORITIZE  │   ──►   │   ACT    │
-   └──────────┘         └──────────┘         └──────────────┘         └──────────┘
- Citizen Ground       Gemini 2.0 Flash        Explainable Risk       Forest Officers &
- GPS Evidence &      Multimodal Vision &      Engine (0 to 100)       Mining Task Force
- Threat Photographs   Sentinel-2 NDVI          Weighted Formula       Raids & Seizures
-```
-</details>
-
-1. **DETECT:** Authenticated citizens and eco-sentinels capture geotagged field photos of suspected excavation, illegal tree felling, or dumping.
-2. **VERIFY:** Server-side Google Gemini AI extracts objective visual indicators and limitations, while remote sensing providers cross-reference regional canopy anomalies.
-3. **PRIORITIZE:** The deterministic **Explainable Risk Engine** scores the sector from 0 to 100 across 5 weighted vectors, identifying primary risk drivers.
-4. **ACT:** Authorized Forest Officers review cases in the triage portal, update statuses (`under_review`, `verified`, `resolved`), log audit entries, and generate printable incident dossiers.
+## 1. Project Title
+**ARAVALLI SENTINEL: AI-Assisted Environmental Threat Reporting & Risk-Prioritization Platform**
 
 ---
 
-## 🏛️ High-Level System Topology
+## 2. Project Overview
+The **Aravalli Mountain Range** spans over 690 kilometers across Gujarat, Rajasthan, Haryana, and Delhi NCR. As one of the oldest geological mountain formations on Earth, it serves as northwest India's primary ecological shield against the eastern expansion of the Thar Desert into the fertile Indo-Gangetic plains and the National Capital Region. It functions as the critical regional recharge aquifer for groundwater tables and hosts vital wildlife corridors connecting Sariska Tiger Reserve, Asola Bhatti Wildlife Sanctuary, and Kumbhalgarh.
 
-> For the comprehensive architectural and legal specification, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+**Aravalli Sentinel** is a full-stack, AI-powered early-warning platform that unites citizen field vigilance with satellite remote sensing and Google Gemini AI multimodal vision. The platform empowers communities to report suspected environmental hazards (such as illegal open-pit quarrying, commercial deforestation, and toxic dumping) while equipping authorized Forest Officers and District Task Forces with an **Explainable Ecological Risk Engine** to prioritize enforcement actions without premature legal determinations.
+
+---
+
+## 3. Problem Statement
+Despite repeated bans imposed by the **Supreme Court of India** (*M.C. Mehta vs. Union of India*, 2002/2004/2009), the Aravalli ecosystem faces relentless ecological degradation:
+1. **Unpermitted Open-Pit Quarrying & Blasting:** Mechanized stone extraction and hill flattening operating outside permissible lease boundaries.
+2. **Deforestation of Indigenous Woodlands:** Felling of slow-growing native *Anogeissus pendula* (Dhau) tree stands on steep slopes, triggering soil erosion and desertification.
+3. **Hydrological Disruption & Aquifer Stress:** Overburden dumping into seasonal drainage channels (*nallahs*), check-dam destruction, and unpermitted commercial borewell clusters.
+4. **Toxic Waste Dumping:** Industrial rubble and leachate tipping into abandoned quarry pits, directly contaminating subterranean drinking aquifers.
+5. **Enforcement Latency:** Fragmented reporting, lack of objective evidence verification, and delayed triage by limited forest ranger units.
+
+---
+
+## 4. Proposed Solution
+Aravalli Sentinel deploys an end-to-end operational pipeline based on the **DETECT → VERIFY → PRIORITIZE → ACT** framework:
+- **DETECT:** Authenticated citizens upload geotagged field photos, GPS coordinates, and descriptions of suspected threats.
+- **VERIFY:** Server-side Google Gemini 2.0 Flash AI extracts objective visual indicators, surfaces technical limitations, and generates a ranger ground verification protocol. Remote sensing providers cross-reference 10-meter Sentinel-2 NDVI canopy decline.
+- **PRIORITIZE:** The deterministic **Explainable Aravalli Risk Engine** calculates a composite score (0–100) using 5 normalized ecological vectors with transparent re-weighting for missing signals.
+- **ACT:** Verified Forest Officers review cases in the triage portal, update workflow statuses (`pending`, `under_review`, `verified`, `resolved`, `rejected`), record immutable audit notes, and generate printable legal incident dossiers.
+
+---
+
+## 5. Project Objectives
+1. Provide an accessible, privacy-preserving reporting portal for citizens living in the Aravalli belt.
+2. Deliver defensible, explainable risk scoring that can be presented in administrative hearings or court proceedings.
+3. Prevent citizen privacy leaks by redacting personal identifying information (PII) from public feeds.
+4. Eliminate black-box AI decisions by explicitly detailing optical ambiguities, technical limitations, and human verification steps.
+5. Accelerate official field response through structured case triage and printable incident dossiers.
+
+---
+
+## 6. Key Features & Implementation Status
+
+| Feature / Module | Description | Implementation Status |
+| :--- | :--- | :---: |
+| **Public Ecological Landing Page** | Overview of Aravalli crisis, live telemetry stats, 4-step pipeline, and regulatory anchors | ✅ **Implemented** |
+| **Citizen Threat Reporting Portal** | Multipart photo upload, interactive GPS mini-map picker, description, threat categories | ✅ **Implemented** |
+| **Citizen Privacy Shield** | Automatic server-side redaction of citizen names, phone numbers, and UIDs on public endpoints | ✅ **Implemented** |
+| **Gemini Multimodal Evidence Analysis** | Visual indicator extraction, confidence estimates, ranger checklist, legal disclaimers | ✅ **Implemented** |
+| **Heuristic Fallback Engine** | Offline / no-key demo simulation ensuring zero broken screens if `GEMINI_API_KEY` is omitted | ✅ **Implemented** |
+| **Explainable 5-Factor Risk Engine** | Deterministic score ($30\% / 25\% / 20\% / 15\% / 10\%$), primary driver detection, transparent re-scaling | ✅ **Implemented** |
+| **Geospatial Operations Map** | Dual-basemap (Esri Satellite + CartoDB Topographic), 8 Aravalli zones, risk radial circles | ✅ **Implemented** |
+| **Zone Telemetry Slide Drawer** | 5-factor breakdown bars, Sentinel-2 NDVI anomaly graphs, and mandatory action protocol | ✅ **Implemented** |
+| **Authority Triage Desk** | Role-gated case triage, search/filters, status mutation with mandatory audit notes | ✅ **Implemented** |
+| **Printable Incident Dossier** | Government-formatted printable PDF incident packet with QR/hash headers and signature blocks | ✅ **Implemented** |
+| **Grounded Ask Aravalli Assistant** | Conversational AI grounded in monitored zones, recent reports, and Supreme Court legal rulings | ✅ **Implemented** |
+| **Role-Based Access Control (RBAC)** | Strict privilege escalation block; server-validated authority invite secret | ✅ **Implemented** |
+| **Live Google Earth Engine Ingestion**| Real-time satellite time-series analysis via GEE service account | 🔄 *Boundary Implemented / Planned* |
+| **Automated Push / SMS Alerts** | Direct dispatch notifications to ranger patrol units via Twilio / FCM | 🔄 *Planned* |
+
+---
+
+## 7. Target Users & Real-World Use Cases
+
+1. **Local Citizens & Community Sentinels:** Residents of Gurugram, Faridabad, Alwar, Jhunjhunu, Sirohi, and surrounding rural panchayats who spot midnight blasting, tree cutting, or dumper convoys and need a safe, anonymous way to report them.
+2. **Divisional Forest Officers (DFOs) & Field Rangers:** Enforcement personnel who require prioritized case lists, GPS coordinates, and structured ground verification checklists to deploy patrol units effectively.
+3. **State Pollution Control Boards (RSPCB / HSPCB / GPCB):** Environmental scientists investigating industrial sludge tipping, stone crusher dust pollution, and groundwater contamination.
+4. **District Task Forces & Magistrates:** Administrative authorities issuing show-cause notices, impounding heavy earthmovers, and enforcing Supreme Court mining bans.
+5. **Environmental Researchers & Legal Advocates:** Conservationists monitoring long-term land-cover change, decadal degradation trends, and compliance with court directives.
+
+---
+
+## 8. Technology Stack
+
+### Frontend Application (`frontend/`)
+- **Core Framework:** React 18.3, Vite 6.2 (ES Modules)
+- **Routing:** React Router DOM v6.29
+- **Styling & Design System:** Tailwind CSS v3.4 with custom Aravalli ecological palette (`aravalli`, `risk`)
+- **Icons:** Lucide React v1.16
+- **Geospatial Mapping:** Leaflet v1.9 (with Esri World Imagery & CartoDB tiles) + Optional Google Maps JS API integration
+- **State Management:** React Context API (`AuthContext`) with persistent localStorage sessions
+
+### Backend REST API (`backend/`)
+- **Runtime:** Node.js v24 (compatible with Node 20+)
+- **Web Framework:** Express.js v4.21
+- **Security:** Helmet v8.0 (HTTP headers), Express Rate Limit v7.5 (300 req/15 min)
+- **Schema Validation:** Zod v3.24 (for reports, coordinates, status updates, and auth)
+- **Upload Pipeline:** Multer v1.4 (Memory Storage, 10MB ceiling, strict JPEG/PNG/WEBP/HEIC MIME filter)
+- **Testing Suite:** Vitest v3.2 + Supertest v7.0 (42 automated unit and integration tests)
+
+### Cloud & AI Integrations
+- **AI Multimodal Vision:** Google Generative AI SDK (`@google/generative-ai`), default model `gemini-2.0-flash`
+- **Database & Storage:** Firebase Admin SDK v13.1 (Cloud Firestore & Firebase Storage) with High-Fidelity Local Development Store fallback
+- **Remote Sensing Data:** Copernicus Sentinel-2 MSI (10m bands) & Landsat-9 OLI-2 Telemetry
+
+---
+
+## 9. System Architecture Overview
 
 ```mermaid
 flowchart TD
-    subgraph PRESENTATION["1. CLIENT PRESENTATION LAYER"]
-        direction TB
-        CLIENT["<b>CLIENT PRESENTATION LAYER</b><br/><i>React 18 • Vite • Tailwind CSS • Lucide Icons • Leaflet / Google Maps</i><br/>──────────────────────────────────────────────────────────<br/>• Public Ecological Landing Page<br/>• Geospatial Risk Operations Map (Topographic / Satellite)<br/>• Citizen Threat Reporting Portal (Photo Upload & GPS Pin Picker)<br/>• Authority Enforcement Triage Desk (Role-Gated Case Management)<br/>• Grounded 'Ask Aravalli' AI Ecological Law Assistant<br/>• Printable Official Incident Dossier Generator"]
-    end
-
-    subgraph API_GATEWAY["2. BACKEND API & SECURITY LAYER"]
-        direction TB
-        BACKEND["<b>BACKEND API & SECURITY LAYER</b><br/><i>Node.js 24 • Express (ES Modules) • Helmet • Zod</i><br/>──────────────────────────────────────────────────────────<br/>• Auth & Role Guard Middleware (Prevents Citizen Privilege Escalation)<br/>• Multer Memory Upload Pipeline (Max 10MB, Strict Image MIME Checks)<br/>• Rate Limiter (300 requests / 15 min window)<br/>• Public Citizen Privacy Redactor (Redacts Phone/Email/Identity)"]
-    end
-
-    subgraph INTELLIGENCE["3. INTELLIGENCE & TELEMETRY LAYER"]
+    subgraph TIER1["BLOCK LAYER 1: CLIENT PRESENTATION"]
         direction LR
-        AI["<b>AI INTELLIGENCE</b><br/><i>Google Gemini API</i><br/>─────────────────────────────<br/>• Multimodal Evidence Vision<br/>• Visual Indicator Extractor<br/>• Limitations & Uncertainty<br/>• Ranger Verification Steps<br/>• Strict Non-Defamation"]
-
-        GEO["<b>GEOSPATIAL & TELEMETRY</b><br/><i>Copernicus Sentinel-2 / EE</i><br/>─────────────────────────────<br/>• 10m Multispectral Bands<br/>• Mean NDVI Anomaly Time-Series<br/>• Surface Water Indices<br/>• Eco-Sensitive Boundaries"]
+        UI_CITIZEN["<b>Citizen Reporting</b><br/>• Geotagged Photos<br/>• GPS Pin Picker<br/>• Gemini AI Preview"]
+        UI_MAP["<b>Risk Operations Map</b><br/>• Dual: Satellite/Street<br/>• 8 Monitored Sectors<br/>• Telemetry Drawer"]
+        UI_AUTH["<b>Authority Triage</b><br/>• Status & Priority Queue<br/>• Audit Trail Notes<br/>• Printable PDF Dossier"]
+        UI_ASK["<b>Ask Aravalli AI</b><br/>• Grounded Telemetry<br/>• Privacy Safeguards"]
     end
 
-    subgraph RISK_ENGINE["4. THE EXPLAINABLE ARAVALLI RISK ENGINE"]
-        direction TB
-        ENGINE["<b>THE EXPLAINABLE ARAVALLI RISK ENGINE</b><br/>──────────────────────────────────────────────────────────<br/><b>Formula:</b><br/>Risk = (Mining * 0.30) + (VegLoss * 0.25) + (Water * 0.20) + (Citizen * 0.15) + (History * 0.10)<br/><br/><b>Classification Bands:</b><br/>• SAFE: 0–30 | WATCH: 31–50 | HIGH RISK: 51–75 | CRITICAL: 76–100<br/>• Proportional Re-normalization with Missing-Factor Transparency"]
+    subgraph TIER2["BLOCK LAYER 2: API GATEWAY & SECURITY"]
+        direction LR
+        GW_RATE["<b>Rate Limiter</b><br/>• 300 req / 15m window<br/>• DDoS Protection"]
+        GW_SEC["<b>Auth & Role Guard</b><br/>• JWT Token Verification<br/>• Privilege Escalation Block"]
+        GW_UPLOAD["<b>Upload Pipeline</b><br/>• Multer Memory Stream<br/>• 10MB Strict Limit"]
+        GW_REDACT["<b>PII Privacy Redactor</b><br/>• Public Anonymization"]
     end
 
-    subgraph PERSISTENCE["5. DATA PERSISTENCE & AUDIT STORE"]
-        direction TB
-        STORAGE["<b>DATA PERSISTENCE & AUDIT STORE</b><br/>──────────────────────────────────────────────────────────<br/>• Primary: Firebase Cloud Firestore & Firebase Storage Bucket<br/>• Fallback: High-Fidelity Local In-Memory Development Store<br/>• Chain of Custody: Non-repudiable audit logs with officer IDs"]
+    subgraph TIER3["BLOCK LAYER 3: INTELLIGENCE & TELEMETRY PROCESSORS"]
+        direction LR
+        PROC_GEMINI["<b>Google Gemini 2.0 AI</b><br/>• Multimodal Evidence Vision<br/>• Visual Indicator Extraction<br/>• Ranger Verification Steps"]
+        PROC_GEO["<b>Geospatial Telemetry</b><br/>• Sentinel-2 MSI Bands<br/>• 10m NDVI Time-Series<br/>• Water Stress Index"]
+        PROC_RISK["<b>Explainable Risk Engine</b><br/>• Mining (30%) + Veg (25%)<br/>• Water (20%) + Citizen (15%)<br/>• Historical Trend (10%)"]
     end
 
-    CLIENT -->|"HTTPS / REST API"| BACKEND
-    BACKEND -->|"Evidence Photos & Prompts"| AI
-    BACKEND -->|"Coordinates & Sector Query"| GEO
-    AI -->|"Extracted Indicators & Confidence"| ENGINE
-    GEO -->|"NDVI & Water Stress Indices"| ENGINE
-    ENGINE -->|"Scored Cases & Audit Dossiers"| STORAGE
+    subgraph TIER4["BLOCK LAYER 4: PERSISTENCE & AUDIT VAULT"]
+        direction LR
+        STORE_DB["<b>Cloud Firestore / Store</b><br/>• Zones & Reports Collection"]
+        STORE_FILE["<b>Firebase Storage / Vault</b><br/>• Encrypted Evidence Photos"]
+        STORE_AUDIT["<b>Forensic Audit Trail</b><br/>• Non-Repudiable Action Log"]
+    end
 
-    %% Styling
-    classDef clientStyle stroke:#38bdf8,stroke-width:2px;
-    classDef backendStyle stroke:#818cf8,stroke-width:2px;
-    classDef aiStyle stroke:#ec4899,stroke-width:2px;
-    classDef geoStyle stroke:#10b981,stroke-width:2px;
-    classDef engineStyle stroke:#f59e0b,stroke-width:2px;
-    classDef storageStyle stroke:#06b6d4,stroke-width:2px;
+    UI_CITIZEN -->|"POST /api/reports"| GW_UPLOAD
+    UI_MAP -->|"GET /api/zones"| GW_RATE
+    UI_AUTH -->|"PATCH /api/reports/:id/status"| GW_SEC
+    UI_ASK -->|"POST /api/ai/ask-aravalli"| GW_RATE
 
-    CLIENT:::clientStyle
-    BACKEND:::backendStyle
-    AI:::aiStyle
-    GEO:::geoStyle
-    ENGINE:::engineStyle
-    STORAGE:::storageStyle
+    GW_UPLOAD --> GW_SEC
+    GW_SEC -->|"Evidence Image & Text"| PROC_GEMINI
+    GW_SEC -->|"Zone Sector Query"| PROC_GEO
+
+    PROC_GEMINI -->|"Visual Impact Score"| PROC_RISK
+    PROC_GEO -->|"NDVI & Aquifer Anomaly"| PROC_RISK
+
+    PROC_RISK -->|"Computed Score & Breakdown"| STORE_DB
+    GW_UPLOAD -->|"Raw Evidence Stream"| STORE_FILE
+    GW_SEC -->|"Status Transitions & Notes"| STORE_AUDIT
+
+    STORE_DB -.->|"Raw Reports"| GW_REDACT
+    GW_REDACT -.->|"Sanitized Threat Feed"| UI_MAP
+    STORE_DB -.->|"Priority Case Queue"| UI_AUTH
+    STORE_AUDIT -.->|"Audit Chain of Custody"| UI_AUTH
+
+    classDef t1 stroke:#38bdf8,stroke-width:2px;
+    classDef t2 stroke:#818cf8,stroke-width:2px;
+    classDef t3 stroke:#f59e0b,stroke-width:2px;
+    classDef t4 stroke:#10b981,stroke-width:2px;
+
+    TIER1:::t1
+    TIER2:::t2
+    TIER3:::t3
+    TIER4:::t4
 ```
+
+For the comprehensive design document with detailed workflows, see [`TECHNICAL_DESIGN.md`](TECHNICAL_DESIGN.md).
 
 ---
 
-## 📐 The Explainable Aravalli Risk Engine
-
-The platform implements a transparent, weighted formula across 5 critical environmental vectors:
-
-$$\text{Overall Risk} = (M \times 0.30) + (V \times 0.25) + (W \times 0.20) + (C \times 0.15) + (H \times 0.10)$$
-
-| Factor | Weight | Description |
-| :--- | :---: | :--- |
-| **$M$ (Mining Risk)** | **30%** | Proximity to illegal quarrying cuts, blasting signatures, and heavy dumper haul tracks. |
-| **$V$ (Vegetation Loss)** | **25%** | Sentinel-2 NDVI degradation index and native Dhau canopy fragmentation. |
-| **$W$ (Water Stress)** | **20%** | Groundwater table drawdown, check-dam breach, and seasonal nallah blockages. |
-| **$C$ (Citizen Evidence)** | **15%** | Density, frequency, and corroboration of citizen reports submitted within 30 days. |
-| **$H$ (Historical Trend)** | **10%** | Decadal transition trend from protected deemed forest to denuded rocky scrub. |
-
-### Classification Bands:
-- 🟢 **SAFE ($0 - 30$):** Baseline ecological equilibrium. Routine monitoring.
-- 🟡 **WATCH ($31 - 50$):** Early warning signals. Scheduled drone or ranger patrol recommended.
-- 🟠 **HIGH RISK ($51 - 75$):** Severe ecological distress. Immediate on-site inspection warranted.
-- 🔴 **CRITICAL ($76 - 100$):** Imminent destruction. Inter-departmental enforcement mobilized under Supreme Court ban.
-
----
-
-## 📁 Repository Structure
+## 10. Repository Folder Structure
 
 ```
-ARAVALLI SENTINEL/
-├── backend/
+c:\Users\dlakh\Desktop\ARAVALLI SENTINEL/
+├── .env.example                       # Master environment variable documentation
+├── .gitignore                         # Excludes .env, node_modules, keys, credentials
+├── firestore.rules                    # Least-privilege Firestore security rules
+├── storage.rules                      # 10MB image limit Storage security rules
+├── package.json                       # Monorepo orchestration scripts
+├── README.md                          # Master GitHub documentation (this file)
+├── TECHNICAL_DESIGN.md                # Solution architecture & Mermaid technical design
+├── TESTING.md                         # Complete test catalog & execution guide
+├── LICENSE                            # MIT License
+├── sample_data/                       # Fictional demonstration datasets
+│   ├── environmental_incidents.json   # 12 synthetic incident records matching app schema
+│   ├── environmental_incidents.csv    # CSV tabular export of sample records
+│   └── README.md                      # Sample data dictionary and usage guide
+├── docs/                              # Auxiliary architectural guides
+│   ├── ARCHITECTURE.md                # Detailed system architecture specification
+│   ├── API_SPEC.md                    # REST API endpoint reference
+│   ├── DEMO_WALKTHROUGH.md            # Step-by-step evaluator demo script
+│   ├── DEPLOYMENT.md                  # Cloud Run & Firebase production deployment
+│   └── FIREBASE_SETUP.md              # Firebase project configuration steps
+├── backend/                           # Node.js Express REST API
+│   ├── .env                           # Local environment file (git-ignored)
+│   ├── .env.example                   # Backend environment template
+│   ├── package.json                   # Backend dependencies & test scripts
 │   ├── src/
-│   │   ├── config/              # Environment, Firebase Admin, Gemini SDK
-│   │   ├── controllers/         # Reports, Zones, AI, Auth controllers
-│   │   ├── data/                # Aravalli zones dataset, seed reports
-│   │   ├── middleware/          # Auth, role guard, Multer upload, rate limiting
-│   │   ├── routes/              # Express API endpoints
-│   │   ├── services/            # Risk Engine, Gemini AI, Geospatial Provider
-│   │   ├── validators/          # Zod validation schemas
-│   │   └── server.js            # Express application entry point
-│   ├── tests/                   # Vitest unit tests (Risk Engine) & Supertest API tests
-│   ├── .env.example             # Backend environment documentation
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/          # MapView, RiskBadge, AIAnalysisCard, Navbar, Footer, Dossier
-│   │   ├── context/             # AuthContext (session persistence & persona switcher)
-│   │   ├── pages/               # Landing, RiskMap, ReportThreat, Authority, AskAravalli
-│   │   ├── services/            # API client
-│   │   ├── App.jsx              # Routing & Layout
-│   │   └── main.jsx             # React entry point
-│   ├── .env.example             # Frontend environment documentation
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   └── package.json
-├── docs/
-│   ├── ARCHITECTURE.md          # In-depth architectural design
-│   ├── API_SPEC.md              # REST API documentation
-│   ├── FIREBASE_SETUP.md        # Firestore & Storage production guide
-│   ├── DEPLOYMENT.md            # Cloud Run / Firebase deployment
-│   └── DEMO_WALKTHROUGH.md      # Step-by-step evaluator demo script
-├── firestore.rules              # Least-privilege Firestore rules
-├── storage.rules                # 10MB image limit Storage rules
-├── package.json                 # Monorepo orchestration scripts
-└── README.md
+│   │   ├── server.js                  # Express application entry point (Port 5050)
+│   │   ├── config/
+│   │   │   ├── env.js                 # Environment variable validation & defaults
+│   │   │   ├── firebase.js            # Firebase Admin SDK & High-Fidelity Local Store
+│   │   │   └── gemini.js              # Google Generative AI client setup
+│   │   ├── controllers/
+│   │   │   ├── aiController.js        # Evidence analysis & Ask Aravalli chat
+│   │   │   ├── authController.js      # Citizen registration & demo persona switching
+│   │   │   ├── reportsController.js   # Incident ingestion, risk scoring, legal dossiers
+│   │   │   └── zonesController.js     # Ecological sectors & risk recalculator
+│   │   ├── data/
+│   │   │   ├── aravalliZones.js       # 8 monitored sectors with telemetry metadata
+│   │   │   └── seedReports.js         # Baseline reports with complete audit histories
+│   │   ├── middleware/
+│   │   │   ├── auth.js                # JWT verification & requireAuthority guard
+│   │   │   └── upload.js              # Multer memory storage (JPEG/PNG/WEBP, 10MB limit)
+│   │   ├── routes/
+│   │   │   ├── aiRoutes.js            # /api/ai routes
+│   │   │   ├── authRoutes.js          # /api/auth routes
+│   │   │   ├── reportsRoutes.js       # /api/reports routes
+│   │   │   └── zonesRoutes.js         # /api/zones routes
+│   │   ├── services/
+│   │   │   ├── geminiService.js       # Gemini 2.0 Flash multimodal vision engine
+│   │   │   ├── geospatialProvider.js  # Sentinel-2 / Landsat simulator & GEE boundary
+│   │   │   └── riskEngine.js          # Explainable 5-Factor Risk Engine (0–100)
+│   │   └── validators/
+│   │       └── reportValidator.js     # Zod input & status schemas
+│   └── tests/                         # Vitest automated test suite
+│       ├── api.test.js                # 31 integration tests for all REST endpoints
+│       └── riskEngine.test.js         # 11 unit tests for risk formula & boundaries
+└── frontend/                          # React Vite Web Client
+    ├── .env                           # Local frontend environment (git-ignored)
+    ├── .env.example                   # Frontend environment template
+    ├── index.html                     # HTML5 shell with ecological branding & fonts
+    ├── package.json                   # Frontend dependencies & build scripts
+    ├── postcss.config.js              # PostCSS Tailwind plugins
+    ├── tailwind.config.js             # Ecological palette configuration
+    ├── vite.config.js                 # Vite configuration with proxy to Port 5050
+    └── src/
+        ├── App.jsx                    # Routing & global layout shell
+        ├── main.jsx                   # React 18 DOM mount point
+        ├── index.css                  # Tailwind styles & print media queries
+        ├── context/
+        │   └── AuthContext.jsx        # Session management & persona switcher
+        ├── services/
+        │   └── api.js                 # Centralized fetch API client
+        ├── components/
+        │   ├── AIAnalysisCard.jsx     # Visual indicators, limitations, ranger checklist
+        │   ├── Footer.jsx             # Regulatory references, credits, legal notice
+        │   ├── MapView.jsx            # Dual-layer Leaflet & Google Maps component
+        │   ├── Navbar.jsx             # Navigation header with active persona switcher
+        │   ├── PrintableIncidentDossier.jsx # Official printable PDF case briefing
+        │   ├── RiskBadge.jsx          # Color-coded severity badge (Safe to Critical)
+        │   └── ZoneDetailDrawer.jsx   # Telemetry drawer with 5-factor breakdown
+        └── pages/
+            ├── AskAravalliPage.jsx    # Conversational assistant grounded in telemetry
+            ├── AuthorityDashboardPage.jsx # Case triage, status mutation, audit trails
+            ├── IncidentDossierPage.jsx    # Dedicated route for printing case dossiers
+            ├── LandingPage.jsx        # Public overview, problem context, 4-step workflow
+            ├── ReportThreatPage.jsx   # Citizen report form with GPS map pin picker
+            └── RiskMapPage.jsx        # Full-featured geospatial operations center
 ```
 
 ---
 
-## ⚡ Quickstart Guide (Windows PowerShell)
+## 11. Prerequisites & Software Requirements
 
-### 1. Install Dependencies
+- **Node.js:** `v20.0.0` or higher (tested on Node `v24.19.0`)
+- **Package Manager:** `npm` v10+ (tested on npm `v11.17.0`)
+- **Web Browser:** Any modern evergreen browser (Google Chrome, Mozilla Firefox, Microsoft Edge, Safari) supporting WebGL/Leaflet maps.
+- **Operating System:** Cross-platform (Windows 10/11 PowerShell, macOS, Linux).
+
+---
+
+## 12. Installation & Setup Instructions
+
+### Step 1: Clone or Open the Repository
 ```powershell
-# From root directory:
+cd "c:\Users\dlakh\Desktop\ARAVALLI SENTINEL"
+```
+
+### Step 2: Install All Dependencies
+Install dependencies for both frontend and backend using the root script:
+```powershell
 npm run install:all
 ```
-
-### 2. Configure Environment Variables
-Copy `.env.example` templates to `.env`:
+*Alternatively, install individually:*
 ```powershell
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+cd backend && npm install
+cd ../frontend && npm install
+cd ..
 ```
-*(Default settings run in **High-Fidelity Demonstration Mode** immediately with zero credentials required! To enable live Gemini AI, paste your API key in `backend/.env`.)*
 
-### 3. Run Unit & Integration Tests
+---
+
+## 13. Environment Variables Configuration
+
+Copy the master `.env.example` template to local `.env` files:
+
 ```powershell
-npm run test:backend
+# Windows PowerShell:
+cp .env.example backend/.env
+cp .env.example frontend/.env
+
+# Linux / macOS Bash:
+cp .env.example backend/.env
+cp .env.example frontend/.env
 ```
-*(All 15 tests in 2 test suites will execute and verify risk engine formulas, boundary validation, and API role guards.)*
 
-### 4. Start the Application
-Open two PowerShell terminals:
+### Key Configuration Parameters:
+| Variable | File | Description | Required? | Default / Example |
+| :--- | :--- | :--- | :---: | :--- |
+| `PORT` | `backend/.env` | Backend server listening port | Yes | `5050` |
+| `NODE_ENV` | `backend/.env` | Runtime environment mode | Yes | `development` |
+| `FRONTEND_URL` | `backend/.env` | Allowed CORS origin | Yes | `http://localhost:5173` |
+| `GEMINI_API_KEY` | `backend/.env` | Google AI Studio key | Optional* | `AIzaSy...` (Uses heuristic fallback if empty) |
+| `GEMINI_MODEL` | `backend/.env` | Gemini model name | Optional | `gemini-2.0-flash` |
+| `FIREBASE_PROJECT_ID` | `backend/.env` | Firebase project ID | Yes | `aravalli-sentinel-demo` |
+| `AUTHORITY_INVITE_SECRET` | `backend/.env` | Admin secret for authority creation | Yes | `AravalliEnforce2025SecureToken` |
+| `VITE_API_URL` | `frontend/.env` | Backend API proxy path | Yes | `/api` |
+| `VITE_GOOGLE_MAPS_API_KEY` | `frontend/.env`| Google Maps JS key | Optional | Empty (Uses Leaflet & Esri Satellite if empty) |
 
-**Terminal 1 (Backend API):**
+*\*Note: The application operates completely out-of-the-box in **Demonstration Mode** with zero external API keys required!*
+
+---
+
+## 14. How to Run the Development Server
+
+From the project root directory, run both servers in separate terminal windows:
+
+### Terminal 1: Backend API Server
 ```powershell
 npm run dev:backend
 ```
-*Backend active at: `http://localhost:5000` (Health Check: `http://localhost:5000/api/health`)*
+*Output:*
+```text
+🌿 ARAVALLI SENTINEL — Backend API Active
+📡 Running at: http://localhost:5050
+🗺️ Health: http://localhost:5050/api/health
+```
 
-**Terminal 2 (Frontend Interface):**
+### Terminal 2: Frontend Web Client
 ```powershell
 npm run dev:frontend
 ```
-*Frontend active at: `http://localhost:5173`*
-
----
-
-## 🛡️ Security & Role Enforcement
-
-- **No Privilege Escalation:** Public registration is hardcoded to the `citizen` role. Citizens cannot escalate to `authority`.
-- **Server-Side Protection:** `requireAuthority` middleware verifies tokens and rejects unauthorized requests with `403 Forbidden`.
-- **Authority Provisioning:** Official accounts require the server-side `AUTHORITY_INVITE_SECRET` or admin claim.
-- **Citizen Privacy:** Citizen phone numbers, email addresses, and identities are completely redacted from public APIs.
-- **Upload Hardening:** Multer restricts uploads to JPEG, PNG, WEBP, and HEIC files with a strict 10MB ceiling.
-- **Audit Immutability:** Case status transitions require mandatory action notes and store the acting authority's identity in the audit trail.
-
----
-
-## 🧪 Verification Commands & Test Results
-
+*Output:*
+```text
+VITE v6.2.0  ready in 280 ms
+➜  Local:   http://localhost:5173/
+➜  Network: use --host to expose
 ```
+
+Open your browser and navigate to **`http://localhost:5173`**.
+
+---
+
+## 15. How to Run Backend and Frontend Separately
+
+If you prefer operating inside individual service directories:
+
+### Running Backend Only
+```powershell
+cd backend
+npm run dev       # Starts Node with --watch at http://localhost:5050
+# Or production mode:
+npm start
+```
+
+### Running Frontend Only
+```powershell
+cd frontend
+npm run dev       # Starts Vite dev server at http://localhost:5173
+# Or build production static assets:
+npm run build
+npm run preview
+```
+
+---
+
+## 16. Database and Firebase Setup
+
+### Development / Demo Mode (Default)
+No setup required. The application initializes an in-memory/disk **High-Fidelity Local Development Store** that seamlessly supports:
+- Document creation, updating, and querying (`collection`, `doc`, `set`, `update`, `where`, `get`).
+- File uploads formatted as base64 data URIs.
+- Pre-seeded incident reports and telemetry sectors.
+
+### Production Firebase Integration (Optional)
+1. Go to the [Firebase Console](https://console.firebase.google.com/) and create a project named `aravalli-sentinel`.
+2. Enable **Cloud Firestore** in production mode in region `asia-south1` (Mumbai).
+3. Enable **Firebase Storage**.
+4. Deploy the security rules from this repository:
+   ```bash
+   firebase deploy --only firestore:rules,storage:rules
+   ```
+5. Generate a private service account key under **Project Settings → Service Accounts → Generate New Private Key**.
+6. Save the key file to `backend/config/serviceAccountKey.json` (git-ignored) and update `backend/.env`:
+   ```env
+   FIREBASE_SERVICE_ACCOUNT_PATH=./config/serviceAccountKey.json
+   FIREBASE_PROJECT_ID=aravalli-sentinel
+   ```
+
+For detailed instructions, see [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md).
+
+---
+
+## 17. Google Gemini API Setup
+
+1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey) and generate a free API key.
+2. Open `backend/.env` and paste your key:
+   ```env
+   GEMINI_API_KEY=AIzaSyYourActualKeyHere
+   GEMINI_MODEL=gemini-2.0-flash
+   ```
+3. Restart the backend server. The console will display:
+   ```text
+   ✅ [Gemini AI] Google Generative AI initialized with model: gemini-2.0-flash
+   ```
+*If no key is configured, the system automatically runs the guided ecological heuristic engine and flags output as `isSimulated: true`.*
+
+---
+
+## 18. Maps and Geospatial Services Setup
+
+The platform features a **Zero-Dependency Dual Map Engine**:
+- **Default (Zero-Key):** Uses **Leaflet v1.9** with **Esri World Imagery** (15m-resolution satellite imagery) and **CartoDB Dark Matter** topographic tiles. It requires no API key, credit card, or cloud account.
+- **Google Maps Integration (Optional):** If you provide `VITE_GOOGLE_MAPS_API_KEY` in `frontend/.env`, the client automatically loads the Google Maps JavaScript API with satellite hybrid terrain layers.
+
+---
+
+## 19. How to Run Tests
+
+The repository includes **42 automated unit and integration tests** built with Vitest and Supertest:
+
+```powershell
+# Run all tests once:
+npm run test:backend
+
+# Or directly in backend directory:
+cd backend
+npm test
+```
+
+### Verified Test Run Output:
+```text
+✓ tests/riskEngine.test.js (11 tests) 9ms
+✓ tests/api.test.js (31 tests) 297ms
+
 Test Files  2 passed (2)
-     Tests  33 passed (33)
-  Duration  2.15s
+     Tests  42 passed (42)
+  Duration  1.90s
 ```
-- `tests/riskEngine.test.js` (11 unit tests): Validates weights sum to 1.00, exact formula precision, boundary validation (0–100), classification bands, proportional multi-vector re-weighting, edge case boundary handling (0 equilibrium & 100 maximum risk), all-missing factor error handling, and dynamic primary driver detection.
-- `tests/api.test.js` (22 integration tests): Validates system health check, 4-state zone filtering (including Gujarat), zone telemetry details, dynamic risk recalculation, threat report category filtering (toxic dumping, groundwater depletion, etc.), rejected status audits, single report lookup and 404s, printable incident dossiers, citizen privacy redaction, Ask Aravalli grounded responses, standalone AI evidence vision analysis, and role-gated status transitions with Zod validation.
+
+For full test case specifications and coverage gaps, see [`TESTING.md`](TESTING.md).
 
 ---
 
-## 📜 Regulatory Citations & Legal Safeguards
-- **Supreme Court of India:** *M.C. Mehta vs Union of India* (2002, 2004, 2009) — Prohibiting mining activities across notified Aravalli hill ranges.
-- **Punjab Land Preservation Act (PLPA) 1900 (Sec 4 & 5):** Restricting non-forestry tree cutting and construction on hill tracts.
-- **Environment (Protection) Act, 1986 & Forest Conservation Act, 1980:** Statutory basis for eco-sensitive zone protections.
+## 20. Sample API Requests & Responses
 
-*Disclaimer: AI inferences generated by Google Gemini are decision-support assessments and do not constitute official judicial determinations or legal findings. Field verification by authorized government personnel is mandatory.*
+### 1. Health Diagnostics
+```http
+GET http://localhost:5050/api/health
+```
+**Response `200 OK`:**
+```json
+{
+  "status": "ONLINE",
+  "platform": "ARAVALLI SENTINEL",
+  "version": "1.0.0",
+  "tagline": "See the Threat. Predict the Risk. Protect the Aravallis.",
+  "timestamp": "2026-10-27T16:28:27.000Z",
+  "services": {
+    "firebase": {
+      "connected": false,
+      "mode": "Local Fallback / High-Fidelity Store"
+    },
+    "geminiAI": {
+      "active": false,
+      "model": "gemini-2.0-flash",
+      "mode": "Heuristic Guided Ecological Assessment (Demo Fallback)"
+    },
+    "geospatialTelemetry": {
+      "provider": "Copernicus Sentinel-2 & Landsat-9 Telemetry Simulator (Demonstration Dataset)",
+      "live": false
+    }
+  }
+}
+```
+
+### 2. Submit Citizen Threat Report
+```http
+POST http://localhost:5050/api/reports
+Content-Type: multipart/form-data
+
+threatCategory: "Illegal Mining & Quarrying"
+description: "Night-time blasting observed near Bandhwari ridge slope. Two earthmovers operating."
+latitude: 28.3892
+longitude: 77.1415
+locationName: "Bandhwari Hill Crest, Gurugram"
+evidenceImage: [binary JPEG image]
+```
+**Response `201 Created`:**
+```json
+{
+  "success": true,
+  "message": "Environmental threat report submitted and processed successfully.",
+  "report": {
+    "id": "rep-aravalli-2026-001",
+    "threatCategory": "Illegal Mining & Quarrying",
+    "description": "Night-time blasting observed near Bandhwari ridge slope...",
+    "status": "pending",
+    "citizenName": "Anonymous Citizen Sentinel",
+    "citizenContactRedacted": true,
+    "riskAssessment": {
+      "score": 84.5,
+      "riskLevel": "CRITICAL",
+      "severity": "critical",
+      "primaryDriver": "Illegal Mining Activity (30% weight)"
+    }
+  }
+}
+```
+
+### 3. Update Official Case Status (Authority Only)
+```http
+PATCH http://localhost:5050/api/reports/rep-aravalli-2026-001/status
+Authorization: Bearer demo-token-authority-valid
+Content-Type: application/json
+
+{
+  "status": "verified",
+  "actionNotes": "Joint inspection with Mining Officer completed. Unpermitted quarry cut verified and earthmover impounded.",
+  "assignedOfficer": "Officer Rajesh Sharma (DFO)"
+}
+```
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "message": "Report rep-aravalli-2026-001 status successfully updated to verified.",
+  "report": {
+    "id": "rep-aravalli-2026-001",
+    "status": "verified",
+    "updatedAt": "2026-10-27T16:28:28.000Z",
+    "auditTrail": [
+      {
+        "action": "Status updated from 'under_review' to 'verified'",
+        "by": "Officer Rajesh Sharma",
+        "notes": "Joint inspection with Mining Officer completed..."
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 21. Sample Data Instructions
+
+Synthetic demonstration datasets are provided in the [`sample_data/`](sample_data/) directory:
+- [`environmental_incidents.json`](sample_data/environmental_incidents.json): 12 structured JSON incident records.
+- [`environmental_incidents.csv`](sample_data/environmental_incidents.csv): Tabular RFC 4180 CSV export.
+- [`sample_data/README.md`](sample_data/README.md): Field definitions, schemas, and synthetic data disclaimers.
+
+All sample records are explicitly marked with `"is_synthetic": true` and represent plausible ecological sectors across Rajasthan, Haryana, Delhi NCR, and Gujarat.
+
+---
+
+## 22. Security and Privacy Considerations
+
+1. **Citizen Anonymity & PII Protection:** The server strips `citizenId` and private contact metadata from public feeds. Citizen sentinels are attributed as `"Anonymous Citizen Sentinel"`.
+2. **Role Escalation Prevention:** Public registration routes unconditionally assign `role: 'citizen'`. Supplying `role: 'authority'` in client payloads is rejected.
+3. **Server-Side Authorization Guards:** Modifying report status (`PATCH /api/reports/:id/status`) strictly requires the `requireAuthority` middleware.
+4. **Upload Hardening:** Multer memory storage validates MIME types (`image/jpeg`, `image/png`, `image/webp`, `image/heic`) and enforces a strict 10MB ceiling.
+5. **Rate Limiting:** Protects endpoints with a window of 300 requests per 15 minutes.
+6. **Immutable Forensic Audit Trail:** Case status changes require non-empty action notes and preserve the acting officer's identity and timestamp.
+
+---
+
+## 23. Troubleshooting Common Errors
+
+### Error 1: `listen EADDRINUSE: address already in use :::5050`
+- **Cause:** Another process is running on port 5050.
+- **Fix:** Terminate the conflicting process or change `PORT=5051` in `backend/.env` and update the proxy target in `frontend/vite.config.js`.
+
+### Error 2: `[Gemini AI] No valid GEMINI_API_KEY detected in .env`
+- **Cause:** Expected in demo mode.
+- **Fix:** The app runs safely with heuristic fallback. To enable live Gemini 2.0 Flash vision, obtain an API key from Google AI Studio and configure `GEMINI_API_KEY` in `backend/.env`.
+
+### Error 3: Map tiles appear blank or grey
+- **Cause:** Network connectivity issue reaching OpenStreetMap or Esri tile servers.
+- **Fix:** Check internet connection. In corporate networks, ensure tile domains (`server.arcgisonline.com`, `cartocdn.com`) are not blocked by firewalls.
+
+---
+
+## 24. Limitations and Future Improvements
+
+### Completed in Current Implementation
+- Full-stack working MVP with React 18, Vite, Node.js 24, and Express.
+- Complete 5-factor Explainable Risk Engine with transparent re-weighting.
+- Multimodal Google Gemini AI evidence analysis with non-defamation caveats.
+- Role-gated authority triage desk with printable PDF incident dossiers.
+- 42 automated unit and integration tests passing.
+
+### Future Roadmap
+- **Live Google Earth Engine Pipeline:** Automated weekly Sentinel-2 and Landsat-9 spectral pass ingestion via GEE Python/Node API.
+- **Offline PWA Support:** Service worker background sync for citizens reporting in remote valleys without cellular coverage.
+- **Multilingual Voice Assistant:** Speech-to-text queries in Hindi, Marwari, and Mewati for rural community elders.
+- **Automated Ranger Push Notifications:** Real-time SMS and Firebase Cloud Messaging alerts dispatched to local ranger patrol handsets.
+
+---
+
+## 25. Contribution Guidelines
+
+Contributions from developers, conservationists, and GIS specialists are welcome:
+1. **Fork the Repository:** Create a feature branch (`git checkout -b feature/eco-restoration-tracker`).
+2. **Adhere to Code Standards:** Use ES Modules, clean comments, and maintain documentation integrity.
+3. **Add Tests:** Ensure all new services have corresponding Vitest unit tests in `backend/tests/`.
+4. **Run Verification:** Verify that `npm run test:backend` and `npm run build:frontend` pass with zero errors.
+5. **Submit a Pull Request:** Describe the ecological rationale and testing steps in your PR description.
+
+---
+
+## 26. License
+This project is licensed under the **MIT License** — see the [`LICENSE`](LICENSE) file for complete terms.
+
+---
+
+## 27. Project Acknowledgements & References
+
+- **Supreme Court of India:** Landmark judgments in *M.C. Mehta vs. Union of India* (2002, 2004, 2009) establishing mining bans and eco-sensitive zones in the Aravallis.
+- **Ministry of Environment, Forest and Climate Change (MoEFCC):** Guidelines on Eco-Sensitive Zones (ESZ) and the Forest (Conservation) Act, 1980.
+- **European Space Agency (ESA) & Copernicus:** Sentinel-2 Multispectral Instrument (MSI) open optical remote sensing imagery.
+- **ISRO & Bhuvan Geo-Portal:** Land Degradation and Desertification Atlases of India.
+- **Google DeepMind & Google AI Studio:** Google Gemini 2.0 Flash developer platform.

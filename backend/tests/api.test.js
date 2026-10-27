@@ -243,4 +243,138 @@ describe('Aravalli Sentinel API - Integration Tests', () => {
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
   });
+
+  it('POST /api/reports successfully creates an incident with evidence image', async () => {
+    const fakeImageBuffer = Buffer.from('fake-pixel-data');
+    const res = await request(app)
+      .post('/api/reports')
+      .field('threatCategory', 'Illegal Mining & Quarrying')
+      .field('description', 'Unauthorized nighttime excavation and blasting spotted near ridge boundary.')
+      .field('latitude', '28.3892')
+      .field('longitude', '77.1415')
+      .field('locationName', 'Bandhwari South Ridge Sector 3')
+      .attach('evidenceImage', fakeImageBuffer, {
+        filename: 'evidence.jpg',
+        contentType: 'image/jpeg',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.report).toBeDefined();
+    expect(res.body.report.id).toMatch(/^rep-aravalli-/);
+    expect(res.body.report.status).toBe('pending');
+    expect(res.body.report.evidenceAnalysis).toBeDefined();
+    expect(res.body.report.riskAssessment).toBeDefined();
+    expect(res.body.report.citizenContactRedacted).toBe(true);
+  });
+
+  it('POST /api/reports rejects out-of-bounds latitude (> 90)', async () => {
+    const res = await request(app)
+      .post('/api/reports')
+      .send({
+        threatCategory: 'Deforestation / Tree Felling',
+        description: 'Chainsaw felling of native Dhau forest trees.',
+        latitude: 95.5, // Out of bounds
+        longitude: 76.5,
+        locationName: 'Sariska Core Boundary',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(JSON.stringify(res.body.details)).toContain('Latitude must be between -90 and 90');
+  });
+
+  it('POST /api/reports rejects out-of-bounds longitude (> 180)', async () => {
+    const res = await request(app)
+      .post('/api/reports')
+      .send({
+        threatCategory: 'Deforestation / Tree Felling',
+        description: 'Chainsaw felling of native Dhau forest trees.',
+        latitude: 27.5,
+        longitude: 195.0, // Out of bounds
+        locationName: 'Sariska Core Boundary',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(JSON.stringify(res.body.details)).toContain('Longitude must be between -180 and 180');
+  });
+
+  it('POST /api/reports rejects non-numeric coordinate types', async () => {
+    const res = await request(app)
+      .post('/api/reports')
+      .send({
+        threatCategory: 'Toxic Waste Dumping',
+        description: 'Industrial waste dump near rainwater catchment.',
+        latitude: 'not-a-coordinate',
+        longitude: 77.14,
+        locationName: 'Test Area',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+  });
+
+  it('POST /api/reports rejects unsupported file upload MIME types', async () => {
+    const textBuffer = Buffer.from('malicious-or-text-payload');
+    const res = await request(app)
+      .post('/api/reports')
+      .field('threatCategory', 'Illegal Mining & Quarrying')
+      .field('description', 'Excavation detected with invalid file attachment.')
+      .field('latitude', '28.3892')
+      .field('longitude', '77.1415')
+      .field('locationName', 'Test Sector')
+      .attach('evidenceImage', textBuffer, {
+        filename: 'payload.txt',
+        contentType: 'text/plain',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toContain('Unsupported file type');
+  });
+
+  it('GET /api/auth/profile rejects unauthenticated request with 401', async () => {
+    const res = await request(app).get('/api/auth/profile');
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toContain('Authentication required');
+  });
+
+  it('GET /api/auth/profile returns verified profile for valid token', async () => {
+    const res = await request(app)
+      .get('/api/auth/profile')
+      .set('Authorization', 'Bearer demo-token-authority-valid');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user).toBeDefined();
+    expect(res.body.user.role).toBe('authority');
+  });
+
+  it('POST /api/auth/register-citizen registers new citizen account with role strictly citizen', async () => {
+    const res = await request(app)
+      .post('/api/auth/register-citizen')
+      .send({
+        email: 'newcitizen@aravalli.community',
+        fullName: 'Sunita Sharma',
+        password: 'SecurePassword123!',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user.role).toBe('citizen');
+    expect(res.body.token).toBeDefined();
+  });
+
+  it('POST /api/auth/register-citizen rejects registration missing required email', async () => {
+    const res = await request(app)
+      .post('/api/auth/register-citizen')
+      .send({
+        fullName: 'Incomplete User',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+  });
 });
