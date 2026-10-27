@@ -139,66 +139,99 @@ flowchart TD
     TIER4:::t4
 ```
 
-<details>
-<summary>View ASCII Text Topology</summary>
+### Detailed Component Data Flow (Block Flowchart)
 
+```mermaid
+flowchart TD
+    %% LAYER 1: CLIENT PRESENTATION BLOCK
+    subgraph BLOCK_CLIENT["CLIENT PRESENTATION BLOCK (React 18 • Vite • Tailwind • Leaflet)"]
+        direction LR
+        PAGE_LANDING["<b>Public Landing Page</b><br/>• Crisis Overview<br/>• Real-Time Stats<br/>• 4-Step Action Pipeline"]
+        PAGE_REPORT["<b>Citizen Threat Portal</b><br/>• Evidence Photo Upload<br/>• Interactive GPS Mini-Map<br/>• Gemini AI Instant Preview"]
+        PAGE_MAP["<b>Geospatial Risk Map</b><br/>• Satellite & Street Tiles<br/>• 8 Monitored Eco-Zones<br/>• Telemetry Slide Drawer"]
+        PAGE_TRIAGE["<b>Authority Triage Desk</b><br/>• Status & Priority Queue<br/>• Mandatory Action Notes<br/>• Printable PDF Dossier"]
+        PAGE_ASK["<b>Ask Aravalli AI</b><br/>• Grounded Law Telemetry<br/>• Citizen PII Safeguard"]
+    end
+
+    %% LAYER 2: SECURITY & GATEWAY BLOCK
+    subgraph BLOCK_GATEWAY["BACKEND API & SECURITY GATEWAY (Node.js 24 • Express • Helmet • Zod)"]
+        direction LR
+        GATE_RATE["<b>Rate Limiter</b><br/>300 req / 15-min window<br/>DDoS & Abuse Shield"]
+        GATE_AUTH["<b>Auth & Role Guard</b><br/>JWT Bearer Verification<br/>requireAuthority Guard"]
+        GATE_UPLOAD["<b>Upload Pipeline</b><br/>Multer Memory Stream<br/>10MB Ceiling • Strict MIME"]
+        GATE_REDACT["<b>PII Privacy Redactor</b><br/>Citizen Anonymization<br/>Public Feed Sanitizer"]
+    end
+
+    %% LAYER 3: INTELLIGENCE & TELEMETRY PROCESSOR BLOCKS
+    subgraph BLOCK_ANALYTICS["INTELLIGENCE & REMOTE SENSING PROCESSORS"]
+        direction LR
+        subgraph MOD_AI["Google Gemini 2.0 AI Block"]
+            AI_VISION["<b>Multimodal Vision</b><br/>Landscape Pattern Extraction"]
+            AI_STEPS["<b>Ranger Action Protocol</b><br/>Field Verification Checklist"]
+            AI_DISCLAIM["<b>Legal Safeguard</b><br/>Non-Defamation Caveats"]
+            AI_VISION --> AI_STEPS --> AI_DISCLAIM
+        end
+
+        subgraph MOD_GEO["Copernicus Sentinel-2 & GEE Block"]
+            GEO_BANDS["<b>10m Multispectral MSI</b><br/>Band 8 (NIR) & Band 4 (Red)"]
+            GEO_NDVI["<b>NDVI Anomaly Engine</b><br/>Multi-Month Canopy Trend"]
+            GEO_WATER["<b>Hydrological Index</b><br/>Surface Water & Aquifer Stress"]
+            GEO_BANDS --> GEO_NDVI --> GEO_WATER
+        end
+    end
+
+    %% LAYER 4: THE RISK ENGINE BLOCK
+    subgraph BLOCK_ENGINE["THE EXPLAINABLE ARAVALLI RISK ENGINE"]
+        direction TB
+        FORMULA_BOX["<b>5-Factor Deterministic Formulation</b><br/>Overall Risk = (Mining × 0.30) + (Vegetation × 0.25) + (Water × 0.20) + (Citizen × 0.15) + (History × 0.10)"]
+        BANDS_BOX["<b>Severity Classification & Action Thresholds</b><br/>• 🟢 SAFE: 0–30 (Routine Telemetry Surveillance)<br/>• 🟡 WATCH: 31–50 (Deploy Drone Patrol & Forest Inspection)<br/>• 🟠 HIGH RISK: 51–75 (Formal Show-Cause Notice & Task Force Mobilization)<br/>• 🔴 CRITICAL: 76–100 (Immediate Inter-Departmental Raid & Machinery Seizure)"]
+        FORMULA_BOX --> BANDS_BOX
+    end
+
+    %% LAYER 5: DATA PERSISTENCE & AUDIT BLOCK
+    subgraph BLOCK_STORE["DATA PERSISTENCE & FORENSIC AUDIT STORE"]
+        direction LR
+        STORE_FIRESTORE["<b>Cloud Firestore / Store</b><br/>• Monitored Zones Catalog<br/>• Ingested Reports Collection"]
+        STORE_BUCKET["<b>Firebase Storage Vault</b><br/>• Forensic Image Files<br/>• Cryptographic Hash Integrity"]
+        STORE_AUDIT["<b>Regulatory Audit Log</b><br/>• Acting Officer Signatures<br/>• Printable Incident Dossiers (PDF)"]
+    end
+
+    %% INTER-BLOCK FLOW CONNECTIONS
+    PAGE_REPORT -->|"1. Submit Photo & GPS"| GATE_UPLOAD
+    PAGE_MAP -->|"Fetch Zones Telemetry"| GATE_RATE
+    PAGE_TRIAGE -->|"Update Case Status"| GATE_AUTH
+    PAGE_ASK -->|"Query Law & Status"| GATE_RATE
+
+    GATE_UPLOAD -->|"Sanitized Buffer"| AI_VISION
+    GATE_AUTH -->|"Query Sector Coordinates"| GEO_BANDS
+
+    AI_DISCLAIM -->|"Visual Indicator Score"| FORMULA_BOX
+    GEO_WATER -->|"NDVI & Water Stress Index"| FORMULA_BOX
+
+    BANDS_BOX -->|"Prioritized Incident Record"| STORE_FIRESTORE
+    GATE_UPLOAD -->|"Store Raw Image"| STORE_BUCKET
+    GATE_AUTH -->|"Append Officer Action Note"| STORE_AUDIT
+
+    STORE_FIRESTORE -.->|"Public Read Feed"| GATE_REDACT
+    GATE_REDACT -.->|"Sanitized Threat Feed"| PAGE_MAP
+    STORE_FIRESTORE -.->|"Case Review Queue"| PAGE_TRIAGE
+    STORE_AUDIT -.->|"Printable Dossier Stream"| PAGE_TRIAGE
+
+    %% STYLING
+    classDef clientStyle stroke:#38bdf8,stroke-width:2px;
+    classDef gatewayStyle stroke:#818cf8,stroke-width:2px;
+    classDef aiStyle stroke:#ec4899,stroke-width:2px;
+    classDef geoStyle stroke:#10b981,stroke-width:2px;
+    classDef engineStyle stroke:#f59e0b,stroke-width:2px;
+    classDef storeStyle stroke:#06b6d4,stroke-width:2px;
+
+    BLOCK_CLIENT:::clientStyle
+    BLOCK_GATEWAY:::gatewayStyle
+    MOD_AI:::aiStyle
+    MOD_GEO:::geoStyle
+    BLOCK_ENGINE:::engineStyle
+    BLOCK_STORE:::storeStyle
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        CLIENT PRESENTATION LAYER                       │
-│  React 18 + Vite + Tailwind CSS + Lucide Icons + Leaflet / Google Maps │
-├────────────────────────────────────────────────────────────────────────┤
-│  • Public Ecological Landing Page                                      │
-│  • Geospatial Risk Operations Map (Topographic / Satellite)            │
-│  • Citizen Threat Reporting Portal (Photo Upload & GPS Pin Picker)     │
-│  • Authority Enforcement Triage Desk (Role-Gated Case Management)      │
-│  • Grounded "Ask Aravalli" AI Ecological Law Assistant                 │
-│  • Printable Official Incident Dossier Generator                       │
-└──────────────────────────────────┬─────────────────────────────────────┘
-                                   │ HTTPS / REST API
-┌──────────────────────────────────▼─────────────────────────────────────┐
-│                       BACKEND API & SECURITY LAYER                     │
-│               Node.js 24 + Express (ES Modules) + Helmet + Zod         │
-├────────────────────────────────────────────────────────────────────────┤
-│  • Auth & Role Guard Middleware (Prevents Citizen Privilege Escalation)│
-│  • Multer Memory Upload Pipeline (Max 10MB, Strict Image MIME Checks)  │
-│  • Rate Limiter (300 requests / 15 min window)                         │
-│  • Public Citizen Privacy Redactor (Redacts Phone/Email/Identity)      │
-└───────────────────┬─────────────────────────────────┬──────────────────┘
-                    │                                 │
-     ┌──────────────▼──────────────┐   ┌──────────────▼─────────────┐
-     │       AI INTELLIGENCE       │   │    GEOSPATIAL & TELEMETRY  │
-     │      Google Gemini API      │   │ Copernicus Sentinel-2 / EE │
-     ├─────────────────────────────┤   ├────────────────────────────┤
-     │ • Multimodal Evidence Vision│   │ • 10m Multispectral Bands  │
-     │ • Visual Indicator Extractor│   │ • Mean NDVI Anomaly Time-  │
-     │ • Limitations & Uncertainty │   │   Series                   │
-     │ • Ranger Verification Steps │   │ • Surface Water Indices    │
-     │ • Strict Non-Defamation     │   │ • Eco-Sensitive Boundaries │
-     └──────────────┬──────────────┘   └──────────────┬─────────────┘
-                    │                                 │
-                    └────────────────┬────────────────┘
-                                     │
-┌────────────────────────────────────▼───────────────────────────────────┐
-│                 THE EXPLAINABLE ARAVALLI RISK ENGINE                   │
-├────────────────────────────────────────────────────────────────────────┤
-│  Formula:                                                              │
-│  Risk = (Mining * 0.30) + (VegLoss * 0.25) + (Water * 0.20) +          │
-│         (Citizen * 0.15) + (History * 0.10)                            │
-│                                                                        │
-│  Classification Bands:                                                 │
-│  • SAFE: 0–30 | WATCH: 31–50 | HIGH RISK: 51–75 | CRITICAL: 76–100     │
-│  • Proportional Re-normalization with Missing-Factor Transparency      │
-└────────────────────────────────────┬───────────────────────────────────┘
-                                     │
-┌────────────────────────────────────▼───────────────────────────────────┐
-│                     DATA PERSISTENCE & AUDIT STORE                     │
-├────────────────────────────────────────────────────────────────────────┤
-│  • Primary: Firebase Cloud Firestore & Firebase Storage Bucket         │
-│  • Fallback: High-Fidelity Local In-Memory Development Store           │
-│  • Chain of Custody: Non-repudiable audit logs with officer IDs        │
-└────────────────────────────────────────────────────────────────────────┘
-```
-</details>
 
 ---
 
