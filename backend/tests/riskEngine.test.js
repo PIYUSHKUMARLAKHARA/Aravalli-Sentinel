@@ -94,4 +94,85 @@ describe('Aravalli Risk Engine - Unit Tests', () => {
     expect(result.contributions.vegetationLoss.contribution).toBe(23.75); // 95 * 0.25
     expect(result.contributions.vegetationLoss.explanation).toContain('NDVI decline');
   });
+
+  it('calculates 0 baseline score when all factors are at minimum (Ecological Equilibrium)', () => {
+    const zeroFactors = {
+      miningRisk: 0,
+      vegetationLoss: 0,
+      waterStress: 0,
+      citizenEvidence: 0,
+      historicalChange: 0,
+    };
+
+    const result = calculateRiskScore(zeroFactors);
+
+    expect(result.success).toBe(true);
+    expect(result.score).toBe(0);
+    expect(result.scoreInteger).toBe(0);
+    expect(result.riskLevel).toBe('SAFE');
+    expect(result.severity).toBe('low');
+    expect(result.transparency.isComplete).toBe(true);
+  });
+
+  it('calculates 100 maximum risk score when all factors are at maximum (Critical Threat)', () => {
+    const maxFactors = {
+      miningRisk: 100,
+      vegetationLoss: 100,
+      waterStress: 100,
+      citizenEvidence: 100,
+      historicalChange: 100,
+    };
+
+    const result = calculateRiskScore(maxFactors);
+
+    expect(result.success).toBe(true);
+    expect(result.score).toBe(100);
+    expect(result.scoreInteger).toBe(100);
+    expect(result.riskLevel).toBe('CRITICAL');
+    expect(result.severity).toBe('critical');
+    expect(result.recommendedAction).toContain('Immediate enforcement raid required');
+  });
+
+  it('handles multi-vector missing factors with transparent proportional re-normalization', () => {
+    // Omitting waterStress (0.20) and citizenEvidence (0.15). Available weight sum is 0.65.
+    const multiMissingFactors = {
+      miningRisk: 60,
+      vegetationLoss: 60,
+      waterStress: null,
+      citizenEvidence: undefined,
+      historicalChange: 60,
+    };
+
+    const result = calculateRiskScore(multiMissingFactors);
+
+    expect(result.success).toBe(true);
+    expect(result.score).toBe(60); // Proportional re-scaling of identical non-missing values
+    expect(result.transparency.isComplete).toBe(false);
+    expect(result.transparency.missingFactorsCount).toBe(2);
+    expect(result.transparency.limitations).toContain('recalculated across 65% available weight');
+    expect(result.contributions.waterStress.weightPercent).toBe('0% (missing)');
+    expect(result.contributions.citizenEvidence.weightPercent).toBe('0% (missing)');
+  });
+
+  it('returns failure when all factors are completely missing or invalid', () => {
+    const emptyResult = calculateRiskScore({});
+    expect(emptyResult.success).toBe(false);
+    expect(emptyResult.error).toContain('All input factors are missing or invalid');
+    expect(emptyResult.missingFactors.length).toBe(5);
+  });
+
+  it('correctly shifts primary driver when historicalChange factor dominates', () => {
+    const factors = {
+      miningRisk: 10,
+      vegetationLoss: 10,
+      waterStress: 10,
+      citizenEvidence: 10,
+      historicalChange: 100, // 100 * 0.10 = 10.0 contribution (highest among factors)
+    };
+
+    const result = calculateRiskScore(factors);
+
+    expect(result.primaryDriver.factor).toBe('historicalChange');
+    expect(result.primaryDriver.contribution).toBe(10);
+  });
 });

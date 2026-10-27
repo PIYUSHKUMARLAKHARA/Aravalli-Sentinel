@@ -25,7 +25,7 @@ Follow this 5-minute walkthrough to test all core capabilities of ARAVALLI SENTI
 ## Step 1: Open the Geospatial Risk Map & Select a Risk Zone
 
 1. Click **"Risk Map"** in the top navigation bar.
-2. Observe the interactive Aravalli map displaying all 8 monitored sectors with color-coded risk circles:
+2. Observe the interactive Aravalli map displaying all 10 monitored sectors across Gujarat, Rajasthan, Haryana, and Delhi NCR with color-coded risk circles:
    - Green (SAFE: 0–30)
    - Amber (WATCH: 31–50)
    - Orange (HIGH RISK: 51–75)

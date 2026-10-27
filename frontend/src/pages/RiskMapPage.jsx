@@ -147,6 +147,7 @@ export function RiskMapPage() {
             <option value="Haryana">Haryana</option>
             <option value="Rajasthan">Rajasthan</option>
             <option value="Delhi NCR">Delhi NCR</option>
+            <option value="Gujarat">Gujarat</option>
           </select>
         </div>
       </div>

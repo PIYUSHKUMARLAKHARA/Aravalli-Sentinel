@@ -100,4 +100,147 @@ describe('Aravalli Sentinel API - Integration Tests', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.report.status).toBe('verified');
   });
+
+  it('GET /api/zones?state=Gujarat returns Gujarat Aravalli zones', async () => {
+    const res = await request(app).get('/api/zones?state=Gujarat');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.zones.length).toBeGreaterThanOrEqual(2);
+    expect(res.body.zones.some(z => z.name.includes('Ambaji'))).toBe(true);
+    expect(res.body.zones.some(z => z.name.includes('Idar'))).toBe(true);
+  });
+
+  it('GET /api/zones?riskLevel=CRITICAL filters zones accurately', async () => {
+    const res = await request(app).get('/api/zones?riskLevel=CRITICAL');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.zones.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.zones.every(z => z.riskLevel === 'CRITICAL')).toBe(true);
+  });
+
+  it('POST /api/zones/recalculate-risk recalculates risk score dynamically', async () => {
+    const res = await request(app)
+      .post('/api/zones/recalculate-risk')
+      .send({
+        factors: {
+          miningRisk: 90,
+          vegetationLoss: 80,
+          waterStress: 70,
+          citizenEvidence: 60,
+          historicalChange: 50,
+        },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    // 90*0.3 + 80*0.25 + 70*0.2 + 60*0.15 + 50*0.1 = 27 + 20 + 14 + 9 + 5 = 75.0
+    expect(res.body.score).toBe(75);
+    expect(res.body.riskLevel).toBe('HIGH RISK');
+  });
+
+  it('GET /api/reports?threatCategory=Toxic Waste Dumping filters reports', async () => {
+    const res = await request(app).get('/api/reports?threatCategory=Toxic%20Waste%20Dumping');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.reports.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.reports[0].threatCategory).toBe('Toxic Waste Dumping');
+  });
+
+  it('GET /api/reports?status=rejected returns audited non-violation reports', async () => {
+    const res = await request(app).get('/api/reports?status=rejected');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.reports.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.reports[0].status).toBe('rejected');
+    expect(res.body.reports[0].auditTrail.some(a => a.action.includes('Rejected'))).toBe(true);
+  });
+
+  it('GET /api/reports/:id returns single report details', async () => {
+    const res = await request(app).get('/api/reports/rep-aravalli-2026-001');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.report.id).toBe('rep-aravalli-2026-001');
+    expect(res.body.report).toHaveProperty('evidenceAnalysis');
+    expect(res.body.report).toHaveProperty('riskAssessment');
+  });
+
+  it('GET /api/reports/:id returns 404 for unknown report ID', async () => {
+    const res = await request(app).get('/api/reports/rep-non-existent-999');
+    expect(res.status).toBe(404);
+    expect(res.body.success).toBe(false);
+  });
+
+  it('GET /api/reports/:id/incident-dossier returns complete legal dossier', async () => {
+    const res = await request(app).get('/api/reports/rep-aravalli-2026-001/incident-dossier');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.dossier).toBeDefined();
+    expect(res.body.dossier.dossierId).toContain('DOSSIER-REP-ARAVALLI-2026-001');
+    expect(res.body.dossier.incidentSummary.threatCategory).toBe('Illegal Mining & Quarrying');
+    expect(res.body.dossier.aiAssessment).toHaveProperty('recommendedHumanActions');
+    expect(res.body.dossier.riskScoreBreakdown).toHaveProperty('formula');
+  });
+
+  it('GET /api/reports enforces citizen privacy redaction for public callers', async () => {
+    const res = await request(app).get('/api/reports');
+    expect(res.status).toBe(200);
+    expect(res.body.reports.length).toBeGreaterThan(0);
+    for (const report of res.body.reports) {
+      expect(report.citizenId).toBeUndefined();
+      expect(report.citizenContactRedacted).toBe(true);
+      expect(report.citizenName).toBe('Anonymous Citizen Sentinel');
+    }
+  });
+
+  it('POST /api/ai/ask-aravalli answers ecological legal queries', async () => {
+    const res = await request(app)
+      .post('/api/ai/ask-aravalli')
+      .send({ question: 'What is the Supreme Court mandate on Aravalli mining?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.answer).toBeDefined();
+    expect(typeof res.body.answer).toBe('string');
+  });
+
+  it('POST /api/ai/analyze-evidence analyzes evidence without persisting', async () => {
+    const res = await request(app)
+      .post('/api/ai/analyze-evidence')
+      .send({
+        threatCategory: 'Illegal Mining & Quarrying',
+        userDescription: 'Heavy stone crushing plant operating at night without dust barriers.',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.analysis).toBeDefined();
+    expect(res.body.analysis).toHaveProperty('observedVisualIndicators');
+    expect(res.body.analysis).toHaveProperty('confidenceEstimate');
+  });
+
+  it('PATCH /api/reports/:id/status rejects invalid status enum', async () => {
+    const res = await request(app)
+      .patch('/api/reports/rep-aravalli-2026-001/status')
+      .set('Authorization', 'Bearer demo-token-authority-valid')
+      .send({
+        status: 'invalid_status_enum',
+        actionNotes: 'Testing status schema validation error',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+  });
+
+  it('PATCH /api/reports/:id/status rejects action notes shorter than 5 characters', async () => {
+    const res = await request(app)
+      .patch('/api/reports/rep-aravalli-2026-001/status')
+      .set('Authorization', 'Bearer demo-token-authority-valid')
+      .send({
+        status: 'verified',
+        actionNotes: 'No', // Shorter than 5 chars
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+  });
 });

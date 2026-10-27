@@ -2,6 +2,52 @@
 
 > **Tagline:** See the Threat. Predict the Risk. Protect the Aravallis.  
 > **Operational Workflow:** DETECT → VERIFY → PRIORITIZE → ACT  
+
+```mermaid
+flowchart TD
+    subgraph B1["BLOCK 1: DETECT (Citizen Field Sourcing)"]
+        direction TB
+        IN1["Ground Observation<br/>• Illegal Mining & Blasting<br/>• Tree Felling & Dhau Loss<br/>• Waste Dumping & Encroachment"]
+        CAPTURE["Evidence Packaging<br/>• Geotagged Field Photographs<br/>• GPS Lat/Long Coordinates<br/>• Timestamp & Incident Context"]
+        IN1 --> CAPTURE
+    end
+
+    subgraph B2["BLOCK 2: VERIFY (Dual-Track Automated Intelligence)"]
+        direction TB
+        GEMINI_BLOCK["Track A: Gemini 2.0 Multimodal Vision<br/>• Visual Indicator Extraction<br/>• Excavation / Clearance Detection<br/>• Technical Uncertainty Flags<br/>• Ranger Verification Checklist"]
+        SENTINEL_BLOCK["Track B: Sentinel-2 Remote Sensing<br/>• 10m NDVI Vegetation Anomaly<br/>• Surface Water Stress Index<br/>• Multi-Month Degradation Curve"]
+    end
+
+    subgraph B3["BLOCK 3: PRIORITIZE (Explainable Risk Engine)"]
+        direction TB
+        CALC_BLOCK["5-Factor Mathematical Index<br/>Score = (M×0.30) + (V×0.25) + (W×0.20) + (C×0.15) + (H×0.10)"]
+        CLASS_BLOCK["Classification Bands & Transparency<br/>• SAFE: 0–30 • WATCH: 31–50<br/>• HIGH RISK: 51–75 • CRITICAL: 76–100<br/>• Proportional Re-normalization for Missing Signals"]
+        CALC_BLOCK --> CLASS_BLOCK
+    end
+
+    subgraph B4["BLOCK 4: ACT (Authority Enforcement & Remediation)"]
+        direction TB
+        TRIAGE_BLOCK["Authority Operations Desk<br/>• Priority Enforcement Triage<br/>• Ranger Verification Protocol"]
+        DOSSIER_BLOCK["Legal & Field Action<br/>• Non-Repudiable Audit Logging<br/>• Printable Official Incident Dossier (PDF)<br/>• Ground Raids & Machinery Seizures"]
+        TRIAGE_BLOCK --> DOSSIER_BLOCK
+    end
+
+    CAPTURE -->|"HTTPS Multipart POST"| GEMINI_BLOCK
+    CAPTURE -->|"Zone Sector Query"| SENTINEL_BLOCK
+    GEMINI_BLOCK -->|"Visual Impact Factor"| CALC_BLOCK
+    SENTINEL_BLOCK -->|"Spectral & Water Telemetry"| CALC_BLOCK
+    CLASS_BLOCK -->|"Prioritized Case Dossier"| TRIAGE_BLOCK
+
+    classDef b1Style stroke:#10b981,stroke-width:2px;
+    classDef b2Style stroke:#06b6d4,stroke-width:2px;
+    classDef b3Style stroke:#f59e0b,stroke-width:2px;
+    classDef b4Style stroke:#ef4444,stroke-width:2px;
+
+    B1:::b1Style
+    B2:::b2Style
+    B3:::b3Style
+    B4:::b4Style
+```  
 > **Biogeographical Scope:** The Aravalli Mountain Range spanning Gujarat, Rajasthan, Haryana, and Delhi NCR.
 
 ---
@@ -21,7 +67,80 @@ ARAVALLI SENTINEL bridges grassroots citizen observations with satellite remote 
 
 ---
 
-## 2. High-Level System Topology
+## 2. High-Level System Architecture (Block Flowchart)
+
+```mermaid
+flowchart TD
+    subgraph TIER1["BLOCK LAYER 1: CLIENT PRESENTATION TIER"]
+        direction LR
+        UI_CITIZEN["<b>Citizen Reporting Portal</b><br/>• Geotagged Photo Upload<br/>• Interactive GPS Pin Picker<br/>• Real-Time Gemini AI Preview"]
+        UI_MAP["<b>Geospatial Operations Map</b><br/>• Dual Mode: Satellite / Street<br/>• 8 Monitored Eco-Zones<br/>• Zone Telemetry Slide Drawer"]
+        UI_AUTH["<b>Authority Triage Desk</b><br/>• Status & Priority Queue<br/>• Mandatory Action Notes<br/>• Printable Official Dossier (PDF)"]
+        UI_ASK["<b>Ask Aravalli AI Assistant</b><br/>• Grounded Law & Telemetry<br/>• PII Privacy Safeguard"]
+    end
+
+    subgraph TIER2["BLOCK LAYER 2: API GATEWAY & SECURITY ENFORCEMENT"]
+        direction LR
+        GW_RATE["<b>Rate Limiter</b><br/>• 300 req / 15-min window<br/>• Endpoint DDoS Shield"]
+        GW_SEC["<b>Auth & Role Guard</b><br/>• JWT Bearer Verification<br/>• requireAuthority Middleware<br/>• Privilege Escalation Block"]
+        GW_UPLOAD["<b>Upload Pipeline</b><br/>• Multer Memory Stream<br/>• MIME Verification (JPEG/PNG/WEBP)<br/>• 10MB Strict Ceiling"]
+        GW_REDACT["<b>PII Privacy Redactor</b><br/>• Citizen Anonymization<br/>• Public Feed Sanitizer"]
+    end
+
+    subgraph TIER3["BLOCK LAYER 3: INTELLIGENCE & TELEMETRY PROCESSORS"]
+        direction LR
+        PROC_GEMINI["<b>Google Gemini 2.0 AI Engine</b><br/>• Multimodal Evidence Vision<br/>• Structured JSON Extraction<br/>• Uncertainty Disclaimers<br/>• Ranger Verification Steps"]
+        PROC_GEO["<b>Geospatial Telemetry Provider</b><br/>• Copernicus Sentinel-2 MSI<br/>• Landsat-9 OLI-2 Telemetry<br/>• 10m NDVI Time-Series<br/>• Hydrological Stress Index"]
+        PROC_RISK["<b>Explainable Risk Engine</b><br/>• Mining Risk (30%)<br/>• Vegetation Loss (25%)<br/>• Water Stress (20%)<br/>• Citizen Evidence (15%)<br/>• Historical Trend (10%)"]
+    end
+
+    subgraph TIER4["BLOCK LAYER 4: DATA PERSISTENCE & AUDIT VAULT"]
+        direction LR
+        STORE_DB["<b>Cloud Firestore / Local Store</b><br/>• Verified Zones Collection<br/>• Ingested Reports Collection<br/>• Least-Privilege Rules"]
+        STORE_FILE["<b>Firebase Storage / Vault</b><br/>• Encrypted Evidence Photos<br/>• Forensic Image Hashes"]
+        STORE_AUDIT["<b>Forensic Audit Trail</b><br/>• Officer Identity & Timestamp<br/>• Action Notes & Memo Trail<br/>• Non-Repudiable History"]
+    end
+
+    %% Client to Gateway Connections
+    UI_CITIZEN -->|"POST /api/reports (Multipart)"| GW_UPLOAD
+    UI_MAP -->|"GET /api/zones"| GW_RATE
+    UI_AUTH -->|"PATCH /api/reports/:id/status"| GW_SEC
+    UI_ASK -->|"POST /api/ai/ask-aravalli"| GW_RATE
+
+    %% Gateway to Processing Connections
+    GW_UPLOAD -->|"Validate Image Buffer"| GW_SEC
+    GW_SEC -->|"Sanitized Image & Context"| PROC_GEMINI
+    GW_SEC -->|"Zone Coordinates & Bounds"| PROC_GEO
+
+    %% Processing to Risk Engine
+    PROC_GEMINI -->|"Visual Threat Impact (0–100)"| PROC_RISK
+    PROC_GEO -->|"NDVI & Aquifer Anomaly Index"| PROC_RISK
+
+    %% Processing to Persistence
+    PROC_RISK -->|"Computed Score & Breakdown"| STORE_DB
+    GW_UPLOAD -->|"Stream Raw Evidence"| STORE_FILE
+    GW_SEC -->|"Log Status Change & Notes"| STORE_AUDIT
+
+    %% Persistence Feedback to UI
+    STORE_DB -.->|"Raw Report Data"| GW_REDACT
+    GW_REDACT -.->|"Redacted Public Feed"| UI_MAP
+    STORE_DB -.->|"Priority Case Queue"| UI_AUTH
+    STORE_AUDIT -.->|"Audit Chain of Custody"| UI_AUTH
+
+    %% Styling
+    classDef t1 stroke:#38bdf8,stroke-width:2px;
+    classDef t2 stroke:#818cf8,stroke-width:2px;
+    classDef t3 stroke:#f59e0b,stroke-width:2px;
+    classDef t4 stroke:#10b981,stroke-width:2px;
+
+    TIER1:::t1
+    TIER2:::t2
+    TIER3:::t3
+    TIER4:::t4
+```
+
+<details>
+<summary>View ASCII Text Topology</summary>
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -79,6 +198,7 @@ ARAVALLI SENTINEL bridges grassroots citizen observations with satellite remote 
 │  • Chain of Custody: Non-repudiable audit logs with officer IDs        │
 └────────────────────────────────────────────────────────────────────────┘
 ```
+</details>
 
 ---
 

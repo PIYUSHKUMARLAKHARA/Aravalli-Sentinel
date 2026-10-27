@@ -144,6 +144,15 @@ function generateSimulatedAnalysis(threatCategory = 'Illegal Mining', userDescri
       'Erection of temporary or permanent sheds within eco-sensitive buffer',
     ];
     explanation = 'Site morphology shows active land parcel boundary creation and vegetation clearing for non-forestry structural use.';
+  } else if (category.includes('water') || category.includes('boring') || category.includes('aquifer')) {
+    possibleThreat = 'Ground Water Depletion / Deep Boring';
+    scoreImpact = 68;
+    indicators = [
+      'Mounted hydraulic or rotary compressor borewell drilling rig on site',
+      'High-pressure groundwater extraction piping without mandated telemetry flow meters',
+      'Unpermitted industrial water tankers drawing from localized fracture aquifer',
+    ];
+    explanation = 'Visual observations and report context suggest deep mechanical groundwater extraction within a declared over-exploited Aravalli hydrogeological block.';
   } else {
     possibleThreat = 'Suspected Ecological Disturbance';
     scoreImpact = 50;

@@ -4,7 +4,7 @@
 > *An AI-Powered Ecological Early-Warning and Action Platform for the Aravalli Ecosystem.*
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Tests: Vitest](https://img.shields.io/badge/Tests-15%20Passed-success.svg)]()
+[![Tests: Vitest](https://img.shields.io/badge/Tests-33%20Passed-success.svg)]()
 [![Backend: Node.js 24](https://img.shields.io/badge/Backend-Node.js%2024%20Express-emerald.svg)]()
 [![Frontend: React 18 / Vite](https://img.shields.io/badge/Frontend-React%2018%20Vite%20Tailwind-cyan.svg)]()
 [![AI: Google Gemini](https://img.shields.io/badge/AI-Gemini%202.0%20Flash-blue.svg)]()
@@ -23,6 +23,22 @@ Despite repeated bans by the **Supreme Court of India** (*M.C. Mehta vs Union of
 
 ## 🔄 Core Operational Workflow
 
+```mermaid
+flowchart LR
+    DETECT["<b>1. DETECT</b><br/>Citizen Ground Evidence &<br/>Threat Photographs"] --> VERIFY["<b>2. VERIFY</b><br/>Gemini 2.0 Flash Vision &<br/>Sentinel-2 NDVI Telemetry"]
+    VERIFY --> PRIORITIZE["<b>3. PRIORITIZE</b><br/>Explainable Risk Engine<br/>Weighted Formula (0–100)"]
+    PRIORITIZE --> ACT["<b>4. ACT</b><br/>Forest Officers & Task Force<br/>Raids, Seizures & Dossiers"]
+
+    classDef step stroke:#10b981,stroke-width:2px;
+    DETECT:::step
+    VERIFY:::step
+    PRIORITIZE:::step
+    ACT:::step
+```
+
+<details>
+<summary>View ASCII Workflow Diagram</summary>
+
 ```
    ┌──────────┐         ┌──────────┐         ┌──────────────┐         ┌──────────┐
    │  DETECT  │   ──►   │  VERIFY  │   ──►   │  PRIORITIZE  │   ──►   │   ACT    │
@@ -31,11 +47,70 @@ Despite repeated bans by the **Supreme Court of India** (*M.C. Mehta vs Union of
  GPS Evidence &      Multimodal Vision &      Engine (0 to 100)       Mining Task Force
  Threat Photographs   Sentinel-2 NDVI          Weighted Formula       Raids & Seizures
 ```
+</details>
 
 1. **DETECT:** Authenticated citizens and eco-sentinels capture geotagged field photos of suspected excavation, illegal tree felling, or dumping.
 2. **VERIFY:** Server-side Google Gemini AI extracts objective visual indicators and limitations, while remote sensing providers cross-reference regional canopy anomalies.
 3. **PRIORITIZE:** The deterministic **Explainable Risk Engine** scores the sector from 0 to 100 across 5 weighted vectors, identifying primary risk drivers.
 4. **ACT:** Authorized Forest Officers review cases in the triage portal, update statuses (`under_review`, `verified`, `resolved`), log audit entries, and generate printable incident dossiers.
+
+---
+
+## 🏛️ High-Level System Topology
+
+> For the comprehensive architectural and legal specification, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+```mermaid
+flowchart TD
+    subgraph PRESENTATION["1. CLIENT PRESENTATION LAYER"]
+        direction TB
+        CLIENT["<b>CLIENT PRESENTATION LAYER</b><br/><i>React 18 • Vite • Tailwind CSS • Lucide Icons • Leaflet / Google Maps</i><br/>──────────────────────────────────────────────────────────<br/>• Public Ecological Landing Page<br/>• Geospatial Risk Operations Map (Topographic / Satellite)<br/>• Citizen Threat Reporting Portal (Photo Upload & GPS Pin Picker)<br/>• Authority Enforcement Triage Desk (Role-Gated Case Management)<br/>• Grounded 'Ask Aravalli' AI Ecological Law Assistant<br/>• Printable Official Incident Dossier Generator"]
+    end
+
+    subgraph API_GATEWAY["2. BACKEND API & SECURITY LAYER"]
+        direction TB
+        BACKEND["<b>BACKEND API & SECURITY LAYER</b><br/><i>Node.js 24 • Express (ES Modules) • Helmet • Zod</i><br/>──────────────────────────────────────────────────────────<br/>• Auth & Role Guard Middleware (Prevents Citizen Privilege Escalation)<br/>• Multer Memory Upload Pipeline (Max 10MB, Strict Image MIME Checks)<br/>• Rate Limiter (300 requests / 15 min window)<br/>• Public Citizen Privacy Redactor (Redacts Phone/Email/Identity)"]
+    end
+
+    subgraph INTELLIGENCE["3. INTELLIGENCE & TELEMETRY LAYER"]
+        direction LR
+        AI["<b>AI INTELLIGENCE</b><br/><i>Google Gemini API</i><br/>─────────────────────────────<br/>• Multimodal Evidence Vision<br/>• Visual Indicator Extractor<br/>• Limitations & Uncertainty<br/>• Ranger Verification Steps<br/>• Strict Non-Defamation"]
+
+        GEO["<b>GEOSPATIAL & TELEMETRY</b><br/><i>Copernicus Sentinel-2 / EE</i><br/>─────────────────────────────<br/>• 10m Multispectral Bands<br/>• Mean NDVI Anomaly Time-Series<br/>• Surface Water Indices<br/>• Eco-Sensitive Boundaries"]
+    end
+
+    subgraph RISK_ENGINE["4. THE EXPLAINABLE ARAVALLI RISK ENGINE"]
+        direction TB
+        ENGINE["<b>THE EXPLAINABLE ARAVALLI RISK ENGINE</b><br/>──────────────────────────────────────────────────────────<br/><b>Formula:</b><br/>Risk = (Mining * 0.30) + (VegLoss * 0.25) + (Water * 0.20) + (Citizen * 0.15) + (History * 0.10)<br/><br/><b>Classification Bands:</b><br/>• SAFE: 0–30 | WATCH: 31–50 | HIGH RISK: 51–75 | CRITICAL: 76–100<br/>• Proportional Re-normalization with Missing-Factor Transparency"]
+    end
+
+    subgraph PERSISTENCE["5. DATA PERSISTENCE & AUDIT STORE"]
+        direction TB
+        STORAGE["<b>DATA PERSISTENCE & AUDIT STORE</b><br/>──────────────────────────────────────────────────────────<br/>• Primary: Firebase Cloud Firestore & Firebase Storage Bucket<br/>• Fallback: High-Fidelity Local In-Memory Development Store<br/>• Chain of Custody: Non-repudiable audit logs with officer IDs"]
+    end
+
+    CLIENT -->|"HTTPS / REST API"| BACKEND
+    BACKEND -->|"Evidence Photos & Prompts"| AI
+    BACKEND -->|"Coordinates & Sector Query"| GEO
+    AI -->|"Extracted Indicators & Confidence"| ENGINE
+    GEO -->|"NDVI & Water Stress Indices"| ENGINE
+    ENGINE -->|"Scored Cases & Audit Dossiers"| STORAGE
+
+    %% Styling
+    classDef clientStyle stroke:#38bdf8,stroke-width:2px;
+    classDef backendStyle stroke:#818cf8,stroke-width:2px;
+    classDef aiStyle stroke:#ec4899,stroke-width:2px;
+    classDef geoStyle stroke:#10b981,stroke-width:2px;
+    classDef engineStyle stroke:#f59e0b,stroke-width:2px;
+    classDef storageStyle stroke:#06b6d4,stroke-width:2px;
+
+    CLIENT:::clientStyle
+    BACKEND:::backendStyle
+    AI:::aiStyle
+    GEO:::geoStyle
+    ENGINE:::engineStyle
+    STORAGE:::storageStyle
+```
 
 ---
 
@@ -158,11 +233,11 @@ npm run dev:frontend
 
 ```
 Test Files  2 passed (2)
-     Tests  15 passed (15)
-  Duration  1.68s
+     Tests  33 passed (33)
+  Duration  2.15s
 ```
-- `tests/riskEngine.test.js`: Validates weights sum to 1.00, exact formula precision, boundary validation (0–100), classification bands, proportional re-weighting, and primary driver detection.
-- `tests/api.test.js`: Validates system health check, zone details, report listing, Zod payload validation, demo persona switching, unauthorized authority rejection, and role-gated status transitions.
+- `tests/riskEngine.test.js` (11 unit tests): Validates weights sum to 1.00, exact formula precision, boundary validation (0–100), classification bands, proportional multi-vector re-weighting, edge case boundary handling (0 equilibrium & 100 maximum risk), all-missing factor error handling, and dynamic primary driver detection.
+- `tests/api.test.js` (22 integration tests): Validates system health check, 4-state zone filtering (including Gujarat), zone telemetry details, dynamic risk recalculation, threat report category filtering (toxic dumping, groundwater depletion, etc.), rejected status audits, single report lookup and 404s, printable incident dossiers, citizen privacy redaction, Ask Aravalli grounded responses, standalone AI evidence vision analysis, and role-gated status transitions with Zod validation.
 
 ---
 

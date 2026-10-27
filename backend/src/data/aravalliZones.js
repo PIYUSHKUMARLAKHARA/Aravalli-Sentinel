@@ -233,6 +233,62 @@ const rawZones = [
     },
     recentCitizenReportsCount: 1,
   },
+  {
+    id: 'zone-ambaji-09',
+    name: 'Ambaji Foothills & Marble Corridor',
+    stateDistrict: 'Banaskantha, Gujarat',
+    state: 'Gujarat',
+    district: 'Banaskantha',
+    coordinates: { lat: 24.3667, lng: 72.8500 },
+    boundaryType: 'Aravalli Southern Flank & Wildlife Buffer',
+    factors: {
+      miningRisk: 76,       // Intensive marble cutting and wire-saw quarrying
+      vegetationLoss: 64,   // Riparian Dhau and Butea scrub clearance
+      waterStress: 70,      // Deep drawdown from quarry water pumping
+      citizenEvidence: 58,  // Citizen reports on white marble slurry stream dumping
+      historicalChange: 60, // Two decades of accelerated mineral extraction
+    },
+    threats: ['Marble Slurry Runoff', 'Wildlife Corridor Severance', 'Aquifer Depletion'],
+    legalStatus: 'Regulated Buffer adjacent to Balaram Ambaji Wildlife Sanctuary',
+    telemetry: {
+      dataSource: 'Copernicus Sentinel-2 & Gujarat Forest GIS',
+      observationDate: '2026-10-24T05:15:00Z',
+      coverage: '33.2 sq km marble cluster',
+      freshness: '2 days ago',
+      ndviMean: 0.22,
+      ndviAnomaly: -19.6,
+      surfaceWaterIndex: -0.31,
+    },
+    recentCitizenReportsCount: 7,
+  },
+  {
+    id: 'zone-idar-10',
+    name: 'Idar Granite Inselbergs & Eco-Zone',
+    stateDistrict: 'Sabarkantha, Gujarat',
+    state: 'Gujarat',
+    district: 'Sabarkantha',
+    coordinates: { lat: 23.8342, lng: 73.0036 },
+    boundaryType: 'Southern Aravalli Geological Heritage Belt',
+    factors: {
+      miningRisk: 48,       // Fringe granite boulder extraction
+      vegetationLoss: 38,   // Dry deciduous scrub along rocky escarpments
+      waterStress: 45,      // Semi-arid seasonal tank recharge reliance
+      citizenEvidence: 35,  // Community alerts regarding hillock blasting
+      historicalChange: 40, // Moderate urban expansion from Idar town
+    },
+    threats: ['Boulder Blasting', 'Raptor Cliff Nesting Disruption'],
+    legalStatus: 'District Protected Geological Feature & Forest Patch',
+    telemetry: {
+      dataSource: 'Sentinel-2 L2A & Bhaskaracharya National Institute (BISAG-N)',
+      observationDate: '2026-10-22T07:20:00Z',
+      coverage: '21.0 sq km rocky hill range',
+      freshness: '4 days ago',
+      ndviMean: 0.32,
+      ndviAnomaly: -6.4,
+      surfaceWaterIndex: -0.12,
+    },
+    recentCitizenReportsCount: 3,
+  },
 ];
 
 // Enrich each zone with the exact Risk Engine calculations
