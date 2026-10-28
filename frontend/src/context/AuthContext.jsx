@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginDemoUser, registerCitizen, registerAuthority, logoutUser } from '../services/api';
+import {
+  loginDemoUser,
+  loginCitizen as apiLoginCitizen,
+  registerCitizen as apiRegisterCitizen,
+  registerAuthority as apiRegisterAuthority,
+  resetCitizenPassword,
+  logoutUser,
+} from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -8,14 +15,13 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load persisted session from localStorage
     try {
       const storedUser = localStorage.getItem('aravalli_auth_user');
       const token = localStorage.getItem('aravalli_auth_token');
       if (storedUser && token) {
         setUser(JSON.parse(storedUser));
       } else {
-        // Default to citizen demo persona for seamless zero-barrier experience
+        // Pre-initialize demo persona if first visit
         const defaultCitizen = {
           uid: 'demo-citizen-01',
           name: 'Aarav Mehta',
@@ -38,7 +44,7 @@ export function AuthProvider({ children }) {
     setLoading(true);
     try {
       const result = await loginDemoUser(targetRole);
-      if (result.success) {
+      if (result.success && result.user) {
         setUser(result.user);
       }
       return result;
@@ -47,20 +53,47 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const loginCitizen = async (email, fullName, password) => {
-    const result = await registerCitizen(email, fullName, password);
-    if (result.success) {
-      setUser(result.user);
+  const loginCitizenWithEmail = async (email, password) => {
+    setLoading(true);
+    try {
+      const result = await apiLoginCitizen(email, password);
+      if (result.success && result.user) {
+        setUser(result.user);
+      }
+      return result;
+    } finally {
+      setLoading(false);
     }
-    return result;
   };
 
-  const loginAuthority = async (payload) => {
-    const result = await registerAuthority(payload);
-    if (result.success) {
-      setUser(result.user);
+  const registerCitizenAccount = async (email, fullName, password) => {
+    setLoading(true);
+    try {
+      const result = await apiRegisterCitizen(email, fullName, password);
+      if (result.success && result.user) {
+        setUser(result.user);
+      }
+      return result;
+    } finally {
+      setLoading(false);
     }
-    return result;
+  };
+
+  const loginAuthorityAccount = async (payload) => {
+    setLoading(true);
+    try {
+      const result = await apiRegisterAuthority(payload);
+      if (result.success && result.user) {
+        setUser(result.user);
+      }
+      return result;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const forgotPassword = async (email) => {
+    return await resetCitizenPassword(email);
   };
 
   const logout = () => {
@@ -77,8 +110,10 @@ export function AuthProvider({ children }) {
         loading,
         isAuthority,
         switchPersona,
-        loginCitizen,
-        loginAuthority,
+        loginCitizen: loginCitizenWithEmail,
+        registerCitizen: registerCitizenAccount,
+        loginAuthority: loginAuthorityAccount,
+        forgotPassword,
         logout,
       }}
     >

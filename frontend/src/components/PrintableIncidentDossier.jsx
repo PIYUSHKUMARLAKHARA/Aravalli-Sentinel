@@ -1,6 +1,7 @@
 import React from 'react';
 import { Printer, Shield, CheckSquare, AlertCircle } from 'lucide-react';
 import { RiskBadge } from './RiskBadge';
+import { ImageWithFallback } from './ui/ImageWithFallback';
 
 export function PrintableIncidentDossier({ dossier, onClose }) {
   if (!dossier) return null;
@@ -106,11 +107,15 @@ export function PrintableIncidentDossier({ dossier, onClose }) {
                 Evidence Photograph
               </h3>
               <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-2">
-                <img
-                  src={dossier.evidenceThumbnailUrl}
-                  alt="Field Evidence"
-                  className="w-full h-44 object-cover rounded-lg"
-                />
+                <div className="h-44 w-full rounded-lg overflow-hidden">
+                  <ImageWithFallback
+                    src={dossier.evidenceThumbnailUrl}
+                    fallbackSrc={dossier.fallbackImageUrl}
+                    threatCategory={incidentSummary.threatCategory}
+                    alt="Field Evidence"
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
                 <p className="text-[10px] text-slate-500 font-mono text-center mt-2">
                   Hash verified timestamped optical capture
                 </p>

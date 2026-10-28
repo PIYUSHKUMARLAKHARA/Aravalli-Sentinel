@@ -40,6 +40,55 @@ export async function loginDemo(req, res) {
   }
 }
 
+export async function loginCitizen(req, res) {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Email and password are required.' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
+    }
+
+    const isDemo = email.toLowerCase() === 'citizen@aravalli.sentinel';
+    const user = isDemo ? demoAccounts.citizen : {
+      uid: `cit-${Date.now()}`,
+      email,
+      name: email.split('@')[0].replace(/[._]/g, ' '),
+      role: 'citizen',
+      token: `demo-token-citizen-${Date.now()}`,
+      badge: 'Citizen Sentinel',
+    };
+
+    return res.json({
+      success: true,
+      message: `Welcome back, ${user.name}!`,
+      token: user.token,
+      user,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function resetPassword(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ success: false, error: 'A valid email address is required.' });
+    }
+
+    return res.json({
+      success: true,
+      message: `Password reset verification link successfully generated and dispatched to ${email}.`,
+      recoverySimulated: true,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
 export async function registerCitizen(req, res) {
   try {
     const { email, fullName, password } = req.body;

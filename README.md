@@ -4,7 +4,7 @@
 > *An AI-Assisted Environmental Threat Reporting & Explainable Ecological Risk Platform for the Aravalli Range.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Tests: Vitest](https://img.shields.io/badge/Tests-42%20Passed-success.svg)](TESTING.md)
+[![Tests: Vitest](https://img.shields.io/badge/Tests-50%20Passed-success.svg)](TESTING.md)
 [![Backend: Node.js 24](https://img.shields.io/badge/Backend-Node.js%2024%20Express-emerald.svg)](backend/)
 [![Frontend: React 18 / Vite](https://img.shields.io/badge/Frontend-React%2018%20Vite%20Tailwind-cyan.svg)](frontend/)
 [![AI: Google Gemini](https://img.shields.io/badge/AI-Gemini%202.0%20Flash-blue.svg)](https://aistudio.google.com/)
@@ -57,13 +57,17 @@ Aravalli Sentinel deploys an end-to-end operational pipeline based on the **DETE
 | Feature / Module | Description | Implementation Status |
 | :--- | :--- | :---: |
 | **Public Ecological Landing Page** | Overview of Aravalli crisis, live telemetry stats, 4-step pipeline, and regulatory anchors | ✅ **Implemented** |
-| **Citizen Threat Reporting Portal** | Multipart photo upload, interactive GPS mini-map picker, description, threat categories | ✅ **Implemented** |
+| **Citizen Threat Reporting Portal** | Collision-proof `ARV-2026-XXXXXX` Case ID, photo upload, interactive GPS map pin, validation | ✅ **Implemented** |
+| **Dual Authentication Gateways** | Citizen email/password login/register & Forest Authority Portal with invitation token | ✅ **Implemented** |
+| **Route Access Guards & Access Denied** | `RequireAuth`, `RequireAuthority`, and formal 403 Access Denied explanation screen | ✅ **Implemented** |
+| **Evidence Storage & Serving Pipeline** | Local disk storage & Firebase Cloud Storage with category-mapped photographic fallback | ✅ **Implemented** |
+| **Evidence Lightbox Viewer** | Fullscreen modal inspector with GPS metadata, timestamp, and aspect-ratio preservation | ✅ **Implemented** |
+| **Live Updating Risk Map** | Auto-refreshing 15s polling countdown, stored incident popups, dual basemap toggle | ✅ **Implemented** |
+| **Area Problem Statement Generator** | Dynamic area queries generating formal environmental problem statements from real records | ✅ **Implemented** |
 | **Citizen Privacy Shield** | Automatic server-side redaction of citizen names, phone numbers, and UIDs on public endpoints | ✅ **Implemented** |
 | **Gemini Multimodal Evidence Analysis** | Visual indicator extraction, confidence estimates, ranger checklist, legal disclaimers | ✅ **Implemented** |
 | **Heuristic Fallback Engine** | Offline / no-key demo simulation ensuring zero broken screens if `GEMINI_API_KEY` is omitted | ✅ **Implemented** |
 | **Explainable 5-Factor Risk Engine** | Deterministic score ($30\% / 25\% / 20\% / 15\% / 10\%$), primary driver detection, transparent re-scaling | ✅ **Implemented** |
-| **Geospatial Operations Map** | Dual-basemap (Esri Satellite + CartoDB Topographic), 8 Aravalli zones, risk radial circles | ✅ **Implemented** |
-| **Zone Telemetry Slide Drawer** | 5-factor breakdown bars, Sentinel-2 NDVI anomaly graphs, and mandatory action protocol | ✅ **Implemented** |
 | **Authority Triage Desk** | Role-gated case triage, search/filters, status mutation with mandatory audit notes | ✅ **Implemented** |
 | **Printable Incident Dossier** | Government-formatted printable PDF incident packet with QR/hash headers and signature blocks | ✅ **Implemented** |
 | **Grounded Ask Aravalli Assistant** | Conversational AI grounded in monitored zones, recent reports, and Supreme Court legal rulings | ✅ **Implemented** |

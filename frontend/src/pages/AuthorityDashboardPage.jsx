@@ -21,6 +21,8 @@ import { fetchReports, updateReportStatus, fetchIncidentDossier } from '../servi
 import { RiskBadge } from '../components/RiskBadge';
 import { AIAnalysisCard } from '../components/AIAnalysisCard';
 import { PrintableIncidentDossier } from '../components/PrintableIncidentDossier';
+import { ImageWithFallback } from '../components/ui/ImageWithFallback';
+import { EvidenceViewerModal } from '../components/ui/EvidenceViewerModal';
 import { useAuth } from '../context/AuthContext';
 
 export function AuthorityDashboardPage() {
@@ -42,6 +44,7 @@ export function AuthorityDashboardPage() {
   // Printable Dossier state
   const [activeDossier, setActiveDossier] = useState(null);
   const [loadingDossier, setLoadingDossier] = useState(false);
+  const [viewingEvidence, setViewingEvidence] = useState(null);
 
   const loadReports = async () => {
     setLoading(true);
@@ -247,6 +250,7 @@ export function AuthorityDashboardPage() {
           <table className="w-full text-left text-xs font-mono">
             <thead className="bg-slate-900 text-slate-400 border-b border-slate-800 text-[11px]">
               <tr>
+                <th className="p-4">EVIDENCE</th>
                 <th className="p-4">CASE ID & TIME</th>
                 <th className="p-4">THREAT CATEGORY</th>
                 <th className="p-4">LOCATION / SECTOR</th>
@@ -259,7 +263,30 @@ export function AuthorityDashboardPage() {
               {filteredReports.map((report) => (
                 <tr key={report.id} className="hover:bg-slate-900/50 transition-colors">
                   <td className="p-4">
-                    <span className="font-bold text-white block">{report.id}</span>
+                    <div className="w-14 h-11 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 cursor-pointer">
+                      <ImageWithFallback
+                        src={report.imageUrl}
+                        fallbackSrc={report.fallbackImageUrl}
+                        threatCategory={report.threatCategory}
+                        alt={report.id}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform"
+                        showZoomBadge={true}
+                        onZoom={() =>
+                          setViewingEvidence({
+                            url: report.imageUrl,
+                            caseId: report.id,
+                            threatCategory: report.threatCategory,
+                            locationName: report.locationName,
+                            latitude: report.latitude,
+                            longitude: report.longitude,
+                            reportedAt: report.createdAt,
+                          })
+                        }
+                      />
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <span className="font-bold text-emerald-400 block">{report.id}</span>
                     <span className="text-[10px] text-slate-400">{new Date(report.createdAt).toLocaleDateString()}</span>
                   </td>
                   <td className="p-4 font-semibold text-slate-200">
@@ -360,13 +387,29 @@ export function AuthorityDashboardPage() {
 
               {/* Evidence Photo & Description */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
-                  <img
-                    src={selectedCase.imageUrl}
-                    alt="Evidence photograph"
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-2 text-[10px] text-slate-400 font-mono text-center">
+                <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950 flex flex-col justify-between">
+                  <div className="h-48 w-full cursor-pointer overflow-hidden">
+                    <ImageWithFallback
+                      src={selectedCase.imageUrl}
+                      fallbackSrc={selectedCase.fallbackImageUrl}
+                      threatCategory={selectedCase.threatCategory}
+                      alt={selectedCase.id}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform"
+                      showZoomBadge={true}
+                      onZoom={() =>
+                        setViewingEvidence({
+                          url: selectedCase.imageUrl,
+                          caseId: selectedCase.id,
+                          threatCategory: selectedCase.threatCategory,
+                          locationName: selectedCase.locationName,
+                          latitude: selectedCase.latitude,
+                          longitude: selectedCase.longitude,
+                          reportedAt: selectedCase.createdAt,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="p-2 text-[10px] text-slate-400 font-mono text-center border-t border-slate-800 bg-slate-950">
                     GPS: {selectedCase.latitude}° N, {selectedCase.longitude}° E
                   </div>
                 </div>
@@ -476,6 +519,14 @@ export function AuthorityDashboardPage() {
         <PrintableIncidentDossier
           dossier={activeDossier}
           onClose={() => setActiveDossier(null)}
+        />
+      )}
+
+      {/* Lightbox / Evidence Viewer Modal */}
+      {viewingEvidence && (
+        <EvidenceViewerModal
+          evidence={viewingEvidence}
+          onClose={() => setViewingEvidence(null)}
         />
       )}
     </div>

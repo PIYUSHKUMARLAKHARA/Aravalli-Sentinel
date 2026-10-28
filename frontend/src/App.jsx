@@ -15,6 +15,8 @@ import { IncidentDossierPage } from './pages/IncidentDossierPage';
 import { DatasetMethodologyPage } from './pages/DatasetMethodologyPage';
 import { AboutPage } from './pages/AboutPage';
 import { LoginPage } from './pages/LoginPage';
+import { AccessDeniedPage } from './pages/AccessDeniedPage';
+import { RequireAuth, RequireAuthority } from './components/ProtectedRoute';
 
 export function App() {
   return (
@@ -25,14 +27,15 @@ export function App() {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<LandingPage />} />
-              <Route path="/dashboard" element={<CitizenDashboardPage />} />
+              <Route path="/dashboard" element={<RequireAuth><CitizenDashboardPage /></RequireAuth>} />
               <Route path="/map" element={<RiskMapPage />} />
-              <Route path="/report" element={<ReportThreatPage />} />
-              <Route path="/authority" element={<AuthorityDashboardPage />} />
+              <Route path="/report" element={<RequireAuth><ReportThreatPage /></RequireAuth>} />
+              <Route path="/authority" element={<RequireAuthority><AuthorityDashboardPage /></RequireAuthority>} />
               <Route path="/ask" element={<AskAravalliPage />} />
               <Route path="/dataset" element={<DatasetMethodologyPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/access-denied" element={<AccessDeniedPage />} />
               <Route path="/incident/:id" element={<IncidentDossierPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

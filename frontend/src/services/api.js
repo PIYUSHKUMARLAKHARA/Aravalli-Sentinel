@@ -98,6 +98,41 @@ export async function askAravalli(question) {
   return res.json();
 }
 
+export async function loginCitizen(email, password) {
+  const res = await fetch(`${BASE_URL}/auth/login-citizen`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (data.success && data.token) {
+    localStorage.setItem('aravalli_auth_token', data.token);
+    localStorage.setItem('aravalli_auth_user', JSON.stringify(data.user));
+  }
+  return data;
+}
+
+export async function resetCitizenPassword(email) {
+  const res = await fetch(`${BASE_URL}/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  return res.json();
+}
+
+export async function generateAreaProblemStatement(payload) {
+  const res = await fetch(`${BASE_URL}/zones/problem-statement`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
 export async function loginDemoUser(role) {
   const res = await fetch(`${BASE_URL}/auth/login-demo`, {
     method: 'POST',
@@ -158,7 +193,10 @@ export default {
   previewAnalyzeEvidence,
   askAravalli,
   loginDemoUser,
+  loginCitizen,
   registerCitizen,
   registerAuthority,
+  resetCitizenPassword,
+  generateAreaProblemStatement,
   logoutUser,
 };

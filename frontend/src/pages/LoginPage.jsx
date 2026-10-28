@@ -1,387 +1,690 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   ShieldAlert,
   User,
   KeyRound,
   Mail,
   Lock,
-  Building,
+  Eye,
+  EyeOff,
+  Building2,
   CheckCircle2,
   ArrowRight,
   Sparkles,
-  Info
+  Info,
+  BadgeCheck,
+  AlertTriangle,
+  RefreshCw,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthority, switchPersona, loginCitizen, loginAuthority } = useAuth();
+  const from = location.state?.from?.pathname || '/dashboard';
 
-  const [activeTab, setActiveTab] = useState('persona'); // 'persona' | 'citizen_reg' | 'authority_reg'
-  const [error, setError] = useState(null);
-  const [successMsg, setSuccessMsg] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    user,
+    isAuthority,
+    switchPersona,
+    loginCitizen,
+    registerCitizen,
+    loginAuthority,
+    forgotPassword,
+  } = useAuth();
 
-  // Citizen Form state
-  const [citizenName, setCitizenName] = useState('');
-  const [citizenEmail, setCitizenEmail] = useState('');
-  const [citizenPassword, setCitizenPassword] = useState('');
+  // Active Login Experience: 'citizen' | 'authority' | 'evaluator'
+  const [activePortal, setActivePortal] = useState('citizen');
+  // Citizen mode: 'signin' | 'signup' | 'forgot'
+  const [citizenMode, setCitizenMode] = useState('signin');
 
-  // Authority Form state
-  const [officerName, setOfficerName] = useState('');
+  // Form states
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Authority Form states
   const [officerEmail, setOfficerEmail] = useState('');
   const [officerPassword, setOfficerPassword] = useState('');
-  const [officerDept, setOfficerDept] = useState('Haryana Forest Department');
+  const [officerName, setOfficerName] = useState('');
+  const [officerDepartment, setOfficerDepartment] = useState('Haryana Forest Department & Aravalli Task Force');
+  const [officerDesignation, setOfficerDesignation] = useState('Divisional Forest Officer (DFO)');
   const [inviteSecret, setInviteSecret] = useState('');
+  const [showOfficerPassword, setShowOfficerPassword] = useState(false);
 
-  const handlePersonaSelect = async (role) => {
-    setError(null);
-    setSuccessMsg(null);
+  // UI state
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Handle Citizen Sign In / Sign Up
+  const handleCitizenAuth = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (citizenMode === 'forgot') {
+      if (!email || !email.includes('@')) {
+        setErrorMessage('Please provide a valid registered email address.');
+        return;
+      }
+      setSubmitting(true);
+      try {
+        const res = await forgotPassword(email);
+        if (res.success) {
+          setSuccessMessage(res.message || 'Password reset link sent to your email.');
+        } else {
+          setErrorMessage(res.error || 'Failed to dispatch password reset.');
+        }
+      } catch (err) {
+        setErrorMessage('Error: ' + err.message);
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    if (!email || !email.includes('@')) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+    if (!password || password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      if (citizenMode === 'signup') {
+        if (!fullName || fullName.trim().length < 2) {
+          setErrorMessage('Full name is required for citizen account registration.');
+          setSubmitting(false);
+          return;
+        }
+        const res = await registerCitizen(email, fullName, password);
+        if (res.success) {
+          setSuccessMessage('Citizen account registered successfully! Redirecting to dashboard...');
+          setTimeout(() => navigate('/dashboard'), 600);
+        } else {
+          setErrorMessage(res.error || 'Registration failed.');
+        }
+      } else {
+        const res = await loginCitizen(email, password);
+        if (res.success) {
+          setSuccessMessage('Welcome back! Loading Citizen Sentinel workspace...');
+          setTimeout(() => navigate(from === '/authority' ? '/dashboard' : from), 600);
+        } else {
+          setErrorMessage(res.error || 'Invalid email or password.');
+        }
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Authentication failed. Please verify credentials.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle Forest Authority Login
+  const handleAuthorityAuth = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (!officerEmail || !officerName || !inviteSecret) {
+      setErrorMessage('Officer Name, Official Email, and Authority Invite Secret are required.');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const res = await loginAuthority({
+        email: officerEmail,
+        fullName: officerName,
+        password: officerPassword || 'Secret2026!',
+        department: officerDepartment,
+        designation: officerDesignation,
+        inviteSecret: inviteSecret,
+      });
+
+      if (res.success) {
+        setSuccessMessage('Authority credentials verified! Opening Enforcement Triage Console...');
+        setTimeout(() => navigate('/authority'), 600);
+      } else {
+        setErrorMessage(res.error || 'Invalid Authority Invite Secret. Contact Forest Department IT administrator.');
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Authority authorization failed.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // 1-Click Persona Quick-Select for Judges & Evaluators
+  const handleQuickPersona = async (role) => {
+    setErrorMessage('');
+    setSuccessMessage('');
     setSubmitting(true);
     try {
       const res = await switchPersona(role);
       if (res.success) {
-        setSuccessMsg(`Switched active session to ${res.user.name} (${res.user.badge})`);
+        setSuccessMessage(`Switched session to ${res.user.name} (${res.user.badge})`);
         setTimeout(() => {
           if (role === 'authority') {
             navigate('/authority');
           } else {
             navigate('/dashboard');
           }
-        }, 600);
+        }, 500);
       }
     } catch (err) {
-      setError('Failed to switch persona.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleCitizenSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setSuccessMsg(null);
-    if (!citizenEmail || !citizenName || !citizenPassword) {
-      setError('Please fill in all required fields.');
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const res = await loginCitizen(citizenEmail, citizenName, citizenPassword);
-      if (res.success) {
-        setSuccessMsg('Account registered successfully as Citizen Sentinel!');
-        setTimeout(() => navigate('/dashboard'), 700);
-      } else {
-        setError(res.error || 'Registration failed.');
-      }
-    } catch (err) {
-      setError(err.message || 'Error creating citizen account.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleAuthoritySubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setSuccessMsg(null);
-    if (!officerEmail || !officerName || !inviteSecret) {
-      setError('Email, Officer Name, and Authority Invite Secret are required.');
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const res = await loginAuthority({
-        email: officerEmail,
-        fullName: officerName,
-        password: officerPassword || 'Secret2026!',
-        department: officerDept,
-        inviteSecret: inviteSecret
-      });
-      if (res.success) {
-        setSuccessMsg('Authority verified! Session active with enforcement triage privileges.');
-        setTimeout(() => navigate('/authority'), 700);
-      } else {
-        setError(res.error || 'Invalid authority invite secret or credentials.');
-      }
-    } catch (err) {
-      setError(err.message || 'Authority authorization failed.');
+      setErrorMessage('Failed to switch demo persona.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-12 space-y-6">
-      {/* Brand & Title */}
+    <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
+      {/* Brand Header */}
       <div className="text-center space-y-2">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-aravalli-700 mx-auto flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
-          <ShieldAlert className="w-6 h-6" />
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-aravalli-800 mx-auto flex items-center justify-center text-white shadow-xl shadow-emerald-500/20 border border-emerald-400/30">
+          <ShieldAlert className="w-7 h-7" />
         </div>
-        <h1 className="text-2xl font-extrabold text-white tracking-tight">Access Aravalli Sentinel</h1>
-        <p className="text-xs text-slate-400">
-          Role-governed ecological intelligence and incident reporting platform.
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-xs font-mono font-bold tracking-wider text-emerald-400 uppercase">
+            ARAVALLI SENTINEL ACCESS GATEWAY
+          </span>
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-400 border border-slate-700">
+            RBAC v1.0
+          </span>
+        </div>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight">
+          Secure Authentication Portal
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
+          Sign in to submit ground environmental threat evidence or access authorized Forest Department enforcement triage.
         </p>
       </div>
 
-      {/* Mode Tabs */}
-      <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs font-semibold">
+      {/* Portal Selection Tabs */}
+      <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 max-w-2xl mx-auto">
         <button
-          onClick={() => { setActiveTab('persona'); setError(null); }}
-          className={`flex-1 py-2 rounded-lg transition-colors ${
-            activeTab === 'persona' ? 'bg-emerald-500 text-white shadow' : 'text-slate-400 hover:text-white'
+          type="button"
+          onClick={() => {
+            setActivePortal('citizen');
+            setErrorMessage('');
+            setSuccessMessage('');
+          }}
+          className={`py-3 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+            activePortal === 'citizen'
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
           }`}
         >
-          Quick Demo Persona
+          <User className="w-4 h-4" />
+          <span>Citizen Sentinel</span>
         </button>
+
         <button
-          onClick={() => { setActiveTab('citizen_reg'); setError(null); }}
-          className={`flex-1 py-2 rounded-lg transition-colors ${
-            activeTab === 'citizen_reg' ? 'bg-emerald-500 text-white shadow' : 'text-slate-400 hover:text-white'
+          type="button"
+          onClick={() => {
+            setActivePortal('authority');
+            setErrorMessage('');
+            setSuccessMessage('');
+          }}
+          className={`py-3 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+            activePortal === 'authority'
+              ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
           }`}
         >
-          Citizen Register
+          <Building2 className="w-4 h-4" />
+          <span>Forest Authority</span>
         </button>
+
         <button
-          onClick={() => { setActiveTab('authority_reg'); setError(null); }}
-          className={`flex-1 py-2 rounded-lg transition-colors ${
-            activeTab === 'authority_reg' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+          type="button"
+          onClick={() => {
+            setActivePortal('evaluator');
+            setErrorMessage('');
+            setSuccessMessage('');
+          }}
+          className={`py-3 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+            activePortal === 'evaluator'
+              ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
           }`}
         >
-          Official Auth
+          <Sparkles className="w-4 h-4" />
+          <span>Evaluator / Demo</span>
         </button>
       </div>
 
-      {/* Notifications */}
-      {error && (
-        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
-          <ShieldAlert className="w-4 h-4 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-      {successMsg && (
-        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>{successMsg}</span>
+      {/* Status Alerts */}
+      {errorMessage && (
+        <div className="max-w-xl mx-auto p-4 rounded-xl bg-rose-950/70 border border-rose-500/40 text-xs text-rose-200 flex items-start gap-3 shadow-lg animate-in fade-in">
+          <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* Tab 1: Quick Demo Personas */}
-      {activeTab === 'persona' && (
-        <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/80 space-y-4 shadow-xl">
-          <div className="space-y-1">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
-              <span>Select Demonstration Persona</span>
-            </h2>
-            <p className="text-[11px] text-slate-400">
-              Instantly evaluate the application without registering an external account.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <button
-              onClick={() => handlePersonaSelect('citizen')}
-              disabled={submitting}
-              className={`w-full p-4 rounded-xl text-left border transition-all ${
-                user?.role === 'citizen'
-                  ? 'bg-emerald-950/40 border-emerald-500/50 shadow-md shadow-emerald-500/10'
-                  : 'bg-slate-850/60 border-slate-750 hover:bg-slate-800'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-white">Citizen Sentinel</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
-                  Role: citizen
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 font-medium">Aarav Mehta</p>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Access to report threat portal, interactive risk map, and AI legal assistant.
-              </p>
-            </button>
-
-            <button
-              onClick={() => handlePersonaSelect('authority')}
-              disabled={submitting}
-              className={`w-full p-4 rounded-xl text-left border transition-all ${
-                isAuthority
-                  ? 'bg-amber-950/40 border-amber-500/50 shadow-md shadow-amber-500/10'
-                  : 'bg-slate-850/60 border-slate-750 hover:bg-slate-800'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-amber-300">Forest Officer / DFO</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">
-                  Role: authority
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 font-medium">Officer R. S. Shekhawat</p>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Access to enforcement desk, status updates, audit notes, and official dossiers.
-              </p>
-            </button>
-          </div>
+      {successMessage && (
+        <div className="max-w-xl mx-auto p-4 rounded-xl bg-emerald-950/70 border border-emerald-500/40 text-xs text-emerald-200 flex items-start gap-3 shadow-lg animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+          <span>{successMessage}</span>
         </div>
       )}
 
-      {/* Tab 2: Citizen Register Form */}
-      {activeTab === 'citizen_reg' && (
-        <form onSubmit={handleCitizenSubmit} className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/80 space-y-4 shadow-xl">
-          <div className="space-y-1">
-            <h2 className="text-sm font-bold text-white">Register Citizen Account</h2>
-            <p className="text-[11px] text-slate-400">
-              Role is strictly assigned as <code className="text-emerald-400 font-mono">citizen</code>.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Full Name</label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Priya Sharma"
-                  value={citizenName}
-                  onChange={e => setCitizenName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                />
+      {/* Main Container */}
+      <div className="max-w-xl mx-auto">
+        {/* ============================================================== */}
+        {/* PORTAL A: CITIZEN SENTINEL                                     */}
+        {/* ============================================================== */}
+        {activePortal === 'citizen' && (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <User className="w-4 h-4 text-emerald-400" />
+                  <span>
+                    {citizenMode === 'signup'
+                      ? 'Register Citizen Sentinel'
+                      : citizenMode === 'forgot'
+                      ? 'Recover Account Password'
+                      : 'Citizen Sentinel Sign In'}
+                  </span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Report illegal mining, deforestation, and water stress with full identity privacy.
+                </p>
               </div>
+
+              {citizenMode !== 'forgot' && (
+                <div className="flex rounded-lg bg-slate-950 p-1 border border-slate-800 text-[11px] font-mono">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCitizenMode('signin');
+                      setErrorMessage('');
+                    }}
+                    className={`px-3 py-1 rounded-md transition-all ${
+                      citizenMode === 'signin' ? 'bg-emerald-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCitizenMode('signup');
+                      setErrorMessage('');
+                    }}
+                    className={`px-3 py-1 rounded-md transition-all ${
+                      citizenMode === 'signup' ? 'bg-emerald-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              )}
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Email Address</label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="email"
-                  required
-                  placeholder="priya@example.com"
-                  value={citizenEmail}
-                  onChange={e => setCitizenEmail(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                />
+            <form onSubmit={handleCitizenAuth} className="space-y-4">
+              {citizenMode === 'signup' && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="e.g. Aarav Mehta"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="email"
+                    placeholder="citizen@aravalli.sentinel"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Password</label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="password"
-                  required
-                  placeholder="Minimum 6 characters"
-                  value={citizenPassword}
-                  onChange={e => setCitizenPassword(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-            </div>
-          </div>
+              {citizenMode !== 'forgot' && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-mono uppercase text-slate-300 font-bold">
+                      Password
+                    </label>
+                    {citizenMode === 'signin' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCitizenMode('forgot');
+                          setErrorMessage('');
+                        }}
+                        className="text-[11px] text-emerald-400 hover:text-emerald-300 font-mono"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              )}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-          >
-            {submitting ? 'Registering...' : 'Create Citizen Account'}
-          </button>
-        </form>
-      )}
+              {citizenMode === 'forgot' && (
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-[11px] text-slate-400">
+                  Enter your registered citizen email. We will generate an authenticated password reset link.
+                </div>
+              )}
 
-      {/* Tab 3: Official Authority Authentication */}
-      {activeTab === 'authority_reg' && (
-        <form onSubmit={handleAuthoritySubmit} className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/80 space-y-4 shadow-xl">
-          <div className="space-y-1">
-            <h2 className="text-sm font-bold text-amber-300">Forest Authority Verification</h2>
-            <p className="text-[11px] text-slate-400">
-              Requires a verified government invite secret to unlock enforcement privileges.
-            </p>
-          </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
+              >
+                {submitting ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Processing Authentication...</span>
+                  </>
+                ) : citizenMode === 'signup' ? (
+                  <>
+                    <User className="w-4 h-4" />
+                    <span>Create Citizen Sentinel Account</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                ) : citizenMode === 'forgot' ? (
+                  <>
+                    <Mail className="w-4 h-4" />
+                    <span>Send Password Reset Instructions</span>
+                  </>
+                ) : (
+                  <>
+                    <BadgeCheck className="w-4 h-4" />
+                    <span>Sign In to Citizen Dashboard</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
 
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Officer Full Name</label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. DFO R. S. Shekhawat"
-                  value={officerName}
-                  onChange={e => setOfficerName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Official Email</label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="email"
-                  required
-                  placeholder="dfo.gurugram@forest.gov.in"
-                  value={officerEmail}
-                  onChange={e => setOfficerEmail(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Department / Division</label>
-              <div className="relative">
-                <Building className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={officerDept}
-                  onChange={e => setOfficerDept(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-medium text-amber-300">Authority Invite Secret</label>
+              {citizenMode === 'forgot' && (
                 <button
                   type="button"
-                  onClick={() => setInviteSecret('ARAVALLI_OFFICER_2026_SECRET')}
-                  className="text-[10px] text-amber-400/80 hover:text-amber-300 underline font-mono"
+                  onClick={() => {
+                    setCitizenMode('signin');
+                    setErrorMessage('');
+                  }}
+                  className="w-full text-center text-xs text-slate-400 hover:text-white font-mono pt-1"
                 >
-                  Quick Fill Demo Secret
+                  Back to Sign In
                 </button>
+              )}
+            </form>
+
+            <div className="pt-2 border-t border-slate-800/80 text-[11px] text-slate-500 flex items-center gap-2">
+              <ShieldAlert className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+              <span>Identity Protection Protocol: Citizen names & contact numbers are redacted in public feeds.</span>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* PORTAL B: FOREST AUTHORITY & ENFORCEMENT OFFICER              */}
+        {/* ============================================================== */}
+        {activePortal === 'authority' && (
+          <div className="bg-slate-900 border border-amber-500/40 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-amber-500 text-slate-950 font-bold text-[9px] uppercase px-3 py-1 rounded-bl-lg font-mono">
+              OFFICIAL PERSONNEL ONLY
+            </div>
+
+            <div className="border-b border-slate-800 pb-4">
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-amber-400" />
+                <span>Forest Authority Officer Login</span>
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Restricted portal for Divisional Forest Officers, Mining Task Force, and Wildlife Wardens.
+              </p>
+            </div>
+
+            <form onSubmit={handleAuthorityAuth} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                    Officer Full Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Officer Rajesh Sharma"
+                    value={officerName}
+                    onChange={(e) => setOfficerName(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                    Department / Agency
+                  </label>
+                  <select
+                    value={officerDepartment}
+                    onChange={(e) => setOfficerDepartment(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="Haryana Forest Department & Aravalli Task Force">Haryana Forest Department</option>
+                    <option value="Rajasthan Department of Environment & Forest">Rajasthan Forest Department</option>
+                    <option value="Delhi Forest & Wildlife Department">Delhi Forest Department</option>
+                    <option value="Gujarat Forest Department (Sabarkantha Division)">Gujarat Forest Department</option>
+                  </select>
+                </div>
               </div>
-              <div className="relative">
-                <KeyRound className="w-4 h-4 text-amber-400 absolute left-3 top-1/2 -translate-y-1/2" />
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                  Designation / Role
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Divisional Forest Officer (DFO) / Range Officer"
+                  value={officerDesignation}
+                  onChange={(e) => setOfficerDesignation(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                  Official Gov / Departmental Email
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="email"
+                    placeholder="officer.sharma@forest.haryana.gov.in"
+                    value={officerEmail}
+                    onChange={(e) => setOfficerEmail(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type={showOfficerPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={officerPassword}
+                    onChange={(e) => setOfficerPassword(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOfficerPassword(!showOfficerPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  >
+                    {showOfficerPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 p-3.5 bg-slate-950 rounded-xl border border-amber-500/30">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-mono uppercase text-amber-300 font-bold flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>Authority Invitation Secret Token</span>
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-mono">Demo: AravalliEnforce2025SecureToken</span>
+                </div>
                 <input
                   type="password"
-                  required
-                  placeholder="Enter secret from .env"
+                  placeholder="Paste government administrative invite token..."
                   value={inviteSecret}
-                  onChange={e => setInviteSecret(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                  onChange={(e) => setInviteSecret(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
                 />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-600/30 transition-all disabled:opacity-50"
+              >
+                {submitting ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Verifying Authority Credentials with Department Server...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="w-4 h-4" />
+                    <span>Verify & Enter Enforcement Triage Console</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-500">
+              Notice: All officer triage actions, status changes, and dispatch notes are cryptographically logged in an immutable audit trail.
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* PORTAL C: 1-CLICK HACKATHON EVALUATOR SWITCHER                 */}
+        {/* ============================================================== */}
+        {activePortal === 'evaluator' && (
+          <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl">
+            <div className="border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                  HACKATHON JURY SPEED ACCESS
+                </span>
+              </div>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-cyan-400" />
+                <span>Instant Demo Persona Switcher</span>
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Evaluate both sides of the platform without typing mock credentials. Switches your browser session instantly.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Persona 1: Citizen */}
+              <div className="p-5 rounded-xl border border-emerald-500/30 bg-emerald-950/20 space-y-3 flex flex-col justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold">Role: Citizen</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-mono">Public</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-white">Aarav Mehta</h3>
+                  <p className="text-xs text-slate-400">citizen@aravalli.sentinel</p>
+                  <p className="text-[11px] text-slate-300 pt-1">
+                    Can submit photo evidence, view personal reports, and preview Gemini AI risk engine scoring.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickPersona('citizen')}
+                  disabled={submitting}
+                  className="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Launch Citizen Workspace</span>
+                </button>
+              </div>
+
+              {/* Persona 2: Authority */}
+              <div className="p-5 rounded-xl border border-amber-500/30 bg-amber-950/20 space-y-3 flex flex-col justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-amber-400 uppercase font-bold">Role: Authority</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded font-mono">Gov Official</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-white">Officer Rajesh Sharma</h3>
+                  <p className="text-xs text-slate-400">officer.sharma@forest.haryana.gov.in</p>
+                  <p className="text-[11px] text-slate-300 pt-1">
+                    Divisional Forest Officer (DFO). Full triage privileges, audit trail logger, and problem statement generator.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickPersona('authority')}
+                  disabled={submitting}
+                  className="w-full py-2.5 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Launch Authority Console</span>
+                </button>
               </div>
             </div>
           </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors shadow-lg shadow-amber-500/20 disabled:opacity-50"
-          >
-            {submitting ? 'Verifying Credentials...' : 'Authenticate as Authority'}
-          </button>
-        </form>
-      )}
+        )}
+      </div>
     </div>
   );
 }

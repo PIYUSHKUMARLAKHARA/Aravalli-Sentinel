@@ -13,7 +13,8 @@ import {
   LayoutDashboard,
   Database,
   Info,
-  LogIn
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -190,6 +191,16 @@ export function Navbar() {
                     <LogIn className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Auth & Registration Page</span>
                   </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 flex items-center gap-2 transition-colors"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Sign Out (Clear Session)</span>
+                  </button>
                 </div>
               </div>
             )}

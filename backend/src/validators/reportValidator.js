@@ -1,13 +1,29 @@
 import { z } from 'zod';
 
-export const ThreatCategoryEnum = z.enum([
+export const VALID_CATEGORIES = [
   'Illegal Mining & Quarrying',
+  'Illegal Mining',
+  'Suspected illegal mining or excavation',
   'Deforestation / Tree Felling',
+  'Deforestation',
+  'Vegetation loss',
+  'Forest damage',
   'Encroachment & Construction',
+  'Encroachment',
   'Toxic Waste Dumping',
+  'Toxic Dumping',
   'Ground Water Depletion / Deep Boring',
+  'Water Stress',
+  'Land Degradation',
   'Other Ecological Threat',
-]);
+  'Other environmental concern',
+  'Other',
+];
+
+export const ThreatCategoryEnum = z.string().refine(
+  (val) => VALID_CATEGORIES.some(cat => cat.toLowerCase() === val.toLowerCase().trim()),
+  { message: `Invalid threat category. Expected one of: ${VALID_CATEGORIES.slice(0, 6).join(', ')}...` }
+);
 
 export const createReportSchema = z.object({
   threatCategory: ThreatCategoryEnum,
@@ -22,7 +38,9 @@ export const createReportSchema = z.object({
 });
 
 export const updateReportStatusSchema = z.object({
-  status: z.enum(['pending', 'under_review', 'verified', 'resolved', 'rejected']),
+  status: z.string().transform(v => v.toLowerCase().trim()).pipe(
+    z.enum(['pending', 'under_review', 'verified', 'resolved', 'rejected'])
+  ),
   actionNotes: z.string().min(5, 'Action notes must provide at least 5 characters of context for the audit trail.').max(1000),
   assignedOfficer: z.string().optional(),
 });

@@ -128,7 +128,67 @@ Updates report workflow status. **Requires Authority role authentication** (`Aut
 
 ---
 
-## 4. AI Analysis & Legal Assistant
+### `POST /api/zones/problem-statement`
+Generates a formal, machine-readable area-based environmental problem statement by spatially querying stored incident reports.
+
+**Request Body (Optional Filters):**
+```json
+{
+  "zoneId": "zone-bandhwari-01",
+  "district": "Gurugram",
+  "state": "Haryana",
+  "radiusKm": 25
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "problemStatement": {
+    "statementId": "PS-ARV-987654",
+    "selectedArea": "Bandhwari Forest Corridor (Gurugram)",
+    "totalReports": 7,
+    "topThreatCategory": "Illegal Mining & Quarrying",
+    "threatBreakdown": [
+      { "category": "Illegal Mining & Quarrying", "count": 4, "percentage": 57 },
+      { "category": "Toxic Waste Dumping", "count": 2, "percentage": 29 },
+      { "category": "Deforestation", "count": 1, "percentage": 14 }
+    ],
+    "riskDistribution": { "critical": 4, "highRisk": 2, "watch": 1, "safe": 0 },
+    "recentTrend": "Recurrent clustering of illegal mining observed across notified forest tracts...",
+    "recommendedPriorities": [
+      "Deploy joint DGPS demarcation patrol immediately...",
+      "Cross-reference disputed khasra numbers against State Forest Registry under PLPA Section 4/5..."
+    ],
+    "dataLimitations": "Observations are synthesized from corroborated citizen optical submissions and Sentinel-2 deltas...",
+    "representativeCases": []
+  }
+}
+```
+
+---
+
+## 4. Authentication & Security Endpoints
+
+### `POST /api/auth/login-citizen`
+Authenticates a citizen using email and password.
+
+### `POST /api/auth/register-citizen`
+Registers a new citizen sentinel account. The `role` is strictly server-enforced as `citizen`.
+
+### `POST /api/auth/register-authority`
+Provisions an authorized Forest Department enforcement account. Requires valid `inviteSecret`.
+
+### `POST /api/auth/reset-password`
+Dispatches a secure password recovery instruction email.
+
+### `POST /api/auth/login-demo`
+Allows 1-click persona switching (`citizen` or `authority`) for evaluation and testing.
+
+---
+
+## 5. AI Analysis & Legal Assistant
 
 ### `POST /api/ai/analyze-evidence`
 Performs standalone Gemini 2.0 multimodal analysis on an uploaded image without persisting a report.
@@ -139,7 +199,6 @@ Interactive environmental and legal QA assistant grounded in live platform data 
 **Request Body:**
 ```json
 {
-  "message": "What are the Supreme Court restrictions on mining in the Aravalli hills of Haryana?",
-  "history": []
+  "question": "What are the Supreme Court restrictions on mining in the Aravalli hills of Haryana?"
 }
 ```

@@ -261,11 +261,14 @@ describe('Aravalli Sentinel API - Integration Tests', () => {
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
     expect(res.body.report).toBeDefined();
-    expect(res.body.report.id).toMatch(/^rep-aravalli-/);
+    expect(res.body.report.id).toMatch(/^ARV-\d{4}-\d{6}$/);
     expect(res.body.report.status).toBe('pending');
     expect(res.body.report.evidenceAnalysis).toBeDefined();
     expect(res.body.report.riskAssessment).toBeDefined();
     expect(res.body.report.citizenContactRedacted).toBe(true);
+    expect(res.body.report.imageUrl).toContain('/uploads/evidence/');
+    expect(res.body.report.evidenceMetadata).toBeDefined();
+    expect(res.body.report.evidenceMetadata.storageType).toBe('local-disk');
   });
 
   it('POST /api/reports rejects out-of-bounds latitude (> 90)', async () => {
@@ -426,5 +429,51 @@ describe('Aravalli Sentinel API - Integration Tests', () => {
     expect(res.headers['content-type']).toContain('text/csv');
     expect(res.text).toContain('observation_id');
     expect(res.text).toContain('ndvi');
+  });
+
+  it('POST /api/auth/login-citizen authenticates valid citizen credentials', async () => {
+    const res = await request(app)
+      .post('/api/auth/login-citizen')
+      .send({ email: 'citizen@aravalli.sentinel', password: 'ValidPassword123!' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.token).toBeDefined();
+    expect(res.body.user.role).toBe('citizen');
+  });
+
+  it('POST /api/auth/reset-password handles password reset requests', async () => {
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ email: 'ranger.sentinel@aravalli.org' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toContain('Password reset');
+  });
+
+  it('POST /api/zones/problem-statement generates official area-based problem statement', async () => {
+    const res = await request(app)
+      .post('/api/zones/problem-statement')
+      .send({ zoneId: 'zone-bandhwari-01' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.problemStatement).toBeDefined();
+    expect(res.body.problemStatement.statementId).toMatch(/^PS-ARV-/);
+    expect(res.body.problemStatement.threatBreakdown).toBeDefined();
+    expect(Array.isArray(res.body.problemStatement.recommendedPriorities)).toBe(true);
+    expect(res.body.problemStatement.dataLimitations).toBeDefined();
+  });
+
+  it('GET /api/reports?myReports=true filters reports submitted by authenticated user', async () => {
+    const res = await request(app)
+      .get('/api/reports')
+      .set('Authorization', 'Bearer demo-token-citizen-valid')
+      .query({ myReports: 'true' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.reports)).toBe(true);
   });
 });

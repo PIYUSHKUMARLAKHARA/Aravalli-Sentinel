@@ -1,11 +1,37 @@
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { getFirestore, getStorageBucket, isRealFirebaseConnected } from '../config/firebase.js';
 import { analyzeEvidence } from '../services/geminiService.js';
 import { calculateRiskScore } from '../services/riskEngine.js';
 import { aravalliZones, getZoneById } from '../data/aravalliZones.js';
 import { seedReports } from '../data/seedReports.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure local evidence directory exists
+const localUploadsDir = path.resolve(__dirname, '../uploads/evidence');
+if (!fs.existsSync(localUploadsDir)) {
+  fs.mkdirSync(localUploadsDir, { recursive: true });
+}
+
+// Fallback curated photographic evidence for ecological threat categories
+const ECOLOGICAL_FALLBACK_IMAGES = {
+  'Illegal Mining': 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=1200&q=80',
+  'Illegal Mining & Quarrying': 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=1200&q=80',
+  'Deforestation': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80',
+  'Deforestation / Tree Felling': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80',
+  'Water Stress': 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80',
+  'Ground Water Depletion / Deep Boring': 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80',
+  'Toxic Dumping': 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=1200&q=80',
+  'Toxic Waste Dumping': 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=1200&q=80',
+  'Encroachment': 'https://images.unsplash.com/photo-1590496793929-36417d3117de?auto=format&fit=crop&w=1200&q=80',
+  'Encroachment & Construction': 'https://images.unsplash.com/photo-1590496793929-36417d3117de?auto=format&fit=crop&w=1200&q=80',
+  'Land Degradation': 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80',
+  'Other Ecological Threat': 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80',
+};
 
 function loadAllReports() {
   const reports = [...seedReports];
@@ -39,6 +65,9 @@ function loadAllReports() {
           ] = cols;
 
           if (!reports.some(r => r.id === reportId)) {
+            const imgBasename = path.basename(imgPath || '');
+            const servedImgUrl = imgBasename ? `/datasets/images/${imgBasename}` : (ECOLOGICAL_FALLBACK_IMAGES[threatType] || ECOLOGICAL_FALLBACK_IMAGES['Illegal Mining']);
+
             reports.push({
               id: reportId,
               threatCategory: threatType,
@@ -54,9 +83,15 @@ function loadAllReports() {
               status: verStatus,
               citizenId: 'cit-dataset-sentinel',
               citizenName: 'Anonymous Sentinel (Redacted for Citizen Protection)',
-              imageUrl: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=1200&q=80',
+              imageUrl: servedImgUrl,
+              fallbackImageUrl: ECOLOGICAL_FALLBACK_IMAGES[threatType] || ECOLOGICAL_FALLBACK_IMAGES['Illegal Mining'],
               imagePath: imgPath,
               sourceType: srcType,
+              evidenceMetadata: {
+                originalPath: imgPath,
+                evidenceQuality: evQuality,
+                isSynthetic: isSynth === 'true',
+              },
               evidenceAnalysis: {
                 observedVisualIndicators: [
                   `Field observation of ${threatType.toLowerCase()}`,
@@ -127,6 +162,30 @@ function loadAllReports() {
 
 // Initialize in-memory reports store with seedReports + dataset reports
 let inMemoryReports = loadAllReports();
+let caseSequenceCounter = inMemoryReports.length + 10;
+
+/**
+ * Collision-proof Case ID generator
+ * Generates official format: ARV-YYYY-XXXXXX
+ * Verifies no duplicate ID exists in inMemoryReports or Firestore.
+ */
+export function generateCollisionSafeCaseId() {
+  const year = new Date().getFullYear();
+  let candidate;
+  let attempts = 0;
+
+  do {
+    const seq = String(caseSequenceCounter++).padStart(6, '0');
+    candidate = `ARV-${year}-${seq}`;
+    attempts++;
+  } while (inMemoryReports.some(r => r.id === candidate) && attempts < 1000);
+
+  return candidate;
+}
+
+export function getAllStoredReports() {
+  return inMemoryReports;
+}
 
 export async function submitReport(req, res) {
   try {
@@ -135,7 +194,8 @@ export async function submitReport(req, res) {
 
     let imageBuffer = null;
     let mimeType = null;
-    let imageUrl = 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=1200&q=80';
+    let imageUrl = ECOLOGICAL_FALLBACK_IMAGES[threatCategory] || ECOLOGICAL_FALLBACK_IMAGES['Illegal Mining'];
+    let evidenceMetadata = null;
 
     if (req.file) {
       imageBuffer = req.file.buffer;
@@ -151,9 +211,29 @@ export async function submitReport(req, res) {
           public: true,
         });
         imageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+        evidenceMetadata = {
+          storageType: 'firebase-storage',
+          path: fileName,
+          sizeBytes: req.file.size,
+          mimeType,
+          uploadedAt: new Date().toISOString(),
+        };
       } else {
-        // In local mode, represent the uploaded image data as base64 data URI
-        imageUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+        // In local mode, persist image buffer to backend/uploads/evidence disk storage
+        const safeExt = path.extname(req.file.originalname) || (mimeType === 'image/png' ? '.png' : '.jpg');
+        const diskFilename = `evidence-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}${safeExt}`;
+        const diskPath = path.resolve(localUploadsDir, diskFilename);
+        
+        fs.writeFileSync(diskPath, imageBuffer);
+        imageUrl = `/uploads/evidence/${diskFilename}`;
+        evidenceMetadata = {
+          storageType: 'local-disk',
+          filename: diskFilename,
+          relativePath: `uploads/evidence/${diskFilename}`,
+          sizeBytes: req.file.size,
+          mimeType,
+          uploadedAt: new Date().toISOString(),
+        };
       }
     }
 
@@ -167,7 +247,6 @@ export async function submitReport(req, res) {
     });
 
     // Step 2: Compute Explainable Risk Score
-    // Find closest or assigned zone to combine citizen report with zone environmental telemetry
     const matchedZone = zoneId ? getZoneById(zoneId) : findClosestZone(Number(latitude), Number(longitude));
     
     // Baseline factors blended with citizen report impact
@@ -187,7 +266,7 @@ export async function submitReport(req, res) {
         ? Math.min(100, Math.max(baseFactors.vegetationLoss, aiAnalysis.preliminaryRiskScoreImpact || 70))
         : baseFactors.vegetationLoss,
       waterStress: baseFactors.waterStress,
-      citizenEvidence: Math.min(100, baseFactors.citizenEvidence + 15), // Corroboration boost
+      citizenEvidence: Math.min(100, baseFactors.citizenEvidence + 15),
       historicalChange: baseFactors.historicalChange,
     };
 
@@ -198,7 +277,8 @@ export async function submitReport(req, res) {
       isDemo: aiAnalysis.isSimulated,
     });
 
-    const reportId = `rep-aravalli-${Date.now().toString().slice(-6)}`;
+    // Generate Collision-Safe Case ID: ARV-2026-000123
+    const reportId = generateCollisionSafeCaseId();
     const now = new Date().toISOString();
 
     const newReport = {
@@ -215,9 +295,12 @@ export async function submitReport(req, res) {
       updatedAt: now,
       status: 'pending',
       citizenId: user.uid,
-      citizenName: 'Anonymous Sentinel (Redacted for Citizen Protection)',
+      citizenEmail: user.email || null,
+      citizenName: user.name || 'Citizen Sentinel',
       citizenContactRedacted: true,
       imageUrl,
+      fallbackImageUrl: ECOLOGICAL_FALLBACK_IMAGES[threatCategory] || ECOLOGICAL_FALLBACK_IMAGES['Illegal Mining'],
+      evidenceMetadata,
       evidenceAnalysis: aiAnalysis,
       riskAssessment: {
         score: riskComputation.score,
@@ -230,7 +313,7 @@ export async function submitReport(req, res) {
         {
           action: 'Report Submitted',
           by: user.name || 'Citizen Sentinel',
-          role: user.role,
+          role: user.role || 'citizen',
           timestamp: now,
           notes: 'Citizen submitted threat report with photographic evidence and coordinates.',
         },
@@ -263,7 +346,7 @@ export async function submitReport(req, res) {
 
 export async function getAllReports(req, res) {
   try {
-    const { status, threatCategory, zoneId, riskLevel } = req.query;
+    const { status, threatCategory, zoneId, riskLevel, myReports } = req.query;
     const isAuthority = req.user && (req.user.role === 'authority' || req.user.role === 'admin');
 
     let reports = [...inMemoryReports];
@@ -288,25 +371,39 @@ export async function getAllReports(req, res) {
       // Continue with inMemoryReports
     }
 
+    // Citizen "My Reports" filter
+    if (myReports === 'true' && req.user) {
+      reports = reports.filter(r => 
+        r.citizenId === req.user.uid || 
+        (req.user.email && r.citizenEmail === req.user.email) ||
+        r.citizenName === req.user.name
+      );
+    }
+
     // Apply filters
     if (status && status !== 'all') {
-      reports = reports.filter(r => r.status === status);
+      reports = reports.filter(r => r.status.toLowerCase() === status.toLowerCase());
     }
     if (threatCategory && threatCategory !== 'all') {
-      reports = reports.filter(r => r.threatCategory === threatCategory);
+      reports = reports.filter(r => r.threatCategory.toLowerCase().includes(threatCategory.toLowerCase()));
     }
     if (zoneId && zoneId !== 'all') {
       reports = reports.filter(r => r.zoneId === zoneId);
     }
     if (riskLevel && riskLevel !== 'all') {
-      reports = reports.filter(r => r.riskAssessment?.riskLevel === riskLevel);
+      reports = reports.filter(r => r.riskAssessment?.riskLevel?.toLowerCase() === riskLevel.toLowerCase());
     }
 
     // Sort by createdAt descending
     reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    // Redact sensitive personal data if not authority
-    const sanitized = reports.map(r => (isAuthority ? r : sanitizeReportForPublic(r)));
+    // Redact sensitive personal data if not authority and not viewing own reports
+    const sanitized = reports.map(r => {
+      if (isAuthority || (req.user && (r.citizenId === req.user.uid || r.citizenEmail === req.user.email))) {
+        return r;
+      }
+      return sanitizeReportForPublic(r);
+    });
 
     return res.json({
       success: true,

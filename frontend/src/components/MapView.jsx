@@ -1,28 +1,43 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Layers, MapPin, Eye, Satellite, Info } from 'lucide-react';
+import { Layers, MapPin, Eye, Satellite, Info, ShieldAlert } from 'lucide-react';
 import { RiskBadge } from './RiskBadge';
+
+const CATEGORY_DEFAULT_PHOTOS = {
+  'Illegal Mining': 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=600&q=80',
+  'Deforestation': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80',
+  'Water Stress': 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80',
+  'Toxic Dumping': 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=600&q=80',
+  'Encroachment': 'https://images.unsplash.com/photo-1590496793929-36417d3117de?auto=format&fit=crop&w=600&q=80',
+  'Land Degradation': 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=600&q=80',
+};
 
 export function MapView({
   zones = [],
+  reports = [],
   selectedZone = null,
   onSelectZone,
+  onSelectReport,
   isPickerMode = false,
   pickerLocation = null,
   onLocationPicked,
   className = 'h-[600px] w-full',
+  isAreaSelectMode = false,
+  onAreaSelected,
 }) {
   const mapContainerRef = useRef(null);
   const leafletMapRef = useRef(null);
-  const markersRef = useRef([]);
+  const zoneLayersRef = useRef([]);
+  const reportMarkersRef = useRef([]);
   const pickerMarkerRef = useRef(null);
+  const areaCircleRef = useRef(null);
   const [activeLayer, setActiveLayer] = useState('satellite'); // 'satellite' | 'street'
 
-  // Default center: Aravalli Range centroid between Haryana and Rajasthan
   const defaultCenter = [27.5, 76.5];
   const defaultZoom = 7;
 
+  // Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -35,88 +50,79 @@ export function MapView({
 
       leafletMapRef.current = map;
 
-      // Handle click for picker mode
+      // Handle click events
       map.on('click', (e) => {
-        if (onLocationPicked) {
-          onLocationPicked({
-            lat: Number(e.latlng.lat.toFixed(5)),
-            lng: Number(e.latlng.lng.toFixed(5)),
-          });
+        const lat = Number(e.latlng.lat.toFixed(5));
+        const lng = Number(e.latlng.lng.toFixed(5));
+
+        if (isPickerMode && onLocationPicked) {
+          onLocationPicked({ lat, lng });
+        } else if (isAreaSelectMode && onAreaSelected) {
+          onAreaSelected({ lat, lng, radiusKm: 25 });
         }
       });
     }
 
     const map = leafletMapRef.current;
 
-    // Remove existing tile layers
+    // Reset base tiles
     map.eachLayer((layer) => {
       if (layer instanceof L.TileLayer) {
         map.removeLayer(layer);
       }
     });
 
-    // Add selected Tile Layer
     if (activeLayer === 'satellite') {
-      // Esri World Imagery (High-res satellite view)
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+        attribution: 'Tiles &copy; Esri, Earthstar Geographics',
         maxZoom: 18,
       }).addTo(map);
 
-      // Add faint boundary labels
       L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 18,
       }).addTo(map);
     } else {
-      // CartoDB Dark Matter / Street view
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: '&copy; OpenStreetMap, &copy; CARTO',
         maxZoom: 19,
       }).addTo(map);
     }
+  }, [activeLayer, isPickerMode, isAreaSelectMode]);
 
-    return () => {
-      // Cleanup on unmount
-    };
-  }, [activeLayer]);
-
-  // Update Zone Markers and Polygons
+  // Render Macro Zones
   useEffect(() => {
     const map = leafletMapRef.current;
     if (!map) return;
 
-    // Clear existing zone markers & circles
-    markersRef.current.forEach((item) => map.removeLayer(item));
-    markersRef.current = [];
+    zoneLayersRef.current.forEach((item) => map.removeLayer(item));
+    zoneLayersRef.current = [];
 
-    // Render zones
     zones.forEach((zone) => {
-      const lat = zone.coordinates.lat;
-      const lng = zone.coordinates.lng;
-      const score = zone.scoreInteger || Math.round(zone.score);
+      const lat = zone.coordinates?.lat;
+      const lng = zone.coordinates?.lng;
+      if (!lat || !lng) return;
+
+      const score = Math.round(zone.score);
       const isCritical = zone.riskLevel === 'CRITICAL';
       const isHigh = zone.riskLevel === 'HIGH RISK';
 
-      // Pick color
-      let color = '#10b981'; // Green
-      if (zone.riskLevel === 'WATCH') color = '#f59e0b'; // Amber
-      if (zone.riskLevel === 'HIGH RISK') color = '#f97316'; // Orange
-      if (zone.riskLevel === 'CRITICAL') color = '#ef4444'; // Red
+      let color = '#10b981';
+      if (zone.riskLevel === 'WATCH') color = '#f59e0b';
+      if (zone.riskLevel === 'HIGH RISK') color = '#f97316';
+      if (zone.riskLevel === 'CRITICAL') color = '#ef4444';
 
-      // Outer radial risk circle (indicates eco-sensitive buffer)
       const radius = isCritical ? 14000 : (isHigh ? 11000 : 8000);
       const circle = L.circle([lat, lng], {
         color: color,
         fillColor: color,
-        fillOpacity: isCritical ? 0.35 : 0.22,
-        weight: isCritical ? 2.5 : 1.5,
+        fillOpacity: isCritical ? 0.32 : 0.18,
+        weight: isCritical ? 2 : 1.2,
         dashArray: isCritical ? '6, 6' : null,
         radius: radius,
       }).addTo(map);
 
-      // Custom HTML Marker with pulsing badge
       const customIcon = L.divIcon({
-        className: 'custom-aravalli-pin',
+        className: 'custom-aravalli-zone-pin',
         html: `
           <div style="position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center;">
             ${isCritical ? `<div style="position: absolute; width: 34px; height: 34px; border-radius: 50%; background-color: ${color}; opacity: 0.5; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : ''}
@@ -134,27 +140,100 @@ export function MapView({
 
       const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
 
-      // Clicking marker opens detail drawer
-      marker.on('click', () => {
-        if (onSelectZone) {
-          onSelectZone(zone);
+      const triggerSelect = () => {
+        if (onSelectZone) onSelectZone(zone);
+        if (isAreaSelectMode && onAreaSelected) {
+          onAreaSelected({ zoneId: zone.id, zoneName: zone.name, lat, lng });
         }
-      });
-      circle.on('click', () => {
-        if (onSelectZone) {
-          onSelectZone(zone);
-        }
-      });
+      };
 
-      markersRef.current.push(circle);
-      markersRef.current.push(marker);
+      marker.on('click', triggerSelect);
+      circle.on('click', triggerSelect);
+
+      zoneLayersRef.current.push(circle);
+      zoneLayersRef.current.push(marker);
     });
-  }, [zones, onSelectZone]);
+  }, [zones, onSelectZone, isAreaSelectMode, onAreaSelected]);
 
-  // Update Selected Zone view flyTo
+  // Render Individual Stored Citizen Report Markers
   useEffect(() => {
     const map = leafletMapRef.current;
-    if (!map || !selectedZone) return;
+    if (!map) return;
+
+    reportMarkersRef.current.forEach((m) => map.removeLayer(m));
+    reportMarkersRef.current = [];
+
+    reports.forEach((report) => {
+      const lat = parseFloat(report.latitude);
+      const lng = parseFloat(report.longitude);
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      const score = report.riskAssessment?.score || report.riskScore || 50;
+      const isCritical = score >= 76;
+      const isHigh = score >= 51 && score < 76;
+      const isWatch = score >= 31 && score < 51;
+
+      let pinColor = '#10b981';
+      if (isWatch) pinColor = '#f59e0b';
+      if (isHigh) pinColor = '#f97316';
+      if (isCritical) pinColor = '#ef4444';
+
+      const reportIcon = L.divIcon({
+        className: 'citizen-report-pin',
+        html: `
+          <div style="position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+            <div style="background: ${pinColor}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 8px ${pinColor};"></div>
+          </div>
+        `,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+
+      const reportMarker = L.marker([lat, lng], { icon: reportIcon }).addTo(map);
+
+      // Popup Content with thumbnail and dossier link
+      const fallbackImg = CATEGORY_DEFAULT_PHOTOS[report.threatCategory] || CATEGORY_DEFAULT_PHOTOS['Illegal Mining'];
+      const displayImg = report.imageUrl || fallbackImg;
+
+      const popupHtml = `
+        <div style="font-family: ui-sans-serif, system-ui, sans-serif; width: 230px; color: #f8fafc; padding: 4px;">
+          <div style="border-radius: 8px; overflow: hidden; height: 90px; background: #0f172a; margin-bottom: 6px;">
+            <img src="${displayImg}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='${fallbackImg}'" />
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span style="font-family: monospace; font-size: 11px; font-weight: bold; color: #34d399;">${report.id}</span>
+            <span style="font-size: 9px; font-weight: bold; padding: 1px 6px; border-radius: 4px; background: ${pinColor}33; color: ${pinColor}; border: 1px solid ${pinColor}66;">
+              ${score}/100
+            </span>
+          </div>
+          <div style="font-size: 11px; font-weight: bold; color: #ffffff; margin-bottom: 2px;">
+            ${report.threatCategory}
+          </div>
+          <div style="font-size: 10px; color: #94a3b8; margin-bottom: 6px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+            ${report.locationName || 'Aravalli Range'}
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #334155; padding-top: 5px;">
+            <span style="font-size: 9px; text-transform: uppercase; color: #94a3b8;">${report.status?.replace('_', ' ')}</span>
+            <a href="/incident/${report.id}" style="font-size: 10px; font-weight: 600; color: #10b981; text-decoration: none; padding: 2px 6px; background: #1e293b; border-radius: 4px;">
+              View Case &rarr;
+            </a>
+          </div>
+        </div>
+      `;
+
+      reportMarker.bindPopup(popupHtml, {
+        className: 'custom-aravalli-popup',
+        maxWidth: 260,
+      });
+
+      reportMarkersRef.current.push(reportMarker);
+    });
+  }, [reports]);
+
+  // Selected Zone FlyTo
+  useEffect(() => {
+    const map = leafletMapRef.current;
+    if (!map || !selectedZone || !selectedZone.coordinates) return;
 
     map.flyTo(
       [selectedZone.coordinates.lat, selectedZone.coordinates.lng],
@@ -163,7 +242,7 @@ export function MapView({
     );
   }, [selectedZone]);
 
-  // Picker Mode: Render interactive pin for report location
+  // Picker Mode Pin
   useEffect(() => {
     const map = leafletMapRef.current;
     if (!map) return;
@@ -198,72 +277,63 @@ export function MapView({
   return (
     <div className={`relative rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-950 ${className}`}>
       {/* Map Container */}
-      <div ref={mapContainerRef} className="w-full h-full z-0" />
+      <div ref={mapContainerRef} className="h-full w-full z-0" />
 
-      {/* Layer Switcher & Controls */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700/80 shadow-xl">
+      {/* Layer Toggle Switch */}
+      <div className="absolute top-4 right-4 z-10 flex rounded-xl overflow-hidden border border-slate-700/80 bg-slate-900/90 backdrop-blur-md p-1 shadow-xl">
         <button
+          type="button"
           onClick={() => setActiveLayer('satellite')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold flex items-center gap-1.5 transition-all ${
             activeLayer === 'satellite'
-              ? 'bg-emerald-500 text-white font-semibold shadow'
-              : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white'
           }`}
-          title="Satellite remote sensing imagery"
         >
           <Satellite className="w-3.5 h-3.5" />
-          <span>Sentinel Satellite</span>
+          <span>Sentinel-2 Imagery</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveLayer('street')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold flex items-center gap-1.5 transition-all ${
             activeLayer === 'street'
-              ? 'bg-emerald-500 text-white font-semibold shadow'
-              : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white'
           }`}
-          title="Topographic boundary map"
         >
           <Layers className="w-3.5 h-3.5" />
-          <span>Topographic</span>
+          <span>Topographic Grid</span>
         </button>
       </div>
 
-      {/* Picker Mode Instruction Banner */}
-      {isPickerMode && (
-        <div className="absolute top-4 left-4 z-20 bg-rose-950/90 border border-rose-500/40 text-rose-200 px-4 py-2 rounded-xl backdrop-blur-md shadow-xl text-xs flex items-center gap-2 animate-bounce">
-          <MapPin className="w-4 h-4 text-rose-400" />
-          <span><strong>Click anywhere on map</strong> to pinpoint coordinates for your threat report</span>
+      {/* Map Overlay Legend */}
+      <div className="absolute bottom-4 left-4 z-10 bg-slate-900/90 border border-slate-800 rounded-xl p-3 backdrop-blur-md text-[11px] font-mono space-y-1.5 shadow-xl hidden sm:block">
+        <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
+          Aravalli Risk Thresholds
         </div>
-      )}
-
-      {/* Map Legend Overlay */}
-      <div className="absolute bottom-4 left-4 z-20 bg-slate-950/90 backdrop-blur-md p-3.5 rounded-xl border border-slate-800 shadow-2xl max-w-xs text-xs space-y-2">
-        <div className="flex items-center justify-between pb-1 border-b border-slate-800">
-          <span className="font-bold text-slate-200 font-mono">RISK ENGINE LEVELS</span>
-          <span className="text-[10px] text-slate-400">Score 0–100</span>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+          <span className="text-slate-300">Critical Risk (76–100)</span>
         </div>
-        <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0" />
-            <span className="text-slate-300">SAFE (0–30)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-amber-500 flex-shrink-0" />
-            <span className="text-slate-300">WATCH (31–50)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-orange-500 flex-shrink-0" />
-            <span className="text-slate-300">HIGH (51–75)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-rose-500 animate-pulse flex-shrink-0" />
-            <span className="text-rose-400 font-bold">CRITICAL (76–100)</span>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+          <span className="text-slate-300">High Risk (51–75)</span>
         </div>
-        <div className="pt-1 text-[10px] text-slate-400 flex items-center gap-1 border-t border-slate-800/80">
-          <Info className="w-3 h-3 text-emerald-400 flex-shrink-0" />
-          <span>Click any marker to inspect telemetry & signals</span>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+          <span className="text-slate-300">Watch Band (31–50)</span>
         </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+          <span className="text-slate-300">Safe / Baseline (0–30)</span>
+        </div>
+        {reports.length > 0 && (
+          <div className="pt-1 border-t border-slate-800 text-[10px] text-emerald-400 flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full border border-white bg-emerald-400" />
+            <span>{reports.length} Ground Incidents Mapped</span>
+          </div>
+        )}
       </div>
     </div>
   );

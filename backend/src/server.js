@@ -3,6 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import env from './config/env.js';
 import { isRealFirebaseConnected } from './config/firebase.js';
 import { isGeminiLive, getActiveModelName } from './config/gemini.js';
@@ -14,7 +17,25 @@ import zonesRoutes from './routes/zonesRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
+
+// Ensure uploads and evidence directories exist on disk
+const uploadsDir = path.resolve(__dirname, '../uploads');
+const evidenceDir = path.resolve(uploadsDir, 'evidence');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+if (!fs.existsSync(evidenceDir)) {
+  fs.mkdirSync(evidenceDir, { recursive: true });
+}
+
+// Locate datasets/citizen_reports/images directory
+const datasetImagesDir = path.resolve(__dirname, '../../datasets/citizen_reports/images');
+const altDatasetImagesDir = path.resolve(__dirname, '../datasets/citizen_reports/images');
+const resolvedDatasetImages = fs.existsSync(datasetImagesDir) ? datasetImagesDir : altDatasetImagesDir;
 
 // Security Headers
 app.use(helmet({
@@ -31,6 +52,13 @@ app.use(cors({
 
 // Request Logger
 app.use(morgan(env.IS_PRODUCTION ? 'combined' : 'dev'));
+
+// Static Evidence and Dataset Image Serving
+app.use('/uploads', express.static(uploadsDir));
+if (fs.existsSync(resolvedDatasetImages)) {
+  app.use('/datasets/images', express.static(resolvedDatasetImages));
+  app.use('/images', express.static(resolvedDatasetImages));
+}
 
 // Rate Limiter
 const apiLimiter = rateLimit({
@@ -72,6 +100,10 @@ app.get('/api/health', (req, res) => {
       geospatialTelemetry: {
         provider: geoProvider.getProviderName(),
         live: geoProvider.isLiveProvider(),
+      },
+      storage: {
+        uploadsDir: '/uploads/evidence',
+        datasetImagesDir: '/datasets/images',
       },
     },
   });
