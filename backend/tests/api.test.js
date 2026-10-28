@@ -377,4 +377,54 @@ describe('Aravalli Sentinel API - Integration Tests', () => {
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
   });
+
+  it('POST /api/zones/satellite-query queries area of interest and returns observations', async () => {
+    const res = await request(app)
+      .post('/api/zones/satellite-query')
+      .send({
+        coordinates: { latitude: 28.3842, longitude: 77.1436 },
+        startDate: '2026-06-01',
+        endDate: '2026-10-20',
+        maxCloudCoverage: 15,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.observations).toBeDefined();
+    expect(Array.isArray(res.body.observations)).toBe(true);
+    expect(res.body.provenance).toContain('DEMO');
+  });
+
+  it('GET /api/zones/:id/satellite-comparison compares baseline and post-monsoon observations', async () => {
+    const res = await request(app)
+      .get('/api/zones/zone-bandhwari-01/satellite-comparison')
+      .query({ baselineDate: '2026-06-15', comparisonDate: '2026-10-18' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.comparison).toBeDefined();
+    expect(res.body.comparison.deltaNDVI).toBeDefined();
+    expect(res.body.comparison.percentChange).toBeDefined();
+  });
+
+  it('GET /api/zones/:id/export-observations returns GeoJSON format', async () => {
+    const res = await request(app)
+      .get('/api/zones/zone-bandhwari-01/export-observations')
+      .query({ format: 'geojson' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.type).toBe('FeatureCollection');
+    expect(Array.isArray(res.body.features)).toBe(true);
+  });
+
+  it('GET /api/zones/:id/export-observations returns CSV format', async () => {
+    const res = await request(app)
+      .get('/api/zones/zone-bandhwari-01/export-observations')
+      .query({ format: 'csv' });
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/csv');
+    expect(res.text).toContain('observation_id');
+    expect(res.text).toContain('ndvi');
+  });
 });

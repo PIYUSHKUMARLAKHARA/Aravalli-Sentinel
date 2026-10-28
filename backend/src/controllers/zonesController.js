@@ -61,8 +61,55 @@ export async function recalculateRisk(req, res) {
   }
 }
 
+export async function querySatellite(req, res) {
+  try {
+    const provider = getActiveGeospatialProvider();
+    const result = await provider.queryAreaOfInterest(req.body || {});
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function compareSatellite(req, res) {
+  try {
+    const { id } = req.params;
+    const { baselineDate, comparisonDate } = req.query;
+    const provider = getActiveGeospatialProvider();
+    const result = await provider.compareObservations({
+      zoneId: id,
+      baselineDate,
+      comparisonDate
+    });
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function exportZoneObservations(req, res) {
+  try {
+    const { id } = req.params;
+    const { format = 'geojson' } = req.query;
+    const provider = getActiveGeospatialProvider();
+    const exportResult = await provider.exportObservations({ format, zoneId: id });
+    
+    if (format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=observations_${id}.csv`);
+      return res.send(exportResult.data);
+    }
+    return res.json(exportResult.data);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
 export default {
   getZones,
   getZoneDetails,
   recalculateRisk,
+  querySatellite,
+  compareSatellite,
+  exportZoneObservations,
 };

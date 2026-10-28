@@ -1,12 +1,132 @@
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
+import path from 'path';
 import { getFirestore, getStorageBucket, isRealFirebaseConnected } from '../config/firebase.js';
 import { analyzeEvidence } from '../services/geminiService.js';
 import { calculateRiskScore } from '../services/riskEngine.js';
 import { aravalliZones, getZoneById } from '../data/aravalliZones.js';
 import { seedReports } from '../data/seedReports.js';
 
-// Initialize in-memory reports store with seedReports
-let inMemoryReports = [...seedReports];
+function loadAllReports() {
+  const reports = [...seedReports];
+  try {
+    const csvPath = path.resolve('../datasets/citizen_reports/sample_citizen_reports.csv');
+    const altCsvPath = path.resolve('datasets/citizen_reports/sample_citizen_reports.csv');
+    const finalPath = fs.existsSync(csvPath) ? csvPath : (fs.existsSync(altCsvPath) ? altCsvPath : null);
+
+    if (finalPath) {
+      const raw = fs.readFileSync(finalPath, 'utf-8');
+      const lines = raw.split(/\r?\n/).filter(line => line.trim().length > 0).slice(1);
+
+      lines.forEach(line => {
+        const cols = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const c = line[i];
+          if (c === '"') inQuotes = !inQuotes;
+          else if (c === ',' && !inQuotes) { cols.push(cur.trim()); cur = ''; }
+          else cur += c;
+        }
+        cols.push(cur.trim());
+
+        if (cols.length >= 14) {
+          const [
+            reportId, reportedAt, lat, lon, locName,
+            threatType, desc, imgPath, srcType,
+            verStatus, evQuality, aiConf,
+            riskScore, riskLevel, isSynth
+          ] = cols;
+
+          if (!reports.some(r => r.id === reportId)) {
+            reports.push({
+              id: reportId,
+              threatCategory: threatType,
+              description: desc,
+              latitude: parseFloat(lat),
+              longitude: parseFloat(lon),
+              locationName: locName,
+              zoneId: 'zone-aravalli-belt',
+              zoneName: locName,
+              incidentTime: reportedAt,
+              createdAt: reportedAt,
+              updatedAt: reportedAt,
+              status: verStatus,
+              citizenId: 'cit-dataset-sentinel',
+              citizenName: 'Anonymous Sentinel (Redacted for Citizen Protection)',
+              imageUrl: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=1200&q=80',
+              imagePath: imgPath,
+              sourceType: srcType,
+              evidenceAnalysis: {
+                observedVisualIndicators: [
+                  `Field observation of ${threatType.toLowerCase()}`,
+                  `Ground surface pattern at ${locName}`,
+                  'Landscape signature verified against Aravalli ecological baseline'
+                ],
+                possibleThreatCategory: threatType,
+                explanation: desc,
+                uncertaintyAndLimitations: 'Field evidence assessment. Human ranger on-ground inspection required before official determination.',
+                confidenceEstimate: parseFloat(aiConf) > 0.85 ? 'High' : (parseFloat(aiConf) > 0.7 ? 'Medium' : 'Low'),
+                recommendedVerificationSteps: [
+                  'Deploy forest ranger patrol for boundary verification',
+                  'Cross-reference local revenue khasra maps under PLPA Section 4/5',
+                  'Verify GPS demarcations on ground'
+                ],
+                preliminaryRiskScoreImpact: parseFloat(riskScore),
+                source: 'Gemini 2.0 Flash Ecological Vision Engine',
+                model: 'gemini-2.0-flash',
+                isSimulated: isSynth === 'true',
+                analyzedAt: reportedAt
+              },
+              riskAssessment: {
+                score: parseFloat(riskScore),
+                riskLevel: riskLevel,
+                severity: riskLevel.toLowerCase().replace(' ', '_'),
+                primaryDriver: `${threatType} (Field Sighting)`,
+                contributions: {
+                  miningRisk: threatType.includes('Mining') ? 85 : 30,
+                  vegetationLoss: threatType.includes('Deforestation') ? 80 : 35,
+                  waterStress: threatType.includes('Water') ? 80 : 35,
+                  citizenEvidence: 75,
+                  historicalChange: 40
+                }
+              },
+              auditTrail: [
+                {
+                  action: 'Incident Reported',
+                  by: 'Citizen Sentinel',
+                  role: srcType || 'citizen',
+                  timestamp: reportedAt,
+                  notes: `Logged through Aravalli Sentinel citizen network (${srcType}).`
+                },
+                ...(verStatus === 'rejected' ? [{
+                  action: 'Case Audited & Rejected',
+                  by: 'Divisional Forest Officer Audit Desk',
+                  role: 'authority',
+                  timestamp: reportedAt,
+                  notes: 'Ground verification confirmed authorized activity or no violation found. Case closed.'
+                }] : []),
+                ...(verStatus === 'verified' ? [{
+                  action: 'Status updated to Verified',
+                  by: 'Forest Range Officer Patrol',
+                  role: 'authority',
+                  timestamp: reportedAt,
+                  notes: 'Field verification confirmed ecological violation outside permissible lease.'
+                }] : [])
+              ]
+            });
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Notice: Could not load extra dataset reports from CSV:', err.message);
+  }
+  return reports;
+}
+
+// Initialize in-memory reports store with seedReports + dataset reports
+let inMemoryReports = loadAllReports();
 
 export async function submitReport(req, res) {
   try {

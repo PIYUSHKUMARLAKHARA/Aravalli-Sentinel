@@ -75,12 +75,16 @@ export function RiskMapPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="text-xs font-mono uppercase text-emerald-400 font-bold tracking-wider">
               GEOSPATIAL OPERATIONS CENTER
             </span>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
               Copernicus Sentinel-2 & Citizen Ground Grid
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+              DEMO DATA — SYNTHETIC BASELINE
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
