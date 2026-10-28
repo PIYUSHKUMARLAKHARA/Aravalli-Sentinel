@@ -172,19 +172,97 @@ Generates a formal, machine-readable area-based environmental problem statement 
 ## 4. Authentication & Security Endpoints
 
 ### `POST /api/auth/login-citizen`
-Authenticates a citizen using email and password.
+Authenticates a citizen sentinel using email and password. Role is strictly server-enforced as `citizen`.
 
 ### `POST /api/auth/register-citizen`
-Registers a new citizen sentinel account. The `role` is strictly server-enforced as `citizen`.
+Registers a new citizen sentinel account. The `role` is strictly server-enforced as `citizen`. Client-supplied roles are ignored.
 
-### `POST /api/auth/register-authority`
-Provisions an authorized Forest Department enforcement account. Requires valid `inviteSecret`.
+### `POST /api/auth/login-authority`
+Authenticates an already-provisioned Forest Authority officer using official email and password. Does **not** require the invitation secret once provisioned.
+
+**Request Body:**
+```json
+{
+  "email": "officer.sharma@forest.haryana.gov.in",
+  "password": "Officer@Aravalli2026!"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "message": "Enforcement credentials verified. Welcome, Officer Rajesh Sharma.",
+  "token": "demo-token-authority-valid",
+  "user": {
+    "uid": "demo-authority-01",
+    "email": "officer.sharma@forest.haryana.gov.in",
+    "name": "Officer Rajesh Sharma",
+    "department": "Haryana Forest Department & Aravalli Task Force",
+    "designation": "Divisional Forest Officer (DFO)",
+    "role": "authority",
+    "badge": "Authorized Enforcement Officer"
+  }
+}
+```
+
+**Errors:**
+- `400 Bad Request`: Validation failure (email/password missing or malformed).
+- `401 Unauthorized`: Invalid password.
+- `404 Not Found`: Officer account not found or not yet provisioned.
+
+### `POST /api/auth/register-authority` / `POST /api/auth/provision-officer`
+Provisions an authorized Forest Department enforcement account. Strictly requires a valid `inviteSecret` verified against the server configuration.
+
+**Request Body:**
+```json
+{
+  "email": "officer.verma@forest.rajasthan.gov.in",
+  "fullName": "Officer Sunita Verma",
+  "department": "Rajasthan Department of Environment & Forest",
+  "designation": "Assistant Conservator of Forests (ACF)",
+  "password": "SecurePassword2026!",
+  "inviteSecret": "AravalliEnforce2025SecureToken"
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "success": true,
+  "message": "Forest Authority officer account successfully provisioned and verified.",
+  "token": "demo-token-authority-1730164800000",
+  "user": {
+    "uid": "auth-1730164800000",
+    "email": "officer.verma@forest.rajasthan.gov.in",
+    "name": "Officer Sunita Verma",
+    "department": "Rajasthan Department of Environment & Forest",
+    "designation": "Assistant Conservator of Forests (ACF)",
+    "role": "authority",
+    "badge": "Authorized Enforcement Officer"
+  }
+}
+```
+
+**Errors:**
+- `403 Forbidden`: `Invalid Authority Invitation Secret. Authority access must be provisioned through a verified Forest Department or State Environmental Agency administrator.`
+- `500 Internal Server Error`: `Server configuration error: Authority Invitation Secret is not configured. Please set AUTHORITY_INVITE_SECRET in backend/.env.`
 
 ### `POST /api/auth/reset-password`
 Dispatches a secure password recovery instruction email.
 
 ### `POST /api/auth/login-demo`
-Allows 1-click persona switching (`citizen` or `authority`) for evaluation and testing.
+Allows 1-click persona switching (`citizen` or `authority`) for hackathon evaluation and demonstration.
+
+---
+
+## 5. Static Evidence & Media Serving
+
+### `GET /uploads/evidence/:filename` (or `GET /api/uploads/evidence/:filename`)
+Serves encrypted/sanitized local disk evidence images captured by citizen sentinels.
+
+### `GET /datasets/images/:filename` (or `GET /api/datasets/images/:filename`)
+Serves curated demonstration baseline evidence images documented in `datasets/image_credits.csv`.
 
 ---
 

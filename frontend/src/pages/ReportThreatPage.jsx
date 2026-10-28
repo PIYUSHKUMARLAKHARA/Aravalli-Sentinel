@@ -218,12 +218,17 @@ export function ReportThreatPage() {
     }
 
     setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
+    if (Object.keys(errors).length > 0) {
+      setSubmissionError('Please resolve the highlighted validation requirements above before submitting the report: ' + Object.values(errors).join(' '));
+      return false;
+    }
+    return true;
   };
 
   // Final Report Submission with Progress States
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmissionError('');
 
     if (!validateForm()) {
       // Scroll to the first error
@@ -232,7 +237,6 @@ export function ReportThreatPage() {
     }
 
     setIsSubmitting(true);
-    setSubmissionError('');
     setSubmissionStep('1/4: Packaging evidence payload & coordinates...');
 
     try {
@@ -688,6 +692,17 @@ export function ReportThreatPage() {
             </p>
           </div>
 
+          {/* Inline Error Notice immediately above Submit Button */}
+          {submissionError && (
+            <div className="p-4 rounded-xl bg-rose-950/80 border border-rose-500/50 text-xs text-rose-200 flex items-start gap-3 shadow-lg animate-in fade-in">
+              <AlertTriangle className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-bold text-rose-300">Action Required Before Submission</p>
+                <p className="leading-relaxed">{submissionError}</p>
+              </div>
+            </div>
+          )}
+
           {/* Submission Progress Bar if Submitting */}
           {isSubmitting && (
             <div className="p-3 rounded-xl bg-slate-900 border border-emerald-500/40 text-xs font-mono text-emerald-300 space-y-2 animate-in fade-in">
@@ -705,6 +720,7 @@ export function ReportThreatPage() {
           {/* Final Submit Button */}
           <button
             type="submit"
+            id="submit-threat-report-btn"
             disabled={isSubmitting}
             className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-600 to-aravalli-600 hover:from-emerald-500 hover:to-aravalli-500 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] disabled:opacity-60 cursor-pointer"
           >

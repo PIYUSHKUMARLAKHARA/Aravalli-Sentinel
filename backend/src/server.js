@@ -53,10 +53,12 @@ app.use(cors({
 // Request Logger
 app.use(morgan(env.IS_PRODUCTION ? 'combined' : 'dev'));
 
-// Static Evidence and Dataset Image Serving
+// Static Evidence and Dataset Image Serving (serves both root and /api prefixed routes)
 app.use('/uploads', express.static(uploadsDir));
+app.use('/api/uploads', express.static(uploadsDir));
 if (fs.existsSync(resolvedDatasetImages)) {
   app.use('/datasets/images', express.static(resolvedDatasetImages));
+  app.use('/api/datasets/images', express.static(resolvedDatasetImages));
   app.use('/images', express.static(resolvedDatasetImages));
 }
 

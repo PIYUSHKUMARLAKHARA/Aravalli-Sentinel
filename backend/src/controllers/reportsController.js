@@ -11,8 +11,8 @@ import { seedReports } from '../data/seedReports.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure local evidence directory exists
-const localUploadsDir = path.resolve(__dirname, '../uploads/evidence');
+// Ensure local evidence directory exists in backend/uploads/evidence
+const localUploadsDir = path.resolve(__dirname, '../../uploads/evidence');
 if (!fs.existsSync(localUploadsDir)) {
   fs.mkdirSync(localUploadsDir, { recursive: true });
 }

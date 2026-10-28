@@ -31,7 +31,7 @@ export function ImageWithFallback({
 
   // Determine current image source
   let currentSrc = src;
-  if (errorCount === 1) {
+  if (!src || errorCount === 1) {
     currentSrc = fallbackSrc || CATEGORY_DEFAULT_PHOTOS[threatCategory] || CATEGORY_DEFAULT_PHOTOS['Illegal Mining'];
   } else if (errorCount >= 2) {
     currentSrc = CATEGORY_DEFAULT_PHOTOS[threatCategory] || CATEGORY_DEFAULT_PHOTOS['Illegal Mining'];

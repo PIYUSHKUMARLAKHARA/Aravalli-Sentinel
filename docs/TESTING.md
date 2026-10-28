@@ -2,8 +2,8 @@
 
 > **Test Framework:** [Vitest](https://vitest.dev/) v3.2.7 (ES Modules Native)  
 > **HTTP Integration Testing:** [Supertest](https://github.com/ladjs/supertest) v7.0.0  
-> **Test Status:** **42 Tests Passed (100% Success Rate across 2 Test Suites)**  
-> **Execution Duration:** ~1.90 seconds
+> **Test Status:** **54 Tests Passed (100% Success Rate across 2 Test Suites)**  
+> **Execution Duration:** ~2.10 seconds
 
 ---
 
@@ -49,7 +49,7 @@ npx --prefix backend vitest run tests/api.test.js
 
 ---
 
-## 3. Verified Test Results (Executed Oct 27, 2026)
+## 3. Verified Test Results (Executed Oct 28, 2026)
 
 ```text
 > aravalli-sentinel-backend@1.0.0 test
@@ -57,13 +57,12 @@ npx --prefix backend vitest run tests/api.test.js
 
  RUN  v3.2.7 C:/Users/dlakh/Desktop/ARAVALLI SENTINEL/backend
 
- ✓ tests/riskEngine.test.js (11 tests) 9ms
- ✓ tests/api.test.js (31 tests) 297ms
+ ✓ tests/riskEngine.test.js (11 tests) 15ms
+ ✓ tests/api.test.js (43 tests) 438ms
 
  Test Files  2 passed (2)
-      Tests  42 passed (42)
-   Start at  16:28:27
-   Duration  1.90s (transform 250ms, setup 0ms, collect 928ms, tests 306ms, environment 0ms, prepare 335ms)
+      Tests  54 passed (54)
+   Duration  2.12s
 ```
 
 ---
@@ -90,7 +89,7 @@ File: [`backend/tests/riskEngine.test.js`](file:///c:/Users/dlakh/Desktop/ARAVAL
 ---
 
 ### Suite B: API Integration Tests (`tests/api.test.js`)
-File: [`backend/tests/api.test.js`](file:///c:/Users/dlakh/Desktop/ARAVALLI%20SENTINEL/backend/tests/api.test.js) (31 Tests)
+File: [`backend/tests/api.test.js`](file:///c:/Users/dlakh/Desktop/ARAVALLI%20SENTINEL/backend/tests/api.test.js) (43 Tests)
 
 | # | Endpoint & Scenario | Method | HTTP Status | Expected Assertion |
 | :---: | :--- | :---: | :---: | :--- |
@@ -111,7 +110,7 @@ File: [`backend/tests/api.test.js`](file:///c:/Users/dlakh/Desktop/ARAVALLI%20SE
 | 15 | **Fetch Report By ID** | `GET /api/reports/:id` | `200` | Returns report object with AI analysis and risk assessment. |
 | 16 | **Unknown Report 404** | `GET /api/reports/:unknown` | `404` | Returns descriptive 404 error object. |
 | 17 | **Printable Incident Dossier** | `GET /api/reports/:id/incident-dossier` | `200` | Formats complete administrative dossier packet. |
-| 18 | **Public Citizen Privacy Redaction** | `GET /api/reports` | `200` | `citizenId` is undefined, `citizenName` set to Anonymous Citizen Sentinel. |
+| 18 | **Public Citizen Privacy Redaction** | `GET /api/reports` | `200` | `citizenId` is redacted, `citizenName` set to Anonymous Citizen Sentinel. |
 | 19 | **Ask Aravalli Legal AI Assistant** | `POST /api/ai/ask-aravalli` | `200` | Returns grounded text answering Supreme Court ban questions. |
 | 20 | **Live Evidence Preview (AI)** | `POST /api/ai/analyze-evidence` | `200` | Returns structured visual indicators and confidence estimate. |
 | 21 | **Invalid Status Enum Rejection** | `PATCH /api/reports/:id/status` | `400` | Rejects non-permitted status strings. |
@@ -125,6 +124,18 @@ File: [`backend/tests/api.test.js`](file:///c:/Users/dlakh/Desktop/ARAVALLI%20SE
 | 29 | **Authenticated Profile Access** | `GET /api/auth/profile` | `200` | Returns decoded user profile for valid Bearer token. |
 | 30 | **Citizen Account Registration** | `POST /api/auth/register-citizen` | `201` | Registers account with role strictly set to `citizen`. |
 | 31 | **Registration Missing Email** | `POST /api/auth/register-citizen` | `400` | Rejects payload missing mandatory email. |
+| 32 | **Satellite Area Query** | `POST /api/zones/satellite-query` | `200` | Queries area of interest and returns satellite observations. |
+| 33 | **Multi-Temporal Satellite Comparison**| `GET /api/zones/:id/satellite-comparison`| `200` | Compares baseline vs. current observation NDVI deltas. |
+| 34 | **Export Observations (GeoJSON)** | `GET /api/zones/:id/export-observations?format=geojson` | `200` | Exports sector telemetry in GeoJSON standard format. |
+| 35 | **Export Observations (CSV)** | `GET /api/zones/:id/export-observations?format=csv` | `200` | Exports sector telemetry in CSV table format. |
+| 36 | **Citizen Email Authentication** | `POST /api/auth/login-citizen` | `200` | Verifies citizen password and returns citizen session token. |
+| 37 | **Citizen Password Reset** | `POST /api/auth/reset-password` | `200` | Dispatches password reset link token simulation. |
+| 38 | **Area Problem Statement** | `POST /api/zones/problem-statement` | `200` | Generates official area-based threat problem statement. |
+| 39 | **Citizen Personal History Filter** | `GET /api/reports?myReports=true` | `200` | Filters reports submitted by authenticated citizen. |
+| 40 | **Officer Credentials Sign In** | `POST /api/auth/login-authority` | `200` | Authenticates provisioned officer credentials. |
+| 41 | **Unprovisioned Officer Rejection** | `POST /api/auth/login-authority` | `404` | Rejects unknown officer email with actionable provisioning guidance. |
+| 42 | **Officer Wrong Password Rejection** | `POST /api/auth/login-authority` | `401` | Rejects invalid password attempt for officer account. |
+| 43 | **End-to-End Officer Triage Workflow** | Full Lifecycle Flow | `201/200` | Officer provisioning with secret -> Login -> Mutate status -> Verified. |
 
 ---
 

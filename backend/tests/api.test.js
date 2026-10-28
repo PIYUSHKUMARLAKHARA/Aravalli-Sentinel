@@ -574,4 +574,16 @@ describe('Aravalli Sentinel API - Integration Tests', () => {
     expect(citizenBlockRes.status).toBe(403);
     expect(citizenBlockRes.body.success).toBe(false);
   });
+
+  it('GET /datasets/images/:filename serves valid static baseline evidence images', async () => {
+    const res = await request(app).get('/datasets/images/charcoal_felling_01.jpg');
+    expect(res.status).toBe(200);
+    expect(res.header['content-type']).toContain('image');
+  });
+
+  it('GET /api/datasets/images/:filename serves static baseline evidence with /api prefix', async () => {
+    const res = await request(app).get('/api/datasets/images/charcoal_felling_01.jpg');
+    expect(res.status).toBe(200);
+    expect(res.header['content-type']).toContain('image');
+  });
 });
