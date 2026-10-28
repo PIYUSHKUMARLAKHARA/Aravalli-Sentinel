@@ -32,6 +32,7 @@ export function LoginPage() {
     loginCitizen,
     registerCitizen,
     loginAuthority,
+    provisionAuthority,
     forgotPassword,
   } = useAuth();
 
@@ -39,6 +40,8 @@ export function LoginPage() {
   const [activePortal, setActivePortal] = useState('citizen');
   // Citizen mode: 'signin' | 'signup' | 'forgot'
   const [citizenMode, setCitizenMode] = useState('signin');
+  // Authority mode: 'signin' | 'provision'
+  const [authorityMode, setAuthorityMode] = useState('signin');
 
   // Form states
   const [email, setEmail] = useState('');
@@ -128,37 +131,69 @@ export function LoginPage() {
     }
   };
 
-  // Handle Forest Authority Login
+  // Handle Forest Authority Sign In vs Provisioning
   const handleAuthorityAuth = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
 
+    if (authorityMode === 'signin') {
+      if (!officerEmail || !officerEmail.includes('@')) {
+        setErrorMessage('Please enter your official registered email address.');
+        return;
+      }
+      if (!officerPassword) {
+        setErrorMessage('Password is required for Forest Authority sign in.');
+        return;
+      }
+
+      setSubmitting(true);
+      try {
+        const res = await loginAuthority(officerEmail, officerPassword);
+        if (res.success) {
+          setSuccessMessage('Officer credentials verified! Opening Enforcement Triage Console...');
+          setTimeout(() => navigate('/authority'), 600);
+        } else {
+          setErrorMessage(res.error || 'Failed to authenticate officer account.');
+        }
+      } catch (err) {
+        setErrorMessage(err.message || 'Authority authorization failed.');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // Provisioning Mode (with administrative invite secret validation)
     if (!officerEmail || !officerName || !inviteSecret) {
-      setErrorMessage('Officer Name, Official Email, and Authority Invite Secret are required.');
+      setErrorMessage('Officer Name, Official Email, and Authority Invite Secret are required to provision an officer account.');
+      return;
+    }
+    if (!officerPassword || officerPassword.length < 6) {
+      setErrorMessage('Please choose a secure password of at least 6 characters for the officer account.');
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const res = await loginAuthority({
+      const res = await provisionAuthority({
         email: officerEmail,
         fullName: officerName,
-        password: officerPassword || 'Secret2026!',
+        password: officerPassword,
         department: officerDepartment,
         designation: officerDesignation,
         inviteSecret: inviteSecret,
       });
 
       if (res.success) {
-        setSuccessMessage('Authority credentials verified! Opening Enforcement Triage Console...');
+        setSuccessMessage('Authority account successfully provisioned! Opening Enforcement Triage Console...');
         setTimeout(() => navigate('/authority'), 600);
       } else {
         setErrorMessage(res.error || 'Invalid Authority Invite Secret. Contact Forest Department IT administrator.');
       }
     } catch (err) {
-      setErrorMessage(err.message || 'Authority authorization failed.');
+      setErrorMessage(err.message || 'Authority provisioning failed.');
     } finally {
       setSubmitting(false);
     }
@@ -477,113 +512,225 @@ export function LoginPage() {
             <div className="border-b border-slate-800 pb-4">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-amber-400" />
-                <span>Forest Authority Officer Login</span>
+                <span>Forest Authority Enforcement Portal</span>
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 Restricted portal for Divisional Forest Officers, Mining Task Force, and Wildlife Wardens.
               </p>
+
+              {/* Sub-Tabs: Officer Sign In vs Officer Provisioning */}
+              <div className="grid grid-cols-2 gap-2 mt-4 p-1 bg-slate-950 border border-slate-800 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthorityMode('signin');
+                    setErrorMessage('');
+                    setSuccessMessage('');
+                  }}
+                  className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                    authorityMode === 'signin'
+                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Officer Sign In</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthorityMode('provision');
+                    setErrorMessage('');
+                    setSuccessMessage('');
+                  }}
+                  className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                    authorityMode === 'provision'
+                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Officer Provisioning</span>
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleAuthorityAuth} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
-                    Officer Full Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Officer Rajesh Sharma"
-                    value={officerName}
-                    onChange={(e) => setOfficerName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+              {/* MODE 1: OFFICER SIGN IN (Existing Provisioned Officer) */}
+              {authorityMode === 'signin' && (
+                <>
+                  {/* Demo Pre-fill helper */}
+                  <div className="p-3 bg-amber-950/30 border border-amber-500/30 rounded-xl flex items-center justify-between gap-2">
+                    <div className="text-[11px] text-amber-300">
+                      <span className="font-bold">Evaluation Bootstrap:</span> Seeded DFO Officer Account
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfficerEmail('officer.sharma@forest.haryana.gov.in');
+                        setOfficerPassword('Officer@Aravalli2026!');
+                      }}
+                      className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-mono transition-colors"
+                    >
+                      Pre-fill DFO Sharma
+                    </button>
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
-                    Department / Agency
-                  </label>
-                  <select
-                    value={officerDepartment}
-                    onChange={(e) => setOfficerDepartment(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
-                  >
-                    <option value="Haryana Forest Department & Aravalli Task Force">Haryana Forest Department</option>
-                    <option value="Rajasthan Department of Environment & Forest">Rajasthan Forest Department</option>
-                    <option value="Delhi Forest & Wildlife Department">Delhi Forest Department</option>
-                    <option value="Gujarat Forest Department (Sabarkantha Division)">Gujarat Forest Department</option>
-                  </select>
-                </div>
-              </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                      Official Gov / Departmental Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="email"
+                        placeholder="officer.sharma@forest.haryana.gov.in"
+                        value={officerEmail}
+                        onChange={(e) => setOfficerEmail(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
-                  Designation / Role
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Divisional Forest Officer (DFO) / Range Officer"
-                  value={officerDesignation}
-                  onChange={(e) => setOfficerDesignation(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type={showOfficerPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={officerPassword}
+                        onChange={(e) => setOfficerPassword(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOfficerPassword(!showOfficerPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                      >
+                        {showOfficerPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
-                  Official Gov / Departmental Email
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    placeholder="officer.sharma@forest.haryana.gov.in"
-                    value={officerEmail}
-                    onChange={(e) => setOfficerEmail(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
+              {/* MODE 2: OFFICER PROVISIONING (New Registration via Invite Secret) */}
+              {authorityMode === 'provision' && (
+                <>
+                  <div className="p-3 bg-amber-950/20 border border-amber-500/30 rounded-xl text-[11px] text-amber-200/90 leading-relaxed">
+                    <span className="font-bold text-amber-300">Administrative Provisioning:</span> New officer accounts require a verified Authority Invitation Secret issued by a Forest Department or State Environmental Agency administrator.
+                  </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type={showOfficerPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={officerPassword}
-                    onChange={(e) => setOfficerPassword(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowOfficerPassword(!showOfficerPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                  >
-                    {showOfficerPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                        Officer Full Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Officer Sunita Verma"
+                        value={officerName}
+                        onChange={(e) => setOfficerName(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
 
-              <div className="space-y-1.5 p-3.5 bg-slate-950 rounded-xl border border-amber-500/30">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-mono uppercase text-amber-300 font-bold flex items-center gap-1.5">
-                    <KeyRound className="w-3.5 h-3.5" />
-                    <span>Authority Invitation Secret Token</span>
-                  </label>
-                  <span className="text-[10px] text-slate-400 font-mono">Demo: AravalliEnforce2025SecureToken</span>
-                </div>
-                <input
-                  type="password"
-                  placeholder="Paste government administrative invite token..."
-                  value={inviteSecret}
-                  onChange={(e) => setInviteSecret(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
-                />
-              </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                        Department / Agency
+                      </label>
+                      <select
+                        value={officerDepartment}
+                        onChange={(e) => setOfficerDepartment(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                      >
+                        <option value="Haryana Forest Department & Aravalli Task Force">Haryana Forest Department</option>
+                        <option value="Rajasthan Department of Environment & Forest">Rajasthan Forest Department</option>
+                        <option value="Delhi Forest & Wildlife Department">Delhi Forest Department</option>
+                        <option value="Gujarat Forest Department (Sabarkantha Division)">Gujarat Forest Department</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                      Designation / Role
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Divisional Forest Officer (DFO) / Range Officer"
+                      value={officerDesignation}
+                      onChange={(e) => setOfficerDesignation(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                      Official Gov / Departmental Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="email"
+                        placeholder="officer.verma@forest.rajasthan.gov.in"
+                        value={officerEmail}
+                        onChange={(e) => setOfficerEmail(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono uppercase text-slate-300 font-bold block">
+                      Create Officer Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type={showOfficerPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={officerPassword}
+                        onChange={(e) => setOfficerPassword(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOfficerPassword(!showOfficerPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                      >
+                        {showOfficerPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 p-3.5 bg-slate-950 rounded-xl border border-amber-500/30">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-mono uppercase text-amber-300 font-bold flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5" />
+                        <span>Authority Invitation Secret Token</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setInviteSecret('AravalliEnforce2025SecureToken')}
+                        className="text-[10px] text-amber-400 hover:underline font-mono"
+                      >
+                        Fill Demo Secret
+                      </button>
+                    </div>
+                    <input
+                      type="password"
+                      placeholder="Paste government administrative invite token..."
+                      value={inviteSecret}
+                      onChange={(e) => setInviteSecret(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
+                    />
+                  </div>
+                </>
+              )}
 
               <button
                 type="submit"
@@ -595,18 +742,41 @@ export function LoginPage() {
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     <span>Verifying Authority Credentials with Department Server...</span>
                   </>
-                ) : (
+                ) : authorityMode === 'signin' ? (
                   <>
                     <ShieldAlert className="w-4 h-4" />
-                    <span>Verify & Enter Enforcement Triage Console</span>
+                    <span>Sign In to Enforcement Triage Console</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                ) : (
+                  <>
+                    <BadgeCheck className="w-4 h-4" />
+                    <span>Verify Secret & Provision Officer Account</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
             </form>
 
-            <div className="pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-500">
-              Notice: All officer triage actions, status changes, and dispatch notes are cryptographically logged in an immutable audit trail.
+            <div className="pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-500 flex items-center justify-between">
+              <span>Notice: Officer triage actions are cryptographically logged in an audit trail.</span>
+              {authorityMode === 'signin' ? (
+                <button
+                  type="button"
+                  onClick={() => setAuthorityMode('provision')}
+                  className="text-amber-400 hover:underline"
+                >
+                  Need Provisioning?
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAuthorityMode('signin')}
+                  className="text-amber-400 hover:underline"
+                >
+                  Back to Sign In
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -684,6 +854,16 @@ export function LoginPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Statutory Non-Government Notice */}
+      <div className="text-center p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-[11px] text-slate-500 max-w-2xl mx-auto space-y-1">
+        <p className="font-semibold text-slate-400">
+          Statutory Notice & Academic / Hackathon Disclaimer
+        </p>
+        <p>
+          Aravalli Sentinel is an independent academic, civic, and hackathon demonstration platform created for ecological threat monitoring. It is not an official portal of the Ministry of Environment, Forest and Climate Change (MoEFCC), Rajasthan Forest Department, or Haryana Forest Department. Official statutory environmental enforcement actions must be routed through respective government bodies.
+        </p>
       </div>
     </div>
   );

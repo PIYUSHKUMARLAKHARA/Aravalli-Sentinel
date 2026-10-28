@@ -46,11 +46,17 @@ export const updateReportStatusSchema = z.object({
 });
 
 export const authorityInviteSchema = z.object({
-  email: z.string().email(),
-  fullName: z.string().min(2),
-  department: z.string().min(2),
-  designation: z.string().min(2),
+  email: z.string().email('Please provide a valid official government or agency email address.'),
+  fullName: z.string().min(2, 'Officer full name must be at least 2 characters.'),
+  department: z.string().min(2, 'Department or agency name is required.'),
+  designation: z.string().min(2, 'Officer designation is required.'),
   inviteSecret: z.string().min(1, 'Authority invite secret is required.'),
+  password: z.string().min(6, 'Password must be at least 6 characters long.').optional(),
+});
+
+export const authorityLoginSchema = z.object({
+  email: z.string().email('Please provide a valid official email address.'),
+  password: z.string().min(6, 'Password must be at least 6 characters long.'),
 });
 
 export function validateCreateReport(req, res, next) {
@@ -91,6 +97,7 @@ export default {
   createReportSchema,
   updateReportStatusSchema,
   authorityInviteSchema,
+  authorityLoginSchema,
   validateCreateReport,
   validateUpdateStatus,
 };

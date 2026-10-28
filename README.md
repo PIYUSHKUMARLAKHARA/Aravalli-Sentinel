@@ -359,11 +359,28 @@ cp .env.example frontend/.env
 | `GEMINI_API_KEY` | `backend/.env` | Google AI Studio key | Optional* | `AIzaSy...` (Uses heuristic fallback if empty) |
 | `GEMINI_MODEL` | `backend/.env` | Gemini model name | Optional | `gemini-2.0-flash` |
 | `FIREBASE_PROJECT_ID` | `backend/.env` | Firebase project ID | Yes | `aravalli-sentinel-demo` |
-| `AUTHORITY_INVITE_SECRET` | `backend/.env` | Admin secret for authority creation | Yes | `AravalliEnforce2025SecureToken` |
+| `AUTHORITY_INVITE_SECRET` | `backend/.env` | Server-held secret to provision Forest Authority accounts | Yes | `AravalliEnforce2025SecureToken` |
+| `DEMO_BOOTSTRAP_ENABLED` | `backend/.env` | Pre-seeds evaluation officer in non-prod environments | Yes | `true` (`false` in production) |
 | `VITE_API_URL` | `frontend/.env` | Backend API proxy path | Yes | `/api` |
 | `VITE_GOOGLE_MAPS_API_KEY` | `frontend/.env`| Google Maps JS key | Optional | Empty (Uses Leaflet & Esri Satellite if empty) |
 
 *\*Note: The application operates completely out-of-the-box in **Demonstration Mode** with zero external API keys required!*
+
+### Forest Authority Role Security & Provisioning Architecture
+1. **Strict Citizen / Officer Separation:**
+   - Public users can only register as `citizen` via `/api/auth/register-citizen`. Client-provided roles are strictly ignored.
+   - Authority status cannot be obtained via query parameters, local storage mutation, or public signup.
+2. **Dual-Path Authority Authentication:**
+   - **Officer Sign In (`POST /api/auth/login-authority`):** For existing/provisioned officers using official email and password. Does not require the invitation secret once provisioned.
+   - **Officer Provisioning (`POST /api/auth/register-authority`):** Requires the verified `AUTHORITY_INVITE_SECRET` configured on the server. Provisions the officer into the server-side officer registry and issues verified `authority` session tokens.
+3. **Demo Bootstrap Mode:**
+   - For hackathon evaluation, `DEMO_BOOTSTRAP_ENABLED=true` seeds a demonstration officer:
+     - **Email:** `officer.sharma@forest.haryana.gov.in`
+     - **Password:** `Officer@Aravalli2026!`
+     - **Demo Secret:** `AravalliEnforce2025SecureToken`
+   - In production environments, set `DEMO_BOOTSTRAP_ENABLED=false` to disable bootstrap accounts and enforce strict administrator provisioning.
+4. **Statutory Non-Government Notice:**
+   - *Aravalli Sentinel is an independent academic, civic, and hackathon project. It is not an official portal of the Ministry of Environment, Forest and Climate Change (MoEFCC) or State Forest Departments.*
 
 ---
 

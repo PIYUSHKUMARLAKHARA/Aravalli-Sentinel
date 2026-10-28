@@ -150,6 +150,9 @@ export const getFirestore = () => {
   return isFirebaseConfigured ? db : localDb;
 };
 
+// In-memory token session registry for local development fallback
+export const localTokenSessionStore = new Map();
+
 export const getAuth = () => {
   if (isFirebaseConfigured) {
     return admin.auth();
@@ -157,6 +160,9 @@ export const getAuth = () => {
   return {
     async verifyIdToken(token) {
       if (!token) throw new Error('Missing token');
+      if (localTokenSessionStore.has(token)) {
+        return localTokenSessionStore.get(token);
+      }
       // For local demo fallback, inspect mock token or demo bearer
       if (token.startsWith('demo-token-')) {
         const role = token.includes('authority') ? 'authority' : 'citizen';
@@ -172,7 +178,10 @@ export const getAuth = () => {
         email: 'user@aravalli.sentinel',
         role: 'citizen',
       };
-    }
+    },
+    async setCustomUserClaims(uid, claims) {
+      return true;
+    },
   };
 };
 

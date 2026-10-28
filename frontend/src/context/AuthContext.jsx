@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   loginDemoUser,
   loginCitizen as apiLoginCitizen,
+  loginAuthority as apiLoginAuthority,
   registerCitizen as apiRegisterCitizen,
   registerAuthority as apiRegisterAuthority,
   resetCitizenPassword,
@@ -79,7 +80,28 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const loginAuthorityAccount = async (payload) => {
+  const loginAuthorityWithCredentials = async (emailOrPayload, password) => {
+    // If called with an object containing inviteSecret (provisioning call)
+    if (typeof emailOrPayload === 'object' && emailOrPayload !== null) {
+      if (emailOrPayload.inviteSecret) {
+        return provisionAuthorityAccount(emailOrPayload);
+      }
+      return loginAuthorityWithCredentials(emailOrPayload.email, emailOrPayload.password);
+    }
+
+    setLoading(true);
+    try {
+      const result = await apiLoginAuthority(emailOrPayload, password);
+      if (result.success && result.user) {
+        setUser(result.user);
+      }
+      return result;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const provisionAuthorityAccount = async (payload) => {
     setLoading(true);
     try {
       const result = await apiRegisterAuthority(payload);
@@ -112,7 +134,9 @@ export function AuthProvider({ children }) {
         switchPersona,
         loginCitizen: loginCitizenWithEmail,
         registerCitizen: registerCitizenAccount,
-        loginAuthority: loginAuthorityAccount,
+        loginAuthority: loginAuthorityWithCredentials,
+        provisionAuthority: provisionAuthorityAccount,
+        loginAuthorityAccount: provisionAuthorityAccount,
         forgotPassword,
         logout,
       }}

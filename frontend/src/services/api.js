@@ -112,6 +112,20 @@ export async function loginCitizen(email, password) {
   return data;
 }
 
+export async function loginAuthority(email, password) {
+  const res = await fetch(`${BASE_URL}/auth/login-authority`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (data.success && data.token) {
+    localStorage.setItem('aravalli_auth_token', data.token);
+    localStorage.setItem('aravalli_auth_user', JSON.stringify(data.user));
+  }
+  return data;
+}
+
 export async function resetCitizenPassword(email) {
   const res = await fetch(`${BASE_URL}/auth/reset-password`, {
     method: 'POST',
@@ -194,6 +208,7 @@ export default {
   askAravalli,
   loginDemoUser,
   loginCitizen,
+  loginAuthority,
   registerCitizen,
   registerAuthority,
   resetCitizenPassword,

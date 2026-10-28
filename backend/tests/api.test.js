@@ -476,4 +476,102 @@ describe('Aravalli Sentinel API - Integration Tests', () => {
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.reports)).toBe(true);
   });
+
+  it('POST /api/auth/login-authority authenticates provisioned bootstrap officer', async () => {
+    const res = await request(app)
+      .post('/api/auth/login-authority')
+      .send({
+        email: 'officer.sharma@forest.haryana.gov.in',
+        password: 'Officer@Aravalli2026!',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user.role).toBe('authority');
+    expect(res.body.token).toBeDefined();
+  });
+
+  it('POST /api/auth/login-authority rejects unprovisioned officer accounts with clear error', async () => {
+    const res = await request(app)
+      .post('/api/auth/login-authority')
+      .send({
+        email: 'unknown.officer@rajasthan.gov.in',
+        password: 'Password2026!',
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toContain('Officer account not provisioned');
+  });
+
+  it('POST /api/auth/login-authority rejects wrong password for registered officer', async () => {
+    const res = await request(app)
+      .post('/api/auth/login-authority')
+      .send({
+        email: 'officer.sharma@forest.haryana.gov.in',
+        password: 'WrongPassword999!',
+      });
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toContain('Invalid password');
+  });
+
+  it('End-to-End: Provision new officer with secret, sign in, and execute authority triage', async () => {
+    const officerEmail = `officer.test.${Date.now()}@forest.rajasthan.gov.in`;
+    const officerPassword = 'SecureForestPass2026!';
+
+    // Step 1: Provision officer with valid Authority Invitation Secret
+    const provisionRes = await request(app)
+      .post('/api/auth/register-authority')
+      .send({
+        email: officerEmail,
+        fullName: 'Officer Vikramaditya Singh',
+        department: 'Rajasthan Forest Department',
+        designation: 'Assistant Conservator of Forests (ACF)',
+        password: officerPassword,
+        inviteSecret: 'AravalliEnforce2025SecureToken',
+      });
+
+    expect(provisionRes.status).toBe(201);
+    expect(provisionRes.body.success).toBe(true);
+    expect(provisionRes.body.user.role).toBe('authority');
+
+    // Step 2: Officer logs in with email and password without needing invite secret
+    const loginRes = await request(app)
+      .post('/api/auth/login-authority')
+      .send({
+        email: officerEmail,
+        password: officerPassword,
+      });
+
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.success).toBe(true);
+    expect(loginRes.body.user.role).toBe('authority');
+    const officerToken = loginRes.body.token;
+
+    // Step 3: Access officer-restricted triage status API
+    const triageRes = await request(app)
+      .patch('/api/reports/rep-aravalli-2026-001/status')
+      .set('Authorization', `Bearer ${officerToken}`)
+      .send({
+        status: 'under_review',
+        actionNotes: 'Enforcement task force patrol assigned to inspect site coordinates.',
+      });
+
+    expect(triageRes.status).toBe(200);
+    expect(triageRes.body.success).toBe(true);
+
+    // Step 4: Verify citizen user is blocked from that same triage API
+    const citizenBlockRes = await request(app)
+      .patch('/api/reports/rep-aravalli-2026-001/status')
+      .set('Authorization', 'Bearer demo-token-citizen-valid')
+      .send({
+        status: 'resolved',
+        actionNotes: 'Citizen trying to mark as resolved.',
+      });
+
+    expect(citizenBlockRes.status).toBe(403);
+    expect(citizenBlockRes.body.success).toBe(false);
+  });
 });

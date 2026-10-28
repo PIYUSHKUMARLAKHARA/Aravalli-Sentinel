@@ -2,6 +2,7 @@ import express from 'express';
 import {
   loginDemo,
   loginCitizen,
+  loginAuthority,
   registerCitizen,
   registerAuthority,
   resetPassword,
@@ -13,8 +14,10 @@ const router = express.Router();
 
 router.post('/login-demo', loginDemo);
 router.post('/login-citizen', loginCitizen);
+router.post('/login-authority', loginAuthority);
 router.post('/register-citizen', registerCitizen);
 router.post('/register-authority', registerAuthority);
+router.post('/provision-officer', registerAuthority); // Administrative alias
 router.post('/reset-password', resetPassword);
 router.get('/profile', authenticateUser, getProfile);
 
