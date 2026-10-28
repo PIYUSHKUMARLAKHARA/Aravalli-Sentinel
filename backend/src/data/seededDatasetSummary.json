@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-10-28T06:55:37.178Z",
+  "datasetProvenance": "synthetic_demonstration",
+  "citizenReportsCount": 33,
+  "environmentalObservationsCount": 52,
+  "riskZonesCount": 10,
+  "zones": [
+    {
+      "zoneId": "ZONE-BANDHWARI-01",
+      "zoneName": "Bandhwari Leachate & Quarry Sector",
+      "riskLevel": "CRITICAL",
+      "riskScore": 88.5
+    },
+    {
+      "zoneId": "ZONE-SARISKA-02",
+      "zoneName": "Sariska Tiger Reserve Northern Buffer",
+      "riskLevel": "CRITICAL",
+      "riskScore": 79.2
+    },
+    {
+      "zoneId": "ZONE-ASOLA-03",
+      "zoneName": "Asola Bhatti Wildlife Corridor Spur",
+      "riskLevel": "HIGH RISK",
+      "riskScore": 58.4
+    },
+    {
+      "zoneId": "ZONE-NAHARGARH-04",
+      "zoneName": "Nahargarh Climax Dhau Ridge",
+      "riskLevel": "HIGH RISK",
+      "riskScore": 67.3
+    },
+    {
+      "zoneId": "ZONE-TOSHAM-05",
+      "zoneName": "Tosham Granite Mining Cluster",
+      "riskLevel": "CRITICAL",
+      "riskScore": 89.1
+    },
+    {
+      "zoneId": "ZONE-KUMBHALGARH-06",
+      "zoneName": "Kumbhalgarh Highland Wildlife Sanctuary",
+      "riskLevel": "HIGH RISK",
+      "riskScore": 52.1
+    },
+    {
+      "zoneId": "ZONE-KHETRI-07",
+      "zoneName": "Khetri Copper Foothills & Mine Waste",
+      "riskLevel": "WATCH",
+      "riskScore": 46.8
+    },
+    {
+      "zoneId": "ZONE-SIROHI-08",
+      "zoneName": "Sirohi Southern Foothills & Abu Corridor",
+      "riskLevel": "WATCH",
+      "riskScore": 48.5
+    },
+    {
+      "zoneId": "ZONE-IDAR-09",
+      "zoneName": "Idar Granite Formations",
+      "riskLevel": "WATCH",
+      "riskScore": 44.2
+    },
+    {
+      "zoneId": "ZONE-MANGAR-10",
+      "zoneName": "Mangar Bani Sacred Climax Grove",
+      "riskLevel": "CRITICAL",
+      "riskScore": 81.3
+    }
+  ]
+}

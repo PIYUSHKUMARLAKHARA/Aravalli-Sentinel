@@ -186,19 +186,38 @@ c:\Users\dlakh\Desktop\ARAVALLI SENTINEL/
 ├── .gitignore                         # Excludes .env, node_modules, keys, credentials
 ├── firestore.rules                    # Least-privilege Firestore security rules
 ├── storage.rules                      # 10MB image limit Storage security rules
-├── package.json                       # Monorepo orchestration scripts
+├── package.json                       # Monorepo orchestration scripts & ESM configuration
 ├── README.md                          # Master GitHub documentation (this file)
-├── TECHNICAL_DESIGN.md                # Solution architecture & Mermaid technical design
+├── TECHNICAL_DESIGN.md                # 3D Isometric Architecture & Technical Design Document
 ├── TESTING.md                         # Complete test catalog & execution guide
 ├── LICENSE                            # MIT License
-├── sample_data/                       # Fictional demonstration datasets
-│   ├── environmental_incidents.json   # 12 synthetic incident records matching app schema
-│   ├── environmental_incidents.csv    # CSV tabular export of sample records
-│   └── README.md                      # Sample data dictionary and usage guide
-├── docs/                              # Auxiliary architectural guides
-│   ├── ARCHITECTURE.md                # Detailed system architecture specification
-│   ├── API_SPEC.md                    # REST API endpoint reference
-│   ├── DEMO_WALKTHROUGH.md            # Step-by-step evaluator demo script
+├── datasets/                          # Standardized Open Environmental Datasets
+│   ├── citizen_reports/
+│   │   ├── sample_citizen_reports.csv # 33 realistic citizen threat reports
+│   │   └── images/                    # 33 verified sample JPEG evidence images
+│   ├── environmental_observations/
+│   │   └── sample_environmental_observations.csv # 52 Sentinel-2 / Landsat NDVI observations
+│   ├── risk_zones/
+│   │   └── sample_risk_zones.geojson  # 10 monitored Aravalli ecological zones (GeoJSON)
+│   ├── image_metadata/
+│   │   └── sample_image_metadata.csv  # Sourced licenses, URLs, and SHA-256 hashes
+│   ├── data_dictionary.md             # Complete field-level schema definitions
+│   ├── sources_and_licenses.md        # Provenance, open licenses, and legal terms
+│   ├── validation_report.md           # Automated integrity and coordinate audit results
+│   └── README.md                      # Dataset inventory & user guide
+├── scripts/                           # Validation and automation scripts
+│   ├── validate_dataset.js            # Automated dataset integrity & bounds validator
+│   ├── seed_demo_data.js              # Runtime database synchronizer
+│   └── generate_sample_images.js      # Evidence image generator
+├── docs/                              # Comprehensive documentation suite
+│   ├── ARCHITECTURE.md                # System topology & block flowcharts
+│   ├── TECHNICAL_DESIGN.md            # 3D Isometric multi-tier architectural stack
+│   ├── DATASET_GUIDE.md               # Guide to data collection & sampling methodology
+│   ├── AI_METHODOLOGY.md              # Gemini 2.0 AI vision & Risk Engine formulation
+│   ├── API_DOCUMENTATION.md           # Complete REST API reference with JSON payloads
+│   ├── TESTING.md                     # Test execution & 42-test catalog
+│   ├── DEMO_SCRIPT.md                 # 2-minute hackathon demo script & SDG alignment
+│   ├── DEMO_WALKTHROUGH.md            # Step-by-step evaluator walkthrough
 │   ├── DEPLOYMENT.md                  # Cloud Run & Firebase production deployment
 │   └── FIREBASE_SETUP.md              # Firebase project configuration steps
 ├── backend/                           # Node.js Express REST API
@@ -218,7 +237,8 @@ c:\Users\dlakh\Desktop\ARAVALLI SENTINEL/
 │   │   │   └── zonesController.js     # Ecological sectors & risk recalculator
 │   │   ├── data/
 │   │   │   ├── aravalliZones.js       # 8 monitored sectors with telemetry metadata
-│   │   │   └── seedReports.js         # Baseline reports with complete audit histories
+│   │   │   ├── seedReports.js         # Baseline reports with complete audit histories
+│   │   │   └── seededDatasetSummary.json # Synchronized dataset manifest
 │   │   ├── middleware/
 │   │   │   ├── auth.js                # JWT verification & requireAuthority guard
 │   │   │   └── upload.js              # Multer memory storage (JPEG/PNG/WEBP, 10MB limit)
@@ -236,11 +256,11 @@ c:\Users\dlakh\Desktop\ARAVALLI SENTINEL/
 │   └── tests/                         # Vitest automated test suite
 │       ├── api.test.js                # 31 integration tests for all REST endpoints
 │       └── riskEngine.test.js         # 11 unit tests for risk formula & boundaries
-└── frontend/                          # React Vite Web Client
+└── frontend/                          # React 18 + Vite 6 + Tailwind CSS Client
     ├── .env                           # Local frontend environment (git-ignored)
     ├── .env.example                   # Frontend environment template
     ├── index.html                     # HTML5 shell with ecological branding & fonts
-    ├── package.json                   # Frontend dependencies & build scripts
+    ├── package.json                   # Frontend dependencies (Recharts, Leaflet, Lucide)
     ├── postcss.config.js              # PostCSS Tailwind plugins
     ├── tailwind.config.js             # Ecological palette configuration
     ├── vite.config.js                 # Vite configuration with proxy to Port 5050
@@ -252,12 +272,23 @@ c:\Users\dlakh\Desktop\ARAVALLI SENTINEL/
         │   └── AuthContext.jsx        # Session management & persona switcher
         ├── services/
         │   └── api.js                 # Centralized fetch API client
-        ├── components/
-        │   ├── AIAnalysisCard.jsx     # Visual indicators, limitations, ranger checklist
-        │   ├── Footer.jsx             # Regulatory references, credits, legal notice
-        │   ├── MapView.jsx            # Dual-layer Leaflet & Google Maps component
-        │   ├── Navbar.jsx             # Navigation header with active persona switcher
-        │   ├── PrintableIncidentDossier.jsx # Official printable PDF case briefing
+        ├── pages/
+        │   ├── LandingPage.jsx            # Public crisis overview & 4-step workflow
+        │   ├── CitizenDashboardPage.jsx   # Citizen reports feed, stats & Recharts graphs
+        │   ├── RiskMapPage.jsx            # Interactive geospatial satellite risk map
+        │   ├── ReportThreatPage.jsx       # Geotagged threat reporting form & AI preview
+        │   ├── AuthorityDashboardPage.jsx # Role-gated case triage & audit note logger
+        │   ├── IncidentDossierPage.jsx    # Official printable legal incident dossier
+        │   ├── AskAravalliPage.jsx        # Conversational AI legal & ecological assistant
+        │   ├── DatasetMethodologyPage.jsx # Open datasets browser, charts & validation
+        │   ├── AboutPage.jsx              # Supreme Court mandate, limitations & SDGs
+        │   └── LoginPage.jsx              # Demo persona switcher & registration
+        └── components/
+            ├── AIAnalysisCard.jsx     # Visual indicators, limitations, ranger checklist
+            ├── Footer.jsx             # Regulatory references, credits, legal notice
+            ├── MapView.jsx            # Dual-layer Leaflet & Google Maps component
+            ├── Navbar.jsx             # Navigation header with active persona switcher
+            ├── PrintableIncidentDossier.jsx # Official printable PDF case briefing
         │   ├── RiskBadge.jsx          # Color-coded severity badge (Safe to Critical)
         │   └── ZoneDetailDrawer.jsx   # Telemetry drawer with 5-factor breakdown
         └── pages/

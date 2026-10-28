@@ -1,0 +1,272 @@
+{
+  "type": "FeatureCollection",
+  "name": "Aravalli_Sentinel_Risk_Zones",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "ZONE-BANDHWARI-01",
+        "zone_name": "Bandhwari Leachate & Quarry Sector",
+        "state": "Haryana",
+        "threat_category": "Toxic Dumping",
+        "risk_score": 88.5,
+        "risk_level": "CRITICAL",
+        "source_type": "hybrid_sentinel_field",
+        "observation_date": "2026-10-25",
+        "is_synthetic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.1350, 28.3750],
+            [77.1550, 28.3750],
+            [77.1550, 28.3950],
+            [77.1350, 28.3950],
+            [77.1350, 28.3750]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "ZONE-SARISKA-02",
+        "zone_name": "Sariska Tiger Reserve Northern Buffer",
+        "state": "Rajasthan",
+        "threat_category": "Illegal Mining",
+        "risk_score": 79.2,
+        "risk_level": "CRITICAL",
+        "source_type": "hybrid_sentinel_field",
+        "observation_date": "2026-10-24",
+        "is_synthetic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [76.4000, 27.3400],
+            [76.4350, 27.3400],
+            [76.4350, 27.3650],
+            [76.4000, 27.3650],
+            [76.4000, 27.3400]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "ZONE-ASOLA-03",
+        "zone_name": "Asola Bhatti Wildlife Corridor Spur",
+        "state": "Delhi NCR",
+        "threat_category": "Encroachment",
+        "risk_score": 58.4,
+        "risk_level": "HIGH RISK",
+        "source_type": "hybrid_sentinel_field",
+        "observation_date": "2026-10-22",
+        "is_synthetic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.2050, 28.4800],
+            [77.2350, 28.4800],
+            [77.2350, 28.5050],
+            [77.2050, 28.5050],
+            [77.2050, 28.4800]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "ZONE-NAHARGARH-04",
+        "zone_name": "Nahargarh Climax Dhau Ridge",
+        "state": "Rajasthan",
+        "threat_category": "Deforestation",
+        "risk_score": 67.3,
+        "risk_level": "HIGH RISK",
+        "source_type": "hybrid_sentinel_field",
+        "observation_date": "2026-10-23",
+        "is_synthetic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [75.8100, 27.1700],
+            [75.8400, 27.1700],
+            [75.8400, 27.1950],
+            [75.8100, 27.1950],
+            [75.8100, 27.1700]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "ZONE-TOSHAM-05",
+        "zone_name": "Tosham Granite Mining Cluster",
+        "state": "Haryana",
+        "threat_category": "Illegal Mining",
+        "risk_score": 89.1,
+        "risk_level": "CRITICAL",
+        "source_type": "hybrid_sentinel_field",
+        "observation_date": "2026-10-26",
+        "is_synthetic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [75.9000, 28.8700],
+            [75.9300, 28.8700],
+            [75.9300, 28.8950],
+            [75.9000, 28.8950],
+            [75.9000, 28.8700]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "ZONE-KUMBHALGARH-06",
+        "zone_name": "Kumbhalgarh Highland Wildlife Sanctuary",
+        "state": "Rajasthan",
+        "threat_category": "Water Stress",
+        "risk_score": 52.1,
+        "risk_level": "HIGH RISK",
+        "source_type": "hybrid_sentinel_field",
+        "observation_date": "2026-10-20",
+        "is_synthetic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.5650, 25.1300],
+            [73.5950, 25.1300],
+            [73.5950, 25.1550],
+            [73.5650, 25.1550],
+            [73.5650, 25.1300]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "ZONE-KHETRI-07",
+        "zone_name": "Khetri Copper Foothills & Mine Waste",
+        "state": "Rajasthan",
+        "threat_category": "Land Degradation",
+        "risk_score": 46.8,
+        "risk_level": "WATCH",
+        "source_type": "hybrid_sentinel_field",
+        "observation_date": "2026-10-21",
+        "is_synthetic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [75.7700, 27.9700],
+            [75.8050, 27.9700],
+            [75.8050, 27.9950],
+            [75.7700, 27.9950],
+            [75.7700, 27.9700]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "ZONE-SIROHI-08",
+        "zone_name": "Sirohi Southern Foothills & Abu Corridor",
+        "state": "Rajasthan",
+        "threat_category": "Deforestation",
+        "risk_score": 48.5,
+        "risk_level": "WATCH",
+        "source_type": "hybrid_sentinel_field",
+        "observation_date": "2026-10-22",
+        "is_synthetic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [72.8300, 24.7000],
+            [72.8600, 24.7000],
+            [72.8600, 24.7250],
+            [72.8300, 24.7250],
+            [72.8300, 24.7000]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "ZONE-IDAR-09",
+        "zone_name": "Idar Granite Formations",
+        "state": "Gujarat",
+        "threat_category": "Illegal Mining",
+        "risk_score": 44.2,
+        "risk_level": "WATCH",
+        "source_type": "hybrid_sentinel_field",
+        "observation_date": "2026-10-22",
+        "is_synthetic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.1100, 24.2200],
+            [73.1400, 24.2200],
+            [73.1400, 24.2450],
+            [73.1100, 24.2450],
+            [73.1100, 24.2200]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "ZONE-MANGAR-10",
+        "zone_name": "Mangar Bani Sacred Climax Grove",
+        "state": "Haryana",
+        "threat_category": "Deforestation",
+        "risk_score": 81.3,
+        "risk_level": "CRITICAL",
+        "source_type": "hybrid_sentinel_field",
+        "observation_date": "2026-10-25",
+        "is_synthetic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.3250, 28.2800],
+            [77.3550, 28.2800],
+            [77.3550, 28.3050],
+            [77.3250, 28.3050],
+            [77.3250, 28.2800]
+          ]
+        ]
+      }
+    }
+  ]
+}

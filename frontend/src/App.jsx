@@ -6,11 +6,15 @@ import { Footer } from './components/Footer';
 
 // Pages
 import { LandingPage } from './pages/LandingPage';
+import { CitizenDashboardPage } from './pages/CitizenDashboardPage';
 import { RiskMapPage } from './pages/RiskMapPage';
 import { ReportThreatPage } from './pages/ReportThreatPage';
 import { AuthorityDashboardPage } from './pages/AuthorityDashboardPage';
 import { AskAravalliPage } from './pages/AskAravalliPage';
 import { IncidentDossierPage } from './pages/IncidentDossierPage';
+import { DatasetMethodologyPage } from './pages/DatasetMethodologyPage';
+import { AboutPage } from './pages/AboutPage';
+import { LoginPage } from './pages/LoginPage';
 
 export function App() {
   return (
@@ -21,10 +25,14 @@ export function App() {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/dashboard" element={<CitizenDashboardPage />} />
               <Route path="/map" element={<RiskMapPage />} />
               <Route path="/report" element={<ReportThreatPage />} />
               <Route path="/authority" element={<AuthorityDashboardPage />} />
               <Route path="/ask" element={<AskAravalliPage />} />
+              <Route path="/dataset" element={<DatasetMethodologyPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/login" element={<LoginPage />} />
               <Route path="/incident/:id" element={<IncidentDossierPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
