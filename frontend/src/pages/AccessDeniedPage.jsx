@@ -9,7 +9,7 @@ export function AccessDeniedPage() {
 
   const handleQuickSwitchToOfficer = async () => {
     await switchPersona('authority');
-    navigate('/authority');
+    navigate('/admin?tab=triage');
   };
 
   return (

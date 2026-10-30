@@ -1,8 +1,29 @@
 import { authorityInviteSchema, authorityLoginSchema } from '../validators/reportValidator.js';
 import env from '../config/env.js';
 import { localTokenSessionStore, isRealFirebaseConnected, getAuth } from '../config/firebase.js';
+import { isMongoDBConnected } from '../config/db.js';
+import { Officer } from '../models/Officer.js';
 
 // Pre-seeded demo accounts for quick testing & evaluation
+export const SUPER_ADMIN = {
+  uid: 'master-super-admin-01',
+  email: 'admin@aravalli.sentinel',
+  password: 'Admin@Aravalli2026!',
+  name: 'Chief Environmental Administrator',
+  role: 'admin',
+  department: 'Aravalli Central Conservation & Regulatory Authority',
+  designation: 'State Environmental Vigilance Commissioner',
+  token: 'demo-token-admin-valid',
+  badge: 'Super Administrator (1 of 1)',
+  permissions: {
+    canVerifyIncidents: true,
+    canUpdateStatus: true,
+    canDispatchPatrols: true,
+    canExportDossiers: true,
+    isActive: true,
+  },
+};
+
 const demoAccounts = {
   citizen: {
     uid: 'demo-citizen-01',
@@ -21,11 +42,22 @@ const demoAccounts = {
     designation: 'Divisional Forest Officer (DFO)',
     token: 'demo-token-authority-valid',
     badge: 'Authorized Enforcement Officer',
+    permissions: {
+      canVerifyIncidents: true,
+      canUpdateStatus: true,
+      canDispatchPatrols: true,
+      canExportDossiers: true,
+      isActive: true,
+    },
   },
+  admin: SUPER_ADMIN,
 };
 
+// Seed Super Admin into local token store on startup
+localTokenSessionStore.set('demo-token-admin-valid', SUPER_ADMIN);
+
 // Server-side registered authority officers registry
-const officerRegistry = new Map();
+export const officerRegistry = new Map();
 
 // If DEMO_BOOTSTRAP_ENABLED is active, seed the restricted demonstration officer
 if (env.DEMO_BOOTSTRAP_ENABLED) {
@@ -44,10 +76,34 @@ if (env.DEMO_BOOTSTRAP_ENABLED) {
   });
 }
 
+async function syncBootstrapOfficer() {
+  if (!isMongoDBConnected() || !env.DEMO_BOOTSTRAP_ENABLED) return;
+  try {
+    const existing = await Officer.findOne({ email: 'officer.sharma@forest.haryana.gov.in' });
+    if (!existing) {
+      await Officer.create({
+        uid: 'demo-authority-01',
+        email: 'officer.sharma@forest.haryana.gov.in',
+        password: 'Officer@Aravalli2026!',
+        name: 'Officer Rajesh Sharma',
+        role: 'authority',
+        department: 'Haryana Forest Department & Aravalli Task Force',
+        designation: 'Divisional Forest Officer (DFO)',
+        badge: 'Authorized Enforcement Officer',
+        token: 'demo-token-authority-valid',
+        isDemoBootstrap: true,
+        verifiedAt: '2026-01-01T00:00:00.000Z',
+      });
+    }
+  } catch (err) {
+    console.warn('⚠️ [MongoDB] Officer sync notice:', err.message);
+  }
+}
+
 export async function loginDemo(req, res) {
   try {
     const { role } = req.body;
-    const targetRole = role === 'authority' ? 'authority' : 'citizen';
+    const targetRole = role === 'admin' ? 'admin' : (role === 'authority' ? 'authority' : 'citizen');
 
     if (targetRole === 'authority' && !env.DEMO_BOOTSTRAP_ENABLED && env.IS_PRODUCTION) {
       return res.status(403).json({
@@ -63,6 +119,51 @@ export async function loginDemo(req, res) {
       message: `Signed in as ${user.name} (${user.badge})`,
       token: user.token,
       user,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function loginAdmin(req, res) {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Administrator email and password required.' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    if (normalizedEmail !== SUPER_ADMIN.email.toLowerCase()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access Denied: Unrecognized administrator. Only 1 Super Administrator is registered in Aravalli Sentinel.',
+      });
+    }
+
+    if (password !== SUPER_ADMIN.password) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid administrator password.',
+      });
+    }
+
+    const sessionToken = SUPER_ADMIN.token;
+    localTokenSessionStore.set(sessionToken, SUPER_ADMIN);
+
+    return res.json({
+      success: true,
+      message: 'Super Administrator authenticated. Master authority active.',
+      token: sessionToken,
+      user: {
+        uid: SUPER_ADMIN.uid,
+        email: SUPER_ADMIN.email,
+        name: SUPER_ADMIN.name,
+        role: 'admin',
+        department: SUPER_ADMIN.department,
+        designation: SUPER_ADMIN.designation,
+        badge: SUPER_ADMIN.badge,
+        permissions: SUPER_ADMIN.permissions,
+      },
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
@@ -115,7 +216,18 @@ export async function loginAuthority(req, res) {
     const { email, password } = parseResult.data;
     const normalizedEmail = email.toLowerCase().trim();
 
-    const officer = officerRegistry.get(normalizedEmail);
+    await syncBootstrapOfficer();
+
+    let officer = null;
+    if (isMongoDBConnected()) {
+      try {
+        officer = await Officer.findOne({ email: normalizedEmail }).lean();
+      } catch (err) {}
+    }
+
+    if (!officer) {
+      officer = officerRegistry.get(normalizedEmail);
+    }
 
     if (!officer) {
       return res.status(404).json({
@@ -132,6 +244,21 @@ export async function loginAuthority(req, res) {
       });
     }
 
+    if (officer.permissions && officer.permissions.isActive === false) {
+      return res.status(403).json({
+        success: false,
+        error: 'Officer account suspended: Enforcement clearance has been deactivated by the Super Administrator.',
+      });
+    }
+
+    const defaultPermissions = {
+      canVerifyIncidents: true,
+      canUpdateStatus: true,
+      canDispatchPatrols: true,
+      canExportDossiers: true,
+      isActive: true,
+    };
+
     const sessionToken = officer.token || `demo-token-authority-${Date.now()}`;
     const userProfile = {
       uid: officer.uid,
@@ -141,6 +268,7 @@ export async function loginAuthority(req, res) {
       designation: officer.designation,
       role: 'authority',
       badge: officer.badge || 'Authorized Enforcement Officer',
+      permissions: officer.permissions || defaultPermissions,
     };
 
     // Store in active session token registry
@@ -223,6 +351,15 @@ export async function registerAuthority(req, res) {
     }
 
     const { email, fullName, department, designation, inviteSecret, password } = parseResult.data;
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Enforce 1 Super Admin rule: Nobody can provision an admin or hijack super admin email
+    if (normalizedEmail === SUPER_ADMIN.email.toLowerCase() || req.body.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: Cannot create an administrator account. Aravalli Sentinel operates strictly under a single Super Administrator security model.',
+      });
+    }
 
     // Strict verification of the administrative invite secret token
     if (inviteSecret !== env.AUTHORITY_INVITE_SECRET) {
@@ -232,9 +369,16 @@ export async function registerAuthority(req, res) {
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
     const officerUid = `auth-${Date.now()}`;
     const sessionToken = `demo-token-authority-${Date.now()}`;
+
+    const defaultPermissions = {
+      canVerifyIncidents: true,
+      canUpdateStatus: true,
+      canDispatchPatrols: true,
+      canExportDossiers: true,
+      isActive: true,
+    };
 
     const newOfficer = {
       uid: officerUid,
@@ -246,8 +390,22 @@ export async function registerAuthority(req, res) {
       badge: 'Authorized Enforcement Officer',
       password: password || 'Officer@Aravalli2026!',
       token: sessionToken,
+      permissions: defaultPermissions,
       verifiedAt: new Date().toISOString(),
     };
+
+    // Save to MongoDB if connected
+    if (isMongoDBConnected()) {
+      try {
+        await Officer.findOneAndUpdate(
+          { email: normalizedEmail },
+          newOfficer,
+          { upsert: true, new: true }
+        );
+      } catch (mongoErr) {
+        console.warn('⚠️ [MongoDB] Could not persist officer in MongoDB:', mongoErr.message);
+      }
+    }
 
     // Register officer in server-side registry
     officerRegistry.set(normalizedEmail, newOfficer);
@@ -308,6 +466,7 @@ export default {
   loginDemo,
   loginCitizen,
   loginAuthority,
+  loginAdmin,
   registerCitizen,
   registerAuthority,
   resetPassword,

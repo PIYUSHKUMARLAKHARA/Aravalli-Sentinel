@@ -8,6 +8,8 @@ describe('Aravalli Sentinel API - Integration Tests', () => {
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('ONLINE');
     expect(res.body.platform).toBe('ARAVALLI SENTINEL');
+    expect(res.body.services).toHaveProperty('database');
+    expect(res.body.services.database).toHaveProperty('type');
     expect(res.body.services).toHaveProperty('geminiAI');
     expect(res.body.services).toHaveProperty('firebase');
     expect(res.body.services).toHaveProperty('geospatialTelemetry');
@@ -585,5 +587,87 @@ describe('Aravalli Sentinel API - Integration Tests', () => {
     const res = await request(app).get('/api/datasets/images/charcoal_felling_01.jpg');
     expect(res.status).toBe(200);
     expect(res.header['content-type']).toContain('image');
+  });
+
+  it('GET /api/admin/officers rejects unauthenticated and citizen users', async () => {
+    const noAuthRes = await request(app).get('/api/admin/officers');
+    expect(noAuthRes.status).toBe(401);
+
+    const citizenRes = await request(app)
+      .get('/api/admin/officers')
+      .set('Authorization', 'Bearer demo-token-citizen-valid');
+    expect(citizenRes.status).toBe(403);
+    expect(citizenRes.body.error).toContain('Super Administrator');
+  });
+
+  it('POST /api/auth/login-admin authenticates the single Super Admin account', async () => {
+    const res = await request(app)
+      .post('/api/auth/login-admin')
+      .send({
+        email: 'admin@aravalli.sentinel',
+        password: 'Admin@Aravalli2026!',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user.role).toBe('admin');
+    expect(res.body.token).toBe('demo-token-admin-valid');
+  });
+
+  it('POST /api/auth/login-admin rejects wrong admin password or unauthorized email', async () => {
+    const wrongPassRes = await request(app)
+      .post('/api/auth/login-admin')
+      .send({
+        email: 'admin@aravalli.sentinel',
+        password: 'WrongPassword!',
+      });
+    expect(wrongPassRes.status).toBe(401);
+
+    const wrongEmailRes = await request(app)
+      .post('/api/auth/login-admin')
+      .send({
+        email: 'other.admin@aravalli.sentinel',
+        password: 'Admin@Aravalli2026!',
+      });
+    expect(wrongEmailRes.status).toBe(403);
+    expect(wrongEmailRes.body.error).toContain('Only 1 Super Administrator');
+  });
+
+  it('GET /api/admin/officers allows Super Admin and confirms single admin policy', async () => {
+    const res = await request(app)
+      .get('/api/admin/officers')
+      .set('Authorization', 'Bearer demo-token-admin-valid');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.officers)).toBe(true);
+    expect(res.body.adminPolicy.model).toBe('SINGLE_SUPER_ADMINISTRATOR');
+    expect(res.body.adminPolicy.totalAllowedAdmins).toBe(1);
+  });
+
+  it('PATCH /api/admin/officers/:uid/permissions updates officer permissions', async () => {
+    const res = await request(app)
+      .patch('/api/admin/officers/officer.sharma@forest.haryana.gov.in/permissions')
+      .set('Authorization', 'Bearer demo-token-admin-valid')
+      .send({
+        permissions: {
+          canVerifyIncidents: true,
+          canUpdateStatus: true,
+          canDispatchPatrols: false,
+        },
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.officer.permissions.canDispatchPatrols).toBe(false);
+  });
+
+  it('GET /api/admin/system-stats returns full operational overview for Super Admin', async () => {
+    const res = await request(app)
+      .get('/api/admin/system-stats')
+      .set('Authorization', 'Bearer demo-token-admin-valid');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.adminPolicy.model).toBe('SINGLE_SUPER_ADMINISTRATOR');
+    expect(res.body.officers).toHaveProperty('total');
+    expect(res.body.incidents).toHaveProperty('total');
+    expect(res.body.database).toHaveProperty('status');
   });
 });

@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getFirestore, getStorageBucket, isRealFirebaseConnected } from '../config/firebase.js';
+import { isMongoDBConnected } from '../config/db.js';
+import { Report } from '../models/Report.js';
 import { analyzeEvidence } from '../services/geminiService.js';
 import { calculateRiskScore } from '../services/riskEngine.js';
 import { aravalliZones, getZoneById } from '../data/aravalliZones.js';
@@ -164,6 +166,22 @@ function loadAllReports() {
 let inMemoryReports = loadAllReports();
 let caseSequenceCounter = inMemoryReports.length + 10;
 
+let isSeededInMongo = false;
+async function syncMongoSeed() {
+  if (!isMongoDBConnected() || isSeededInMongo) return;
+  try {
+    const count = await Report.countDocuments();
+    if (count === 0 && inMemoryReports.length > 0) {
+      console.log(`🌱 [MongoDB] Seeding ${inMemoryReports.length} baseline reports into MongoDB 'reports' collection...`);
+      await Report.insertMany(inMemoryReports, { ordered: false });
+      console.log(`✅ [MongoDB] Baseline reports seeded successfully.`);
+    }
+    isSeededInMongo = true;
+  } catch (err) {
+    console.warn(`⚠️ [MongoDB] Seed sync error: ${err.message}`);
+  }
+}
+
 /**
  * Collision-proof Case ID generator
  * Generates official format: ARV-YYYY-XXXXXX
@@ -320,12 +338,20 @@ export async function submitReport(req, res) {
       ],
     };
 
-    // Save to Firestore or in-memory
-    const db = getFirestore();
-    try {
-      await db.collection('reports').doc(reportId).set(newReport);
-    } catch (saveErr) {
-      console.warn('⚠️ Could not save to Firestore, saving in-memory:', saveErr.message);
+    // Save to MongoDB if connected, or Firestore / in-memory
+    if (isMongoDBConnected()) {
+      try {
+        await Report.create(newReport);
+      } catch (mongoErr) {
+        console.warn('⚠️ [MongoDB] Failed to persist report in MongoDB:', mongoErr.message);
+      }
+    } else {
+      const db = getFirestore();
+      try {
+        await db.collection('reports').doc(reportId).set(newReport);
+      } catch (saveErr) {
+        console.warn('⚠️ Could not save to Firestore, saving in-memory:', saveErr.message);
+      }
     }
     inMemoryReports.unshift(newReport);
 
@@ -349,26 +375,40 @@ export async function getAllReports(req, res) {
     const { status, threatCategory, zoneId, riskLevel, myReports } = req.query;
     const isAuthority = req.user && (req.user.role === 'authority' || req.user.role === 'admin');
 
-    let reports = [...inMemoryReports];
+    await syncMongoSeed();
 
-    // Try fetching from Firestore if connected
-    const db = getFirestore();
-    try {
-      const snapshot = await db.collection('reports').get();
-      if (!snapshot.empty) {
-        const firestoreReports = [];
-        snapshot.forEach(doc => firestoreReports.push(doc.data()));
-        if (firestoreReports.length > 0) {
-          // Merge avoiding duplicates
-          const ids = new Set(firestoreReports.map(r => r.id));
-          reports = [
-            ...firestoreReports,
-            ...inMemoryReports.filter(r => !ids.has(r.id)),
-          ];
+    let reports = [];
+    if (isMongoDBConnected()) {
+      try {
+        reports = await Report.find({}).lean();
+        if (!reports || reports.length === 0) {
+          reports = [...inMemoryReports];
         }
+      } catch (err) {
+        reports = [...inMemoryReports];
       }
-    } catch (err) {
-      // Continue with inMemoryReports
+    } else {
+      reports = [...inMemoryReports];
+
+      // Try fetching from Firestore if connected
+      const db = getFirestore();
+      try {
+        const snapshot = await db.collection('reports').get();
+        if (!snapshot.empty) {
+          const firestoreReports = [];
+          snapshot.forEach(doc => firestoreReports.push(doc.data()));
+          if (firestoreReports.length > 0) {
+            // Merge avoiding duplicates
+            const ids = new Set(firestoreReports.map(r => r.id));
+            reports = [
+              ...firestoreReports,
+              ...inMemoryReports.filter(r => !ids.has(r.id)),
+            ];
+          }
+        }
+      } catch (err) {
+        // Continue with inMemoryReports
+      }
     }
 
     // Citizen "My Reports" filter
@@ -420,14 +460,25 @@ export async function getReportById(req, res) {
     const { id } = req.params;
     const isAuthority = req.user && (req.user.role === 'authority' || req.user.role === 'admin');
 
-    let report = inMemoryReports.find(r => r.id === id);
+    let report = null;
+    if (isMongoDBConnected()) {
+      try {
+        report = await Report.findOne({ id }).lean();
+      } catch (err) {}
+    }
+
+    if (!report) {
+      report = inMemoryReports.find(r => r.id === id);
+    }
 
     if (!report) {
       const db = getFirestore();
-      const doc = await db.collection('reports').doc(id).get();
-      if (doc.exists) {
-        report = doc.data();
-      }
+      try {
+        const doc = await db.collection('reports').doc(id).get();
+        if (doc.exists) {
+          report = doc.data();
+        }
+      } catch (err) {}
     }
 
     if (!report) {
@@ -449,14 +500,61 @@ export async function updateReportStatus(req, res) {
     const { status, actionNotes, assignedOfficer } = req.body;
     const authorityUser = req.user;
 
-    let report = inMemoryReports.find(r => r.id === id);
-    const db = getFirestore();
+    // Super Administrator bypasses all permission checks; otherwise verify officer permissions
+    if (authorityUser.role !== 'admin') {
+      let officerRecord = null;
+      if (isMongoDBConnected()) {
+        try {
+          const { Officer } = await import('../models/Officer.js');
+          officerRecord = await Officer.findOne({ email: authorityUser.email }).lean();
+        } catch (err) {}
+      }
+      if (!officerRecord) {
+        const { officerRegistry } = await import('./authController.js');
+        officerRecord = officerRegistry.get(authorityUser.email);
+      }
+
+      if (officerRecord?.permissions) {
+        if (officerRecord.permissions.isActive === false) {
+          return res.status(403).json({
+            success: false,
+            error: 'Permission Denied: Your officer account has been deactivated by the Super Administrator.',
+          });
+        }
+        if (officerRecord.permissions.canUpdateStatus === false) {
+          return res.status(403).json({
+            success: false,
+            error: 'Permission Denied: Super Administrator has restricted your permission to update incident status.',
+          });
+        }
+        if (status === 'verified' && officerRecord.permissions.canVerifyIncidents === false) {
+          return res.status(403).json({
+            success: false,
+            error: 'Permission Denied: Incident verification clearance is required from the Super Administrator.',
+          });
+        }
+      }
+    }
+
+    let report = null;
+    if (isMongoDBConnected()) {
+      try {
+        report = await Report.findOne({ id }).lean();
+      } catch (err) {}
+    }
 
     if (!report) {
-      const doc = await db.collection('reports').doc(id).get();
-      if (doc.exists) {
-        report = doc.data();
-      }
+      report = inMemoryReports.find(r => r.id === id);
+    }
+
+    if (!report) {
+      const db = getFirestore();
+      try {
+        const doc = await db.collection('reports').doc(id).get();
+        if (doc.exists) {
+          report = doc.data();
+        }
+      } catch (err) {}
     }
 
     if (!report) {
@@ -481,15 +579,36 @@ export async function updateReportStatus(req, res) {
     report.auditTrail = report.auditTrail || [];
     report.auditTrail.push(auditEntry);
 
-    // Save to Firestore
-    try {
-      await db.collection('reports').doc(id).update({
-        status,
-        updatedAt: now,
-        auditTrail: report.auditTrail,
-      });
-    } catch (saveErr) {
-      // In-memory updated
+    // Save to MongoDB if connected
+    if (isMongoDBConnected()) {
+      try {
+        await Report.findOneAndUpdate(
+          { id },
+          {
+            $set: { status, updatedAt: now },
+            $push: { auditTrail: auditEntry },
+          },
+          { new: true }
+        );
+      } catch (mongoErr) {
+        console.warn('⚠️ [MongoDB] Update error:', mongoErr.message);
+      }
+    } else {
+      // Save to Firestore
+      try {
+        const db = getFirestore();
+        await db.collection('reports').doc(id).update({
+          status,
+          updatedAt: now,
+          auditTrail: report.auditTrail,
+        });
+      } catch (saveErr) {}
+    }
+
+    // Keep in-memory store synchronized
+    const memIdx = inMemoryReports.findIndex(r => r.id === id);
+    if (memIdx !== -1) {
+      inMemoryReports[memIdx] = { ...report };
     }
 
     return res.json({
@@ -505,12 +624,24 @@ export async function updateReportStatus(req, res) {
 export async function generateIncidentDossier(req, res) {
   try {
     const { id } = req.params;
-    let report = inMemoryReports.find(r => r.id === id);
+    let report = null;
+
+    if (isMongoDBConnected()) {
+      try {
+        report = await Report.findOne({ id }).lean();
+      } catch (err) {}
+    }
+
+    if (!report) {
+      report = inMemoryReports.find(r => r.id === id);
+    }
 
     if (!report) {
       const db = getFirestore();
-      const doc = await db.collection('reports').doc(id).get();
-      if (doc.exists) report = doc.data();
+      try {
+        const doc = await db.collection('reports').doc(id).get();
+        if (doc.exists) report = doc.data();
+      } catch (err) {}
     }
 
     if (!report) {

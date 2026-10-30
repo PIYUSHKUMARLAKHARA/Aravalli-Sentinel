@@ -47,7 +47,32 @@ export function RequireAuthority({ children }) {
   return children;
 }
 
+export function RequireAdmin({ children }) {
+  const { user, isAdmin, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] text-slate-400 text-xs font-mono">
+        <div className="w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mr-2" />
+        <span>Verifying Super Administrator clearance...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!isAdmin) {
+    return <AccessDeniedPage />;
+  }
+
+  return children;
+}
+
 export default {
   RequireAuth,
   RequireAuthority,
+  RequireAdmin,
 };

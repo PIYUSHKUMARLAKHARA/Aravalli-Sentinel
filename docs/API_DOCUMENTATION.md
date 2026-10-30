@@ -12,16 +12,31 @@ Checks server uptime, memory usage, and operational status of backend services.
 **Response `200 OK`:**
 ```json
 {
-  "status": "healthy",
+  "status": "ONLINE",
   "platform": "ARAVALLI SENTINEL",
   "version": "1.0.0",
-  "environment": "development",
-  "timestamp": "2026-10-28T12:00:00.000Z",
+  "tagline": "See the Threat. Predict the Risk. Protect the Aravallis.",
+  "timestamp": "2026-10-29T12:00:00.000Z",
   "services": {
-    "gemini": "simulated_ecological_heuristics",
-    "firebase": "high_fidelity_local_store",
-    "riskEngine": "operational",
-    "geospatialProvider": "mock-gee"
+    "database": {
+      "type": "MongoDB",
+      "status": "CONNECTED",
+      "host": "localhost",
+      "database": "aravalli_sentinel"
+    },
+    "geminiAI": {
+      "active": true,
+      "model": "gemini-2.0-flash",
+      "mode": "Live Gemini 2.0 Flash Engine"
+    },
+    "firebase": {
+      "connected": false,
+      "mode": "Local Fallback / High-Fidelity Store"
+    },
+    "geospatialTelemetry": {
+      "provider": "Copernicus Sentinel-2 MSI Telemetry Simulator",
+      "live": false
+    }
   }
 }
 ```

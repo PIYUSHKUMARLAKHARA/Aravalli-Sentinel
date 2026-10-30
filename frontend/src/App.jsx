@@ -5,18 +5,16 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 
 // Pages
-import { LandingPage } from './pages/LandingPage';
-import { CitizenDashboardPage } from './pages/CitizenDashboardPage';
+import { DashboardPage } from './pages/DashboardPage';
 import { RiskMapPage } from './pages/RiskMapPage';
 import { ReportThreatPage } from './pages/ReportThreatPage';
 import { AuthorityDashboardPage } from './pages/AuthorityDashboardPage';
-import { AskAravalliPage } from './pages/AskAravalliPage';
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { IncidentDossierPage } from './pages/IncidentDossierPage';
-import { DatasetMethodologyPage } from './pages/DatasetMethodologyPage';
 import { AboutPage } from './pages/AboutPage';
 import { LoginPage } from './pages/LoginPage';
 import { AccessDeniedPage } from './pages/AccessDeniedPage';
-import { RequireAuth, RequireAuthority } from './components/ProtectedRoute';
+import { RequireAuth, RequireAuthority, RequireAdmin } from './components/ProtectedRoute';
 
 export function App() {
   return (
@@ -26,13 +24,15 @@ export function App() {
           <Navbar />
           <main className="flex-1">
             <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/dashboard" element={<RequireAuth><CitizenDashboardPage /></RequireAuth>} />
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/overview" element={<Navigate to="/dashboard" replace />} />
               <Route path="/map" element={<RiskMapPage />} />
               <Route path="/report" element={<RequireAuth><ReportThreatPage /></RequireAuth>} />
-              <Route path="/authority" element={<RequireAuthority><AuthorityDashboardPage /></RequireAuthority>} />
-              <Route path="/ask" element={<AskAravalliPage />} />
-              <Route path="/dataset" element={<DatasetMethodologyPage />} />
+              <Route path="/authority" element={<Navigate to="/admin?tab=triage" replace />} />
+              <Route path="/admin" element={<RequireAuthority><AdminDashboardPage /></RequireAuthority>} />
+              <Route path="/ask" element={<Navigate to="/" replace />} />
+              <Route path="/dataset" element={<Navigate to="/" replace />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/access-denied" element={<AccessDeniedPage />} />

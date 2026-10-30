@@ -165,11 +165,19 @@ export const getAuth = () => {
       }
       // For local demo fallback, inspect mock token or demo bearer
       if (token.startsWith('demo-token-')) {
-        const role = token.includes('authority') ? 'authority' : 'citizen';
+        let role = 'citizen';
+        let name = 'Aarav Mehta (Citizen Sentinel)';
+        if (token.includes('admin')) {
+          role = 'admin';
+          name = 'Chief Environmental Administrator';
+        } else if (token.includes('authority')) {
+          role = 'authority';
+          name = 'Officer Rajesh Sharma (Forest Task Force)';
+        }
         return {
           uid: 'demo-user-' + role,
           email: `${role}@aravalli.sentinel`,
-          name: role === 'authority' ? 'Officer Rajesh Sharma (Forest Task Force)' : 'Aarav Mehta (Citizen Sentinel)',
+          name,
           role,
         };
       }

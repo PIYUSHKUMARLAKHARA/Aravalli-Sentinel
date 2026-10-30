@@ -3,6 +3,7 @@ import {
   loginDemoUser,
   loginCitizen as apiLoginCitizen,
   loginAuthority as apiLoginAuthority,
+  loginAdmin as apiLoginAdmin,
   registerCitizen as apiRegisterCitizen,
   registerAuthority as apiRegisterAuthority,
   resetCitizenPassword,
@@ -114,6 +115,19 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginAdminAccount = async (email, password) => {
+    setLoading(true);
+    try {
+      const result = await apiLoginAdmin(email, password);
+      if (result.success && result.user) {
+        setUser(result.user);
+      }
+      return result;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const forgotPassword = async (email) => {
     return await resetCitizenPassword(email);
   };
@@ -124,6 +138,7 @@ export function AuthProvider({ children }) {
   };
 
   const isAuthority = user?.role === 'authority' || user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
 
   return (
     <AuthContext.Provider
@@ -131,10 +146,12 @@ export function AuthProvider({ children }) {
         user,
         loading,
         isAuthority,
+        isAdmin,
         switchPersona,
         loginCitizen: loginCitizenWithEmail,
         registerCitizen: registerCitizenAccount,
         loginAuthority: loginAuthorityWithCredentials,
+        loginAdmin: loginAdminAccount,
         provisionAuthority: provisionAuthorityAccount,
         loginAuthorityAccount: provisionAuthorityAccount,
         forgotPassword,

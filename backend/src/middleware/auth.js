@@ -63,6 +63,29 @@ export function requireAuthority(req, res, next) {
 }
 
 /**
+ * Super Administrator Guard Middleware:
+ * Verifies user has Super Administrator credentials.
+ * Only 1 Super Admin exists in the system.
+ */
+export function requireAdmin(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required. Please sign in with administrator credentials.',
+    });
+  }
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      error: 'Access Denied: Super Administrator privileges required. Only 1 administrator is permitted in Aravalli Sentinel.',
+    });
+  }
+
+  next();
+}
+
+/**
  * Optional Authentication: Attaches user if token present, but doesn't block guests
  */
 export async function optionalAuth(req, res, next) {
@@ -92,5 +115,6 @@ export async function optionalAuth(req, res, next) {
 export default {
   authenticateUser,
   requireAuthority,
+  requireAdmin,
   optionalAuth,
 };

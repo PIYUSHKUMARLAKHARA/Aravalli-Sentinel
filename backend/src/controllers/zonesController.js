@@ -2,6 +2,23 @@ import { aravalliZones, getZoneById } from '../data/aravalliZones.js';
 import { calculateRiskScore } from '../services/riskEngine.js';
 import { getActiveGeospatialProvider } from '../services/geospatialProvider.js';
 import { getAllStoredReports } from './reportsController.js';
+import { isMongoDBConnected } from '../config/db.js';
+import { Zone } from '../models/Zone.js';
+
+let isZonesSeededInMongo = false;
+async function syncMongoZones() {
+  if (!isMongoDBConnected() || isZonesSeededInMongo) return;
+  try {
+    const count = await Zone.countDocuments();
+    if (count === 0 && aravalliZones.length > 0) {
+      await Zone.insertMany(aravalliZones, { ordered: false });
+      console.log(`✅ [MongoDB] Seeded ${aravalliZones.length} ecological zones into MongoDB.`);
+    }
+    isZonesSeededInMongo = true;
+  } catch (err) {
+    console.warn('⚠️ [MongoDB] Zone seed sync notice:', err.message);
+  }
+}
 
 function calculateDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371; // Earth radius in km
@@ -19,13 +36,36 @@ export async function getZones(req, res) {
   try {
     const { riskLevel, state } = req.query;
 
-    let zones = [...aravalliZones];
+    await syncMongoZones();
 
-    if (riskLevel && riskLevel !== 'all') {
-      zones = zones.filter(z => z.riskLevel.toLowerCase() === riskLevel.toLowerCase());
+    let zones = [];
+    if (isMongoDBConnected()) {
+      try {
+        const query = {};
+        if (riskLevel && riskLevel !== 'all') {
+          query.riskLevel = new RegExp(`^${riskLevel}$`, 'i');
+        }
+        if (state && state !== 'all') {
+          query.state = new RegExp(`^${state}$`, 'i');
+        }
+        zones = await Zone.find(query).lean();
+        if (!zones || zones.length === 0) {
+          zones = [...aravalliZones];
+        }
+      } catch (err) {
+        zones = [...aravalliZones];
+      }
+    } else {
+      zones = [...aravalliZones];
     }
-    if (state && state !== 'all') {
-      zones = zones.filter(z => z.state.toLowerCase() === state.toLowerCase());
+
+    if (!isMongoDBConnected()) {
+      if (riskLevel && riskLevel !== 'all') {
+        zones = zones.filter(z => z.riskLevel.toLowerCase() === riskLevel.toLowerCase());
+      }
+      if (state && state !== 'all') {
+        zones = zones.filter(z => z.state.toLowerCase() === state.toLowerCase());
+      }
     }
 
     return res.json({
@@ -41,7 +81,17 @@ export async function getZones(req, res) {
 export async function getZoneDetails(req, res) {
   try {
     const { id } = req.params;
-    const zone = getZoneById(id);
+    let zone = null;
+
+    if (isMongoDBConnected()) {
+      try {
+        zone = await Zone.findOne({ id }).lean();
+      } catch (err) {}
+    }
+
+    if (!zone) {
+      zone = getZoneById(id);
+    }
 
     if (!zone) {
       return res.status(404).json({ success: false, error: `Zone ${id} not found.` });

@@ -45,11 +45,11 @@ export function IncidentDossierPage() {
         <h2 className="text-base font-bold text-white">Dossier Unavailable</h2>
         <p className="text-xs text-slate-400">{error || 'Could not locate case file.'}</p>
         <Link
-          to="/authority"
+          to="/admin?tab=triage"
           className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Return to Authority Triage</span>
+          <span>Return to Authority Incident Triage</span>
         </Link>
       </div>
     );

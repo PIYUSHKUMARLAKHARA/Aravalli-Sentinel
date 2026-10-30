@@ -9,18 +9,17 @@ import {
   UserCheck,
   ChevronDown,
   Layers,
-  Sparkles,
   LayoutDashboard,
-  Database,
   Info,
   LogIn,
   LogOut,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export function Navbar() {
   const location = useLocation();
-  const { user, isAuthority, switchPersona, logout } = useAuth();
+  const { user, isAuthority, isAdmin, switchPersona, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const isActive = (path) => location.pathname === path;
@@ -45,76 +44,83 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* Center Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-1 text-xs font-semibold">
+        {/* Center Navigation Links - Role-Tailored & Unified */}
+        <nav className="hidden lg:flex items-center gap-1.5 text-xs font-semibold">
           <Link
             to="/"
-            className={`px-2.5 py-1.5 rounded-lg transition-colors ${
-              isActive('/') ? 'text-white bg-slate-800/80' : 'text-slate-300 hover:text-white hover:bg-slate-850'
-            }`}
-          >
-            Overview
-          </Link>
-          <Link
-            to="/dashboard"
-            className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
-              isActive('/dashboard') ? 'text-white bg-slate-800/80' : 'text-slate-300 hover:text-white hover:bg-slate-850'
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+              isActive('/') || isActive('/dashboard') ? 'text-white bg-slate-800/80' : 'text-slate-300 hover:text-white hover:bg-slate-850'
             }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
             <span>Dashboard</span>
           </Link>
-          <Link
-            to="/map"
-            className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
-              isActive('/map') ? 'text-white bg-slate-800/80' : 'text-slate-300 hover:text-white hover:bg-slate-850'
-            }`}
-          >
-            <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Risk Map</span>
-          </Link>
-          <Link
-            to="/report"
-            className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
-              isActive('/report') ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-500/30' : 'text-emerald-400/90 hover:text-emerald-300 hover:bg-emerald-950/30'
-            }`}
-          >
-            <FileWarning className="w-3.5 h-3.5" />
-            <span>Report</span>
-          </Link>
-          <Link
-            to="/authority"
-            className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
-              isActive('/authority') ? 'text-amber-400 bg-amber-950/40 border border-amber-500/30' : 'text-amber-400/90 hover:text-amber-300 hover:bg-amber-950/30'
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5" />
-            <span>Authority</span>
-            {isAuthority && (
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-            )}
-          </Link>
-          <Link
-            to="/dataset"
-            className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
-              isActive('/dataset') ? 'text-white bg-slate-800/80' : 'text-slate-300 hover:text-white hover:bg-slate-850'
-            }`}
-          >
-            <Database className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Dataset</span>
-          </Link>
-          <Link
-            to="/ask"
-            className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
-              isActive('/ask') ? 'text-cyan-400 bg-cyan-950/40 border border-cyan-500/30' : 'text-cyan-400/90 hover:text-cyan-300 hover:bg-cyan-950/30'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Ask AI</span>
-          </Link>
+
+          {isAuthority ? (
+            /* Forest Authority Navigation: Dashboard, All Reports, Risk Map, Area Summary */
+            <>
+              <Link
+                to="/admin?tab=triage"
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                  location.search.includes('triage') || isActive('/authority') ? 'text-amber-300 bg-amber-950/40 border border-amber-500/30' : 'text-slate-300 hover:text-white hover:bg-slate-850'
+                }`}
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                <span>All Reports</span>
+              </Link>
+              <Link
+                to="/map"
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                  isActive('/map') ? 'text-white bg-slate-800/80' : 'text-slate-300 hover:text-white hover:bg-slate-850'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Risk Map</span>
+              </Link>
+              <Link
+                to="/admin?tab=telemetry"
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                  location.search.includes('telemetry') ? 'text-cyan-300 bg-cyan-950/40 border border-cyan-500/30' : 'text-slate-300 hover:text-white hover:bg-slate-850'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Area Summary</span>
+              </Link>
+            </>
+          ) : (
+            /* Citizen Navigation: Dashboard, Report an Issue, My Reports, Risk Map */
+            <>
+              <Link
+                to="/report"
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                  isActive('/report') ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-500/30' : 'text-slate-300 hover:text-white hover:bg-slate-850'
+                }`}
+              >
+                <FileWarning className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Report an Issue</span>
+              </Link>
+              <a
+                href="/#recent-reports"
+                className="px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-850 transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5 text-amber-400" />
+                <span>My Reports</span>
+              </a>
+              <Link
+                to="/map"
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                  isActive('/map') ? 'text-white bg-slate-800/80' : 'text-slate-300 hover:text-white hover:bg-slate-850'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Risk Map</span>
+              </Link>
+            </>
+          )}
+
           <Link
             to="/about"
-            className={`px-2.5 py-1.5 rounded-lg transition-colors ${
+            className={`px-3 py-1.5 rounded-lg transition-colors ${
               isActive('/about') ? 'text-white bg-slate-800/80' : 'text-slate-300 hover:text-white hover:bg-slate-850'
             }`}
           >
@@ -171,18 +177,44 @@ export function Navbar() {
                       setDropdownOpen(false);
                     }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between ${
-                      isAuthority ? 'bg-amber-950/50 text-amber-300 font-semibold border border-amber-500/30' : 'text-slate-300 hover:bg-slate-800'
+                      isAuthority && !isAdmin ? 'bg-amber-950/50 text-amber-300 font-semibold border border-amber-500/30' : 'text-slate-300 hover:bg-slate-800'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-amber-400" />
                       <span>Forest Authority (Officer)</span>
                     </div>
-                    {isAuthority && <span className="text-[10px]">Active</span>}
+                    {isAuthority && !isAdmin && <span className="text-[10px]">Active</span>}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      switchPersona('admin');
+                      setDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between ${
+                      isAdmin ? 'bg-purple-950/50 text-purple-300 font-semibold border border-purple-500/30' : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-purple-400" />
+                      <span>Super Administrator (1 of 1)</span>
+                    </div>
+                    {isAdmin && <span className="text-[10px]">Active</span>}
                   </button>
                 </div>
 
                 <div className="mt-2 pt-2 border-t border-slate-800 space-y-1">
+                  {(isAuthority || isAdmin) && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setDropdownOpen(false)}
+                      className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-purple-300 hover:text-white hover:bg-purple-950/40 flex items-center gap-2"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Admin Command Panel</span>
+                    </Link>
+                  )}
                   <Link
                     to="/login"
                     onClick={() => setDropdownOpen(false)}
@@ -208,14 +240,71 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile sub-bar */}
-      <div className="lg:hidden flex items-center justify-around border-t border-slate-800/60 bg-slate-950/95 py-2 px-1 text-[11px] overflow-x-auto">
-        <Link to="/" className={`px-2 py-1 rounded shrink-0 ${isActive('/') ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>Overview</Link>
-        <Link to="/dashboard" className={`px-2 py-1 rounded shrink-0 ${isActive('/dashboard') ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>Dashboard</Link>
-        <Link to="/map" className={`px-2 py-1 rounded shrink-0 ${isActive('/map') ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>Map</Link>
-        <Link to="/report" className={`px-2 py-1 rounded shrink-0 ${isActive('/report') ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>Report</Link>
-        <Link to="/authority" className={`px-2 py-1 rounded shrink-0 ${isActive('/authority') ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>Authority</Link>
-        <Link to="/dataset" className={`px-2 py-1 rounded shrink-0 ${isActive('/dataset') ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}>Dataset</Link>
+      {/* Mobile sub-bar - Role-Tailored */}
+      <div className="lg:hidden flex items-center justify-around border-t border-slate-800/60 bg-slate-950/95 py-2 px-1 text-[11px] overflow-x-auto gap-1">
+        <Link
+          to="/"
+          className={`px-2 py-1 rounded shrink-0 flex items-center gap-1 ${
+            isActive('/') || isActive('/dashboard') ? 'text-emerald-400 font-bold' : 'text-slate-400'
+          }`}
+        >
+          <LayoutDashboard className="w-3 h-3" />
+          <span>Dashboard</span>
+        </Link>
+
+        {isAuthority ? (
+          <>
+            <Link
+              to="/admin?tab=triage"
+              className={`px-2 py-1 rounded shrink-0 flex items-center gap-1 ${
+                location.search.includes('triage') ? 'text-amber-400 font-bold' : 'text-slate-400'
+              }`}
+            >
+              <span>All Reports</span>
+            </Link>
+            <Link
+              to="/map"
+              className={`px-2 py-1 rounded shrink-0 ${
+                isActive('/map') ? 'text-emerald-400 font-bold' : 'text-slate-400'
+              }`}
+            >
+              Map
+            </Link>
+            <Link
+              to="/admin?tab=telemetry"
+              className={`px-2 py-1 rounded shrink-0 ${
+                location.search.includes('telemetry') ? 'text-cyan-400 font-bold' : 'text-slate-400'
+              }`}
+            >
+              Summary
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/report"
+              className={`px-2 py-1 rounded shrink-0 ${
+                isActive('/report') ? 'text-emerald-400 font-bold' : 'text-slate-400'
+              }`}
+            >
+              Report
+            </Link>
+            <a
+              href="/#recent-reports"
+              className="px-2 py-1 rounded shrink-0 text-slate-400 hover:text-white"
+            >
+              My Reports
+            </a>
+            <Link
+              to="/map"
+              className={`px-2 py-1 rounded shrink-0 ${
+                isActive('/map') ? 'text-emerald-400 font-bold' : 'text-slate-400'
+              }`}
+            >
+              Map
+            </Link>
+          </>
+        )}
       </div>
     </header>
   );

@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import env from './config/env.js';
 import { isRealFirebaseConnected } from './config/firebase.js';
 import { isGeminiLive, getActiveModelName } from './config/gemini.js';
+import { connectDB, getDatabaseStatus } from './config/db.js';
 import { getActiveGeospatialProvider } from './services/geospatialProvider.js';
 
 // Route imports
@@ -16,6 +17,7 @@ import reportsRoutes from './routes/reportsRoutes.js';
 import zonesRoutes from './routes/zonesRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -90,6 +92,7 @@ app.get('/api/health', (req, res) => {
     tagline: 'See the Threat. Predict the Risk. Protect the Aravallis.',
     timestamp: new Date().toISOString(),
     services: {
+      database: getDatabaseStatus(),
       firebase: {
         connected: isRealFirebaseConnected(),
         mode: isRealFirebaseConnected() ? 'Live Firebase Firestore & Storage' : 'Local Fallback / High-Fidelity Store',
@@ -116,6 +119,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/zones', zonesRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Root informational endpoint
 app.get('/', (req, res) => {
@@ -152,14 +156,18 @@ app.use((err, req, res, next) => {
 // Start listening if not imported in tests
 if (process.env.NODE_ENV !== 'test') {
   const PORT = env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`
+  connectDB().then(() => {
+    const dbStatus = getDatabaseStatus();
+    app.listen(PORT, () => {
+      console.log(`
 ================================================================
 🌿 ARAVALLI SENTINEL — Backend API Active
 📡 Running at: http://localhost:${PORT}
 🗺️ Health: http://localhost:${PORT}/api/health
+🗄️ Database: ${dbStatus.type} (${dbStatus.status})
 ================================================================
-    `);
+      `);
+    });
   });
 }
 

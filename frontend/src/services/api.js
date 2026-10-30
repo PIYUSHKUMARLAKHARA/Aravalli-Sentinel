@@ -189,6 +189,66 @@ export async function registerAuthority(payload) {
   return data;
 }
 
+export async function loginAdmin(email, password) {
+  const res = await fetch(`${BASE_URL}/auth/login-admin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (data.success && data.token) {
+    localStorage.setItem('aravalli_auth_token', data.token);
+    localStorage.setItem('aravalli_auth_user', JSON.stringify(data.user));
+  }
+  return data;
+}
+
+export async function fetchAdminOfficers() {
+  const res = await fetch(`${BASE_URL}/admin/officers`, {
+    headers: { ...getAuthHeader() },
+  });
+  return res.json();
+}
+
+export async function updateOfficerPermissions(uid, payload) {
+  const res = await fetch(`${BASE_URL}/admin/officers/${uid}/permissions`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+export async function adminProvisionOfficer(payload) {
+  const res = await fetch(`${BASE_URL}/admin/officers/provision`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+export async function adminDeleteOfficer(uid) {
+  const res = await fetch(`${BASE_URL}/admin/officers/${uid}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeader() },
+  });
+  return res.json();
+}
+
+export async function fetchAdminSystemStats() {
+  const res = await fetch(`${BASE_URL}/admin/system-stats`, {
+    headers: { ...getAuthHeader() },
+  });
+  return res.json();
+}
+
 export function logoutUser() {
   localStorage.removeItem('aravalli_auth_token');
   localStorage.removeItem('aravalli_auth_user');

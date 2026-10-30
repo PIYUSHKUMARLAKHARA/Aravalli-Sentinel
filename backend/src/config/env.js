@@ -26,6 +26,10 @@ export const env = {
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+  // MongoDB Database Configuration
+  MONGODB_URI: process.env.MONGODB_URI || '',
+  DATABASE_TYPE: process.env.DATABASE_TYPE || (process.env.MONGODB_URI ? 'mongodb' : 'fallback'),
+  // Legacy Firebase Config (Optional)
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || 'aravalli-sentinel-demo',
   FIREBASE_SERVICE_ACCOUNT_PATH: process.env.FIREBASE_SERVICE_ACCOUNT_PATH || '',
   FIREBASE_SERVICE_ACCOUNT_JSON: process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '',

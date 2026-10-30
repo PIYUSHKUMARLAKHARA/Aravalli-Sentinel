@@ -151,8 +151,8 @@ export function LoginPage() {
       try {
         const res = await loginAuthority(officerEmail, officerPassword);
         if (res.success) {
-          setSuccessMessage('Officer credentials verified! Opening Enforcement Triage Console...');
-          setTimeout(() => navigate('/authority'), 600);
+          setSuccessMessage('Officer credentials verified! Opening Admin Panel (Authority Incident Triage)...');
+          setTimeout(() => navigate('/admin?tab=triage'), 600);
         } else {
           setErrorMessage(res.error || 'Failed to authenticate officer account.');
         }
@@ -187,8 +187,8 @@ export function LoginPage() {
       });
 
       if (res.success) {
-        setSuccessMessage('Authority account successfully provisioned! Opening Enforcement Triage Console...');
-        setTimeout(() => navigate('/authority'), 600);
+        setSuccessMessage('Authority account successfully provisioned! Opening Admin Panel (Authority Incident Triage)...');
+        setTimeout(() => navigate('/admin?tab=triage'), 600);
       } else {
         setErrorMessage(res.error || 'Invalid Authority Invite Secret. Contact Forest Department IT administrator.');
       }
@@ -209,8 +209,10 @@ export function LoginPage() {
       if (res.success) {
         setSuccessMessage(`Switched session to ${res.user.name} (${res.user.badge})`);
         setTimeout(() => {
-          if (role === 'authority') {
-            navigate('/authority');
+          if (role === 'admin') {
+            navigate('/admin');
+          } else if (role === 'authority') {
+            navigate('/admin?tab=triage');
           } else {
             navigate('/dashboard');
           }
@@ -849,6 +851,31 @@ export function LoginPage() {
                 >
                   <ShieldAlert className="w-3.5 h-3.5" />
                   <span>Launch Authority Console</span>
+                </button>
+              </div>
+
+              {/* Persona 3: Super Administrator */}
+              <div className="sm:col-span-2 p-5 rounded-xl border border-purple-500/40 bg-purple-950/20 space-y-3 flex flex-col justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-purple-400 uppercase font-bold">Role: Super Administrator</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-purple-500/20 text-purple-300 rounded font-mono font-bold">1 of 1 Admin</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-white">Chief Environmental Administrator</h3>
+                  <p className="text-xs text-purple-300 font-mono">admin@aravalli.sentinel</p>
+                  <p className="text-[11px] text-slate-300 pt-1">
+                    Central authority oversight. Regulates enforcement officer clearances, sets verification/status permissions, provisions new officers, and enforces single administrator policy.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickPersona('admin')}
+                  disabled={submitting}
+                  className="w-full py-2.5 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Launch Super Admin Command Panel</span>
                 </button>
               </div>
             </div>

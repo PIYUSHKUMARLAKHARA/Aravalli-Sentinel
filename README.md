@@ -106,8 +106,9 @@ Aravalli Sentinel deploys an end-to-end operational pipeline based on the **DETE
 - **Testing Suite:** Vitest v3.2 + Supertest v7.0 (42 automated unit and integration tests)
 
 ### Cloud & AI Integrations
+- **Database & ODM:** MongoDB with Mongoose v8 (Collections: `reports`, `officers`, `zones` with geospatial indexes and automatic baseline dataset seeding) + High-Fidelity Local Development Store fallback
 - **AI Multimodal Vision:** Google Generative AI SDK (`@google/generative-ai`), default model `gemini-2.0-flash`
-- **Database & Storage:** Firebase Admin SDK v13.1 (Cloud Firestore & Firebase Storage) with High-Fidelity Local Development Store fallback
+- **Legacy Cloud Support:** Firebase Admin SDK v13.1 (Cloud Firestore & Firebase Storage)
 - **Remote Sensing Data:** Copernicus Sentinel-2 MSI (10m bands) & Landsat-9 OLI-2 Telemetry
 
 ---
@@ -358,6 +359,8 @@ cp .env.example frontend/.env
 | `FRONTEND_URL` | `backend/.env` | Allowed CORS origin | Yes | `http://localhost:5173` |
 | `GEMINI_API_KEY` | `backend/.env` | Google AI Studio key | Optional* | `AIzaSy...` (Uses heuristic fallback if empty) |
 | `GEMINI_MODEL` | `backend/.env` | Gemini model name | Optional | `gemini-2.0-flash` |
+| `MONGODB_URI` | `backend/.env` | MongoDB connection URI (Local or Atlas cluster) | Optional* | `mongodb://localhost:27017/aravalli_sentinel` (Uses High-Fidelity Local Store if empty) |
+| `DATABASE_TYPE` | `backend/.env` | Database provider indicator | Optional | `mongodb` |
 | `FIREBASE_PROJECT_ID` | `backend/.env` | Firebase project ID | Yes | `aravalli-sentinel-demo` |
 | `AUTHORITY_INVITE_SECRET` | `backend/.env` | Server-held secret to provision Forest Authority accounts | Yes | `AravalliEnforce2025SecureToken` |
 | `DEMO_BOOTSTRAP_ENABLED` | `backend/.env` | Pre-seeds evaluation officer in non-prod environments | Yes | `true` (`false` in production) |
@@ -381,6 +384,34 @@ cp .env.example frontend/.env
    - In production environments, set `DEMO_BOOTSTRAP_ENABLED=false` to disable bootstrap accounts and enforce strict administrator provisioning.
 4. **Statutory Non-Government Notice:**
    - *Aravalli Sentinel is an independent academic, civic, and hackathon project. It is not an official portal of the Ministry of Environment, Forest and Climate Change (MoEFCC) or State Forest Departments.*
+
+### MongoDB Database Setup & Migration Guide
+Aravalli Sentinel uses **MongoDB (via Mongoose)** as its persistent database layer, replacing external dependencies with a flexible document model ideal for geospatial coordinates, nested Gemini AI evidence metadata, and forensic audit logs.
+
+#### Option A: Local MongoDB (Community Server)
+1. Install MongoDB Community Edition and ensure the daemon is running:
+   ```powershell
+   # Start MongoDB service (Windows)
+   net start MongoDB
+   ```
+2. In `backend/.env`, configure:
+   ```ini
+   MONGODB_URI=mongodb://localhost:27017/aravalli_sentinel
+   DATABASE_TYPE=mongodb
+   ```
+
+#### Option B: MongoDB Atlas (Free Cloud Cluster)
+1. Create a free M0 cluster at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. Create a database user and whitelist your IP (or `0.0.0.0/0` for development).
+3. Copy the connection string and set it in `backend/.env`:
+   ```ini
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/aravalli_sentinel?retryWrites=true&w=majority
+   DATABASE_TYPE=mongodb
+   ```
+
+#### Zero-Config Fallback & Auto-Seeding
+- If `MONGODB_URI` is left blank or the database is temporarily unreachable, the backend automatically activates the **High-Fidelity Local Development Store** so the app and automated test suites run without errors.
+- On your first connection to MongoDB, the backend automatically seeds the 33 baseline citizen reports and 10 Aravalli monitored zones directly into your MongoDB collections (`reports` and `zones`), requiring zero manual seeding scripts.
 
 ---
 
