@@ -301,6 +301,7 @@ export async function submitReport(req, res) {
 
     const newReport = {
       id: reportId,
+      title: req.body.title || `${threatCategory} at ${locationName}`,
       threatCategory,
       description,
       latitude: Number(latitude),
@@ -311,6 +312,7 @@ export async function submitReport(req, res) {
       incidentTime: incidentTime || now,
       createdAt: now,
       updatedAt: now,
+      lastUpdatedDate: now,
       status: 'pending',
       citizenId: user.uid,
       citizenEmail: user.email || null,
@@ -485,6 +487,22 @@ export async function getReportById(req, res) {
       return res.status(404).json({ success: false, error: `Report ${id} not found.` });
     }
 
+    // Citizen privacy & ownership check (TEST 11)
+    if (req.user && req.user.role === 'citizen') {
+      const isOwner =
+        (report.citizenId && report.citizenId === req.user.uid) ||
+        (report.citizenEmail && report.citizenEmail === req.user.email) ||
+        (req.user.name && report.citizenName?.includes(req.user.name));
+
+      // If report is explicitly owned by someone else, deny citizen inspection
+      if (report.citizenId && !isOwner) {
+        return res.status(403).json({
+          success: false,
+          error: 'Access Denied: Citizens can only inspect their own submitted reports.',
+        });
+      }
+    }
+
     return res.json({
       success: true,
       report: isAuthority ? report : sanitizeReportForPublic(report),
@@ -497,8 +515,35 @@ export async function getReportById(req, res) {
 export async function updateReportStatus(req, res) {
   try {
     const { id } = req.params;
-    const { status, actionNotes, assignedOfficer } = req.body;
+    const {
+      status,
+      actionNotes,
+      resolutionSummary,
+      actionTaken,
+      officerRemarks,
+      resolutionDate,
+      assignedOfficer,
+    } = req.body;
     const authorityUser = req.user;
+
+    // Mandatory Resolution Remarks validation for Step D
+    let resolutionData = null;
+    if (status === 'resolved') {
+      if (!resolutionSummary || resolutionSummary.trim().length < 5) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed: A meaningful Resolution Summary (at least 5 characters) is required when marking a case as RESOLVED.',
+        });
+      }
+
+      resolutionData = {
+        summary: resolutionSummary.trim(),
+        actionTaken: (actionTaken || actionNotes || 'On-site verification completed and protective action executed.').trim(),
+        officerRemarks: (officerRemarks || actionNotes || 'Case formally reviewed and resolved by forest enforcement officers.').trim(),
+        resolvedBy: authorityUser.name || 'Authorized Forest Officer',
+        resolvedAt: resolutionDate || new Date().toISOString(),
+      };
+    }
 
     // Super Administrator bypasses all permission checks; otherwise verify officer permissions
     if (authorityUser.role !== 'admin') {
@@ -570,22 +615,31 @@ export async function updateReportStatus(req, res) {
       email: authorityUser.email,
       role: authorityUser.role,
       timestamp: now,
-      notes: actionNotes,
+      notes: actionNotes || resolutionSummary || officerRemarks || 'Status updated by authorized officer.',
+      resolution: resolutionData || undefined,
       assignedOfficer: assignedOfficer || authorityUser.name,
     };
 
     report.status = status;
     report.updatedAt = now;
+    report.lastUpdatedDate = now;
+    if (resolutionData) {
+      report.resolution = resolutionData;
+    }
     report.auditTrail = report.auditTrail || [];
     report.auditTrail.push(auditEntry);
 
     // Save to MongoDB if connected
     if (isMongoDBConnected()) {
       try {
+        const updateFields = { status, updatedAt: now, lastUpdatedDate: now };
+        if (resolutionData) {
+          updateFields.resolution = resolutionData;
+        }
         await Report.findOneAndUpdate(
           { id },
           {
-            $set: { status, updatedAt: now },
+            $set: updateFields,
             $push: { auditTrail: auditEntry },
           },
           { new: true }
@@ -600,6 +654,8 @@ export async function updateReportStatus(req, res) {
         await db.collection('reports').doc(id).update({
           status,
           updatedAt: now,
+          lastUpdatedDate: now,
+          resolution: resolutionData || report.resolution,
           auditTrail: report.auditTrail,
         });
       } catch (saveErr) {}
@@ -609,6 +665,30 @@ export async function updateReportStatus(req, res) {
     const memIdx = inMemoryReports.findIndex(r => r.id === id);
     if (memIdx !== -1) {
       inMemoryReports[memIdx] = { ...report };
+    }
+
+    // Dispatch in-app notification to reporting citizen (Step F)
+    try {
+      const { createReportNotification } = await import('./notificationsController.js');
+      const targetCitizenId = report.citizenId || 'demo-citizen-01';
+      const targetCitizenEmail = report.citizenEmail || 'citizen@aravalli.sentinel';
+      await createReportNotification({
+        citizenId: targetCitizenId,
+        citizenEmail: targetCitizenEmail,
+        reportId: report.id,
+        reportTitle: report.title || report.threatCategory,
+        type: status === 'resolved' ? 'case_resolved' : 'status_update',
+        title: status === 'resolved' ? `Case Resolved: ${report.id}` : `Case Updated: ${report.id}`,
+        message: status === 'resolved'
+          ? `Your environmental report ${report.id} has been reviewed and marked as resolved by the authorized officer.`
+          : `Your environmental report ${report.id} status has been updated to ${status.replace('_', ' ').toUpperCase()}.`,
+        status,
+        resolution: resolutionData || null,
+        officerRemarks: officerRemarks || actionNotes || null,
+        updatedBy: authorityUser.name || 'Forest Authority Officer',
+      });
+    } catch (notifErr) {
+      console.warn('⚠️ [Notification] Could not dispatch notification:', notifErr.message);
     }
 
     return res.json({
@@ -684,6 +764,8 @@ export async function generateIncidentDossier(req, res) {
       },
       enforcementAuditHistory: report.auditTrail || [],
       evidenceThumbnailUrl: report.imageUrl,
+      resolution: report.resolution || null,
+      lastUpdatedDate: report.lastUpdatedDate || report.updatedAt || report.createdAt,
     };
 
     return res.json({

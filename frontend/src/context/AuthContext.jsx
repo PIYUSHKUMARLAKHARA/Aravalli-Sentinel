@@ -23,17 +23,7 @@ export function AuthProvider({ children }) {
       if (storedUser && token) {
         setUser(JSON.parse(storedUser));
       } else {
-        // Pre-initialize demo persona if first visit
-        const defaultCitizen = {
-          uid: 'demo-citizen-01',
-          name: 'Aarav Mehta',
-          email: 'citizen@aravalli.sentinel',
-          role: 'citizen',
-          badge: 'Citizen Sentinel',
-        };
-        setUser(defaultCitizen);
-        localStorage.setItem('aravalli_auth_token', 'demo-token-citizen-valid');
-        localStorage.setItem('aravalli_auth_user', JSON.stringify(defaultCitizen));
+        setUser(null);
       }
     } catch (e) {
       console.error('Failed to load session:', e);
@@ -128,8 +118,8 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const forgotPassword = async (email) => {
-    return await resetCitizenPassword(email);
+  const forgotPassword = async (email, newPassword) => {
+    return await resetCitizenPassword(email, newPassword);
   };
 
   const logout = () => {

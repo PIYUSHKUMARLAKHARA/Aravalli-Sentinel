@@ -73,6 +73,10 @@ export function AdminDashboardPage({ initialTab = 'triage' }) {
   const [selectedCase, setSelectedCase] = useState(null);
   const [newStatus, setNewStatus] = useState('under_review');
   const [actionNotes, setActionNotes] = useState('');
+  const [resolutionSummary, setResolutionSummary] = useState('');
+  const [actionTaken, setActionTaken] = useState('');
+  const [officerRemarks, setOfficerRemarks] = useState('');
+  const [resolutionDate, setResolutionDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Printable Dossier & Lightbox
@@ -163,25 +167,56 @@ export function AdminDashboardPage({ initialTab = 'triage' }) {
     setSelectedCase(report);
     setNewStatus(report.status === 'pending' ? 'under_review' : report.status);
     setActionNotes('');
+    setResolutionSummary(report.resolution?.summary || '');
+    setActionTaken(report.resolution?.actionTaken || '');
+    setOfficerRemarks(report.resolution?.officerRemarks || '');
+    setResolutionDate(
+      report.resolution?.resolutionDate
+        ? new Date(report.resolution.resolutionDate).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0]
+    );
     setFeedback(null);
   };
 
   const handleUpdateStatusSubmit = async (e) => {
     e.preventDefault();
-    if (!actionNotes || actionNotes.trim().length < 5) {
-      setFeedback({ type: 'error', message: 'Please provide at least 5 characters of official action notes for the forensic audit trail.' });
-      return;
+    if (newStatus === 'resolved') {
+      if (!resolutionSummary || resolutionSummary.trim().length < 5) {
+        setFeedback({
+          type: 'error',
+          message: 'Resolution Summary is required and must be at least 5 characters long when marking a case as resolved.',
+        });
+        return;
+      }
+    } else {
+      if (!actionNotes || actionNotes.trim().length < 5) {
+        setFeedback({
+          type: 'error',
+          message: 'Please provide at least 5 characters of official action notes for the forensic audit trail.',
+        });
+        return;
+      }
     }
 
     setIsUpdatingStatus(true);
     setFeedback(null);
 
     try {
-      const res = await updateReportStatus(selectedCase.id, {
+      const payload = {
         status: newStatus,
-        actionNotes,
         assignedOfficer: user?.name,
-      });
+        actionNotes: newStatus === 'resolved' ? resolutionSummary.trim() : actionNotes.trim(),
+        ...(newStatus === 'resolved'
+          ? {
+              resolutionSummary: resolutionSummary.trim(),
+              actionTaken: actionTaken.trim() || 'Remediation completed by authorized Forest Authority.',
+              officerRemarks: officerRemarks.trim() || 'Case verified and resolved in compliance with Aravalli protection mandates.',
+              resolutionDate: resolutionDate || new Date().toISOString(),
+            }
+          : {}),
+      };
+
+      const res = await updateReportStatus(selectedCase.id, payload);
 
       if (res.success && res.report) {
         setReports((prev) => prev.map((r) => (r.id === res.report.id ? res.report : r)));
@@ -189,7 +224,7 @@ export function AdminDashboardPage({ initialTab = 'triage' }) {
         setActionNotes('');
         setFeedback({
           type: 'success',
-          message: `Case ${res.report.id} status successfully updated to '${newStatus}'. Cryptographic audit log updated.`,
+          message: `Case ${res.report.id} status successfully updated to '${newStatus}'. Cryptographic audit log updated and citizen notification dispatched.`,
         });
       } else {
         setFeedback({ type: 'error', message: res.error || 'Failed to update case status.' });
@@ -519,7 +554,16 @@ export function AdminDashboardPage({ initialTab = 'triage' }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
-              {['all', 'pending', 'under_review', 'verified', 'resolved', 'rejected'].map((status) => (
+              {[
+                'all',
+                'pending',
+                'under_review',
+                'investigation_in_progress',
+                'action_taken',
+                'verified',
+                'resolved',
+                'rejected',
+              ].map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
@@ -529,7 +573,7 @@ export function AdminDashboardPage({ initialTab = 'triage' }) {
                       : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
                 >
-                  {status.replace('_', ' ')}
+                  {status.replace(/_/g, ' ')}
                 </button>
               ))}
             </div>
@@ -991,11 +1035,13 @@ export function AdminDashboardPage({ initialTab = 'triage' }) {
                       onChange={(e) => setNewStatus(e.target.value)}
                       className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white"
                     >
-                      <option value="under_review">Under Review (Patrol Dispatched)</option>
-                      <option value="verified">Verified (Violation Confirmed)</option>
-                      <option value="resolved">Resolved (Machinery Seized / Cleared)</option>
-                      <option value="rejected">Rejected (False Alarm / Non-Forest Land)</option>
-                      <option value="pending">Pending</option>
+                      <option value="pending">PENDING (Initial Citizen Submission)</option>
+                      <option value="under_review">UNDER REVIEW (Field Verification Assigned)</option>
+                      <option value="investigation_in_progress">INVESTIGATION IN PROGRESS (On-Site Team Deployed)</option>
+                      <option value="action_taken">ACTION TAKEN (Seizure / Notice Issued)</option>
+                      <option value="verified">VERIFIED (Violation Confirmed)</option>
+                      <option value="resolved">RESOLVED (Remediation Completed / Case Closed)</option>
+                      <option value="rejected">REJECTED / INVALID (Non-Forest Land / False Report)</option>
                     </select>
                   </div>
                   <div>
@@ -1009,18 +1055,86 @@ export function AdminDashboardPage({ initialTab = 'triage' }) {
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-[10px] text-slate-400 uppercase block mb-1">
-                    Enforcement Action Notes (Mandatory for Audit Trail)
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="e.g. Range Forest Officer dispatched team with DGPS. Show-cause notice issued under PLPA Section 4."
-                    value={actionNotes}
-                    onChange={(e) => setActionNotes(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white"
-                  />
-                </div>
+                {/* Conditional Resolution Fields when status is RESOLVED */}
+                {newStatus === 'resolved' ? (
+                  <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 space-y-3">
+                    <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-xs font-bold uppercase">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Case Resolution Protocol & Citizen Notification</span>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-300 uppercase block mb-1 font-mono font-semibold">
+                        Resolution Summary <span className="text-emerald-400">* (Required, min 5 chars)</span>
+                      </label>
+                      <textarea
+                        rows={2}
+                        required
+                        placeholder="Detail the remedial action taken (e.g. Illegal excavator seized, mining pit backfilled, area returned to forest division custody)."
+                        value={resolutionSummary}
+                        onChange={(e) => setResolutionSummary(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] text-slate-300 uppercase block mb-1 font-mono">
+                          Action Taken
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Machinery impounded; FIR lodged under PLPA Sec 4"
+                          value={actionTaken}
+                          onChange={(e) => setActionTaken(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] text-slate-300 uppercase block mb-1 font-mono">
+                          Resolution Date
+                        </label>
+                        <input
+                          type="date"
+                          value={resolutionDate}
+                          onChange={(e) => setResolutionDate(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-300 uppercase block mb-1 font-mono">
+                        Official Officer Remarks (Internal & Dossier Record)
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="e.g. Physical perimeter secured. Routine ranger patrols scheduled every Wednesday to deter reincursion."
+                        value={officerRemarks}
+                        onChange={(e) => setOfficerRemarks(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <p className="text-[10px] text-emerald-400/90 font-mono">
+                      ✓ Saving this resolution will immediately dispatch an in-app resolution notification to the reporting citizen.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-[10px] text-slate-400 uppercase block mb-1">
+                      Enforcement Action Notes (Mandatory for Audit Trail)
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Range Forest Officer dispatched team with DGPS. Show-cause notice issued under PLPA Section 4."
+                      value={actionNotes}
+                      onChange={(e) => setActionNotes(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white"
+                    />
+                  </div>
+                )}
 
                 {/* Permission restriction notices */}
                 {!isAdmin && user?.permissions?.isActive === false && (
@@ -1057,7 +1171,13 @@ export function AdminDashboardPage({ initialTab = 'triage' }) {
                   className="w-full py-2.5 px-4 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>{isUpdatingStatus ? 'Recording Status in Audit Trail...' : 'Confirm Status Update & Save Audit Log'}</span>
+                  <span>
+                    {isUpdatingStatus
+                      ? 'Recording Status in Audit Trail...'
+                      : newStatus === 'resolved'
+                      ? 'Mark Case Resolved & Dispatch Notification'
+                      : 'Confirm Status Update & Save Audit Log'}
+                  </span>
                 </button>
               </form>
 

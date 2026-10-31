@@ -3,8 +3,10 @@ import env from '../config/env.js';
 import { localTokenSessionStore, isRealFirebaseConnected, getAuth } from '../config/firebase.js';
 import { isMongoDBConnected } from '../config/db.js';
 import { Officer } from '../models/Officer.js';
+import { User } from '../models/User.js';
+import { hashPassword, verifyPassword, signJWT } from '../utils/security.js';
 
-// Pre-seeded demo accounts for quick testing & evaluation
+// Pre-seeded Super Administrator (Single Admin Security Model)
 export const SUPER_ADMIN = {
   uid: 'master-super-admin-01',
   email: 'admin@aravalli.sentinel',
@@ -53,18 +55,33 @@ const demoAccounts = {
   admin: SUPER_ADMIN,
 };
 
-// Seed Super Admin into local token store on startup
+// Seed Super Admin and demo accounts into local token session store
 localTokenSessionStore.set('demo-token-admin-valid', SUPER_ADMIN);
+localTokenSessionStore.set('demo-token-citizen-valid', demoAccounts.citizen);
+localTokenSessionStore.set('demo-token-authority-valid', demoAccounts.authority);
 
-// Server-side registered authority officers registry
+// In-memory registries (fallback for when MongoDB is in demo/offline mode)
 export const officerRegistry = new Map();
+export const citizenRegistry = new Map();
 
-// If DEMO_BOOTSTRAP_ENABLED is active, seed the restricted demonstration officer
+// Seed initial demo citizen
+citizenRegistry.set('citizen@aravalli.sentinel', {
+  uid: 'demo-citizen-01',
+  email: 'citizen@aravalli.sentinel',
+  password: hashPassword('Citizen@Aravalli2026!'),
+  name: 'Aarav Mehta',
+  role: 'citizen',
+  badge: 'Citizen Sentinel',
+  isActive: true,
+});
+
+// Seed default demonstration officer if demo bootstrap is enabled
 if (env.DEMO_BOOTSTRAP_ENABLED) {
   officerRegistry.set('officer.sharma@forest.haryana.gov.in', {
     uid: 'demo-authority-01',
     email: 'officer.sharma@forest.haryana.gov.in',
-    password: 'Officer@Aravalli2026!',
+    password: hashPassword('Officer@Aravalli2026!'),
+    rawPassword: 'Officer@Aravalli2026!',
     name: 'Officer Rajesh Sharma',
     role: 'authority',
     department: 'Haryana Forest Department & Aravalli Task Force',
@@ -73,33 +90,115 @@ if (env.DEMO_BOOTSTRAP_ENABLED) {
     token: 'demo-token-authority-valid',
     isDemoBootstrap: true,
     verifiedAt: '2026-01-01T00:00:00.000Z',
+    permissions: {
+      canVerifyIncidents: true,
+      canUpdateStatus: true,
+      canDispatchPatrols: true,
+      canExportDossiers: true,
+      isActive: true,
+    },
   });
 }
 
-async function syncBootstrapOfficer() {
-  if (!isMongoDBConnected() || !env.DEMO_BOOTSTRAP_ENABLED) return;
-  try {
-    const existing = await Officer.findOne({ email: 'officer.sharma@forest.haryana.gov.in' });
-    if (!existing) {
-      await Officer.create({
-        uid: 'demo-authority-01',
-        email: 'officer.sharma@forest.haryana.gov.in',
-        password: 'Officer@Aravalli2026!',
-        name: 'Officer Rajesh Sharma',
+/**
+ * Synchronize bootstrap officer and environment-provisioned initial officer
+ */
+export async function syncBootstrapOfficer() {
+  // 1. Sync demo bootstrap officer
+  if (env.DEMO_BOOTSTRAP_ENABLED) {
+    if (isMongoDBConnected()) {
+      try {
+        const existing = await Officer.findOne({ email: 'officer.sharma@forest.haryana.gov.in' });
+        if (!existing) {
+          await Officer.create({
+            uid: 'demo-authority-01',
+            email: 'officer.sharma@forest.haryana.gov.in',
+            password: hashPassword('Officer@Aravalli2026!'),
+            name: 'Officer Rajesh Sharma',
+            role: 'authority',
+            department: 'Haryana Forest Department & Aravalli Task Force',
+            designation: 'Divisional Forest Officer (DFO)',
+            badge: 'Authorized Enforcement Officer',
+            token: 'demo-token-authority-valid',
+            isDemoBootstrap: true,
+            verifiedAt: '2026-01-01T00:00:00.000Z',
+            permissions: {
+              canVerifyIncidents: true,
+              canUpdateStatus: true,
+              canDispatchPatrols: true,
+              canExportDossiers: true,
+              isActive: true,
+            },
+          });
+        }
+      } catch (err) {
+        console.warn('⚠️ [MongoDB] Officer sync notice:', err.message);
+      }
+    }
+  }
+
+  // 2. Provision initial officer from environment variables if specified
+  const envEmail = env.INITIAL_OFFICER_EMAIL?.toLowerCase().trim();
+  const envPassword = env.INITIAL_OFFICER_PASSWORD;
+  const envName = env.INITIAL_OFFICER_NAME || 'Forest Range Officer';
+
+  if (envEmail && envPassword) {
+    let officerExists = officerRegistry.has(envEmail);
+
+    if (!officerExists && isMongoDBConnected()) {
+      try {
+        const dbOfficer = await Officer.findOne({ email: envEmail }).lean();
+        if (dbOfficer) {
+          officerExists = true;
+          officerRegistry.set(envEmail, dbOfficer);
+        }
+      } catch (err) {}
+    }
+
+    if (!officerExists) {
+      const hashedPassword = hashPassword(envPassword);
+      const officerUid = `auth-env-${Date.now()}`;
+      const newOfficer = {
+        uid: officerUid,
+        email: envEmail,
+        password: hashedPassword,
+        name: envName,
         role: 'authority',
-        department: 'Haryana Forest Department & Aravalli Task Force',
+        department: 'State Forest Department & Aravalli Enforcement Unit',
         designation: 'Divisional Forest Officer (DFO)',
         badge: 'Authorized Enforcement Officer',
-        token: 'demo-token-authority-valid',
-        isDemoBootstrap: true,
-        verifiedAt: '2026-01-01T00:00:00.000Z',
-      });
+        isEnvProvisioned: true,
+        verifiedAt: new Date().toISOString(),
+        permissions: {
+          canVerifyIncidents: true,
+          canUpdateStatus: true,
+          canDispatchPatrols: true,
+          canExportDossiers: true,
+          isActive: true,
+        },
+      };
+
+      officerRegistry.set(envEmail, newOfficer);
+
+      if (isMongoDBConnected()) {
+        try {
+          await Officer.create(newOfficer);
+        } catch (mongoErr) {
+          console.warn('⚠️ [MongoDB] Could not persist env-provisioned officer:', mongoErr.message);
+        }
+      }
+
+      console.log(`🌲 [Auth] Pre-authorized initial officer account provisioned for: ${envEmail}`);
     }
-  } catch (err) {
-    console.warn('⚠️ [MongoDB] Officer sync notice:', err.message);
   }
 }
 
+// Initial sync on module load
+syncBootstrapOfficer().catch(() => {});
+
+/**
+ * DEMO QUICK SWITCH LOGIN (Preserved for hackathon evaluators & judges)
+ */
 export async function loginDemo(req, res) {
   try {
     const { role } = req.body;
@@ -113,11 +212,19 @@ export async function loginDemo(req, res) {
     }
 
     const user = demoAccounts[targetRole];
+    const sessionToken = signJWT({
+      uid: user.uid,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    });
+
+    localTokenSessionStore.set(sessionToken, user);
 
     return res.json({
       success: true,
       message: `Signed in as ${user.name} (${user.badge})`,
-      token: user.token,
+      token: sessionToken,
       user,
     });
   } catch (err) {
@@ -125,6 +232,9 @@ export async function loginDemo(req, res) {
   }
 }
 
+/**
+ * SUPER ADMINISTRATOR LOGIN
+ */
 export async function loginAdmin(req, res) {
   try {
     const { email, password } = req.body;
@@ -147,13 +257,20 @@ export async function loginAdmin(req, res) {
       });
     }
 
-    const sessionToken = SUPER_ADMIN.token;
+    const sessionToken = signJWT({
+      uid: SUPER_ADMIN.uid,
+      email: SUPER_ADMIN.email,
+      name: SUPER_ADMIN.name,
+      role: 'admin',
+    });
+
     localTokenSessionStore.set(sessionToken, SUPER_ADMIN);
+    localTokenSessionStore.set(SUPER_ADMIN.token, SUPER_ADMIN);
 
     return res.json({
       success: true,
       message: 'Super Administrator authenticated. Master authority active.',
-      token: sessionToken,
+      token: SUPER_ADMIN.token || sessionToken,
       user: {
         uid: SUPER_ADMIN.uid,
         email: SUPER_ADMIN.email,
@@ -170,6 +287,9 @@ export async function loginAdmin(req, res) {
   }
 }
 
+/**
+ * CITIZEN PORTAL LOGIN
+ */
 export async function loginCitizen(req, res) {
   try {
     const { email, password } = req.body;
@@ -181,27 +301,188 @@ export async function loginCitizen(req, res) {
       return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
     }
 
-    const isDemo = email.toLowerCase() === 'citizen@aravalli.sentinel';
-    const user = isDemo ? demoAccounts.citizen : {
-      uid: `cit-${Date.now()}`,
-      email,
-      name: email.split('@')[0].replace(/[._]/g, ' '),
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check demo citizen
+    if (normalizedEmail === 'citizen@aravalli.sentinel') {
+      const demoUser = demoAccounts.citizen;
+      const sessionToken = signJWT({
+        uid: demoUser.uid,
+        email: demoUser.email,
+        name: demoUser.name,
+        role: 'citizen',
+      });
+      localTokenSessionStore.set(sessionToken, demoUser);
+
+      return res.json({
+        success: true,
+        message: `Welcome back, ${demoUser.name}!`,
+        token: sessionToken,
+        user: demoUser,
+      });
+    }
+
+    // Lookup citizen in MongoDB or memory
+    let user = null;
+    if (isMongoDBConnected()) {
+      try {
+        user = await User.findOne({ email: normalizedEmail }).lean();
+      } catch (err) {}
+    }
+
+    if (!user) {
+      user = citizenRegistry.get(normalizedEmail);
+    }
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid email or password. Please verify your credentials or register as a Citizen Sentinel.',
+      });
+    }
+
+    if (user.isActive === false) {
+      return res.status(403).json({
+        success: false,
+        error: 'Account suspended. Please contact platform administrators.',
+      });
+    }
+
+    const isMatch = verifyPassword(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid email or password. Please verify your credentials.',
+      });
+    }
+
+    const userProfile = {
+      uid: user.uid,
+      email: user.email,
+      name: user.name,
       role: 'citizen',
-      token: `demo-token-citizen-${Date.now()}`,
-      badge: 'Citizen Sentinel',
+      badge: user.badge || 'Citizen Sentinel',
     };
+
+    const sessionToken = signJWT({
+      uid: userProfile.uid,
+      email: userProfile.email,
+      name: userProfile.name,
+      role: 'citizen',
+    });
+
+    localTokenSessionStore.set(sessionToken, userProfile);
 
     return res.json({
       success: true,
-      message: `Welcome back, ${user.name}!`,
-      token: user.token,
-      user,
+      message: `Welcome back, ${userProfile.name}!`,
+      token: sessionToken,
+      user: userProfile,
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
 }
 
+/**
+ * CITIZEN REGISTRATION
+ * Server-enforced: Role is ALWAYS 'citizen'.
+ * Ignores any role submitted by user to prevent privilege escalation.
+ */
+export async function registerCitizen(req, res) {
+  try {
+    const { email, fullName, password } = req.body;
+
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ success: false, error: 'A valid email address is required.' });
+    }
+    if (!fullName || fullName.trim().length < 2) {
+      return res.status(400).json({ success: false, error: 'Full name must be at least 2 characters.' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters long.' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if email already registered in citizen or officer accounts
+    if (citizenRegistry.has(normalizedEmail) || officerRegistry.has(normalizedEmail)) {
+      return res.status(409).json({
+        success: false,
+        error: 'An account with this email address already exists. Please log in.',
+      });
+    }
+
+    if (isMongoDBConnected()) {
+      try {
+        const existingCitizen = await User.findOne({ email: normalizedEmail }).lean();
+        const existingOfficer = await Officer.findOne({ email: normalizedEmail }).lean();
+        if (existingCitizen || existingOfficer) {
+          return res.status(409).json({
+            success: false,
+            error: 'An account with this email address already exists. Please log in.',
+          });
+        }
+      } catch (err) {}
+    }
+
+    // Role is strictly hardcoded to 'citizen'. Never trust client-supplied role!
+    const hashedPassword = hashPassword(password);
+    const uid = `cit-${Date.now()}`;
+    const newCitizen = {
+      uid,
+      email: normalizedEmail,
+      name: fullName.trim(),
+      password: hashedPassword,
+      role: 'citizen',
+      badge: 'Citizen Sentinel',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (isMongoDBConnected()) {
+      try {
+        await User.create(newCitizen);
+      } catch (mongoErr) {
+        console.warn('⚠️ [MongoDB] Could not persist citizen:', mongoErr.message);
+      }
+    }
+
+    citizenRegistry.set(normalizedEmail, newCitizen);
+
+    const userProfile = {
+      uid: newCitizen.uid,
+      email: newCitizen.email,
+      name: newCitizen.name,
+      role: 'citizen',
+      badge: newCitizen.badge,
+    };
+
+    const sessionToken = signJWT({
+      uid: userProfile.uid,
+      email: userProfile.email,
+      name: userProfile.name,
+      role: 'citizen',
+    });
+
+    localTokenSessionStore.set(sessionToken, userProfile);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Citizen Sentinel account registered successfully.',
+      token: sessionToken,
+      user: userProfile,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * FOREST AUTHORITY OFFICER LOGIN
+ * Restricts access strictly to verified Forest Authority officers.
+ * If a citizen account attempts login, returns 403 Forbidden with exact portal restriction notice.
+ */
 export async function loginAuthority(req, res) {
   try {
     const parseResult = authorityLoginSchema.safeParse(req.body);
@@ -218,6 +499,25 @@ export async function loginAuthority(req, res) {
 
     await syncBootstrapOfficer();
 
+    // TEST 4 Security Check: If a citizen tries to use the Forest Authority portal
+    let isCitizenAccount = citizenRegistry.has(normalizedEmail) && normalizedEmail !== 'officer.sharma@forest.haryana.gov.in';
+    if (!isCitizenAccount && isMongoDBConnected()) {
+      try {
+        const citizenDoc = await User.findOne({ email: normalizedEmail }).lean();
+        if (citizenDoc && citizenDoc.role === 'citizen') {
+          isCitizenAccount = true;
+        }
+      } catch (err) {}
+    }
+
+    if (isCitizenAccount) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access Denied: This portal is restricted to authorized Forest Authority officers.',
+      });
+    }
+
+    // Lookup officer
     let officer = null;
     if (isMongoDBConnected()) {
       try {
@@ -232,19 +532,25 @@ export async function loginAuthority(req, res) {
     if (!officer) {
       return res.status(404).json({
         success: false,
-        error: 'Officer account not provisioned. Official Forest Authority accounts must be provisioned by a verified administrator using an Authority Invitation Secret under the "Officer Provisioning" tab.',
+        error: 'Officer account not provisioned. Access Denied: Unrecognized or unauthorized officer credentials. Official Forest Authority accounts must be pre-provisioned by a verified administrator.',
       });
     }
 
     // Verify password against provisioned credential
-    if (officer.password && officer.password !== password) {
+    const isMatch = verifyPassword(password, officer.password) ||
+                    (officer.rawPassword && officer.rawPassword === password) ||
+                    (officer.password === password);
+
+    if (!isMatch) {
       return res.status(401).json({
         success: false,
         error: 'Invalid password for Forest Authority account. Please check credentials or contact your department administrator.',
       });
     }
 
-    if (officer.permissions && officer.permissions.isActive === false) {
+    // Check account active status
+    const isActive = officer.permissions ? officer.permissions.isActive !== false : (officer.isActive !== false);
+    if (!isActive) {
       return res.status(403).json({
         success: false,
         error: 'Officer account suspended: Enforcement clearance has been deactivated by the Super Administrator.',
@@ -259,7 +565,6 @@ export async function loginAuthority(req, res) {
       isActive: true,
     };
 
-    const sessionToken = officer.token || `demo-token-authority-${Date.now()}`;
     const userProfile = {
       uid: officer.uid,
       email: officer.email,
@@ -271,8 +576,19 @@ export async function loginAuthority(req, res) {
       permissions: officer.permissions || defaultPermissions,
     };
 
-    // Store in active session token registry
+    const sessionToken = signJWT({
+      uid: userProfile.uid,
+      email: userProfile.email,
+      name: userProfile.name,
+      role: 'authority',
+      department: userProfile.department,
+      designation: userProfile.designation,
+    });
+
     localTokenSessionStore.set(sessionToken, userProfile);
+    if (officer.token) {
+      localTokenSessionStore.set(officer.token, userProfile);
+    }
 
     return res.json({
       success: true,
@@ -285,6 +601,9 @@ export async function loginAuthority(req, res) {
   }
 }
 
+/**
+ * RESET PASSWORD
+ */
 export async function resetPassword(req, res) {
   try {
     const { email } = req.body;
@@ -302,38 +621,11 @@ export async function resetPassword(req, res) {
   }
 }
 
-export async function registerCitizen(req, res) {
-  try {
-    const { email, fullName, password } = req.body;
-
-    if (!email || !fullName) {
-      return res.status(400).json({ success: false, error: 'Email and Full Name are required.' });
-    }
-
-    // Role is strictly hardcoded to 'citizen'. A citizen cannot pass role: 'authority'!
-    const user = {
-      uid: `cit-${Date.now()}`,
-      email,
-      name: fullName,
-      role: 'citizen',
-      token: `demo-token-citizen-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-
-    return res.status(201).json({
-      success: true,
-      message: 'Citizen Sentinel account registered successfully.',
-      token: user.token,
-      user,
-    });
-  } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
-  }
-}
-
+/**
+ * ADMINISTRATIVE OFFICER PROVISIONING (Protected by AUTHORITY_INVITE_SECRET)
+ */
 export async function registerAuthority(req, res) {
   try {
-    // Check if AUTHORITY_INVITE_SECRET is configured on the server
     if (!env.AUTHORITY_INVITE_SECRET) {
       return res.status(500).json({
         success: false,
@@ -370,8 +662,6 @@ export async function registerAuthority(req, res) {
     }
 
     const officerUid = `auth-${Date.now()}`;
-    const sessionToken = `demo-token-authority-${Date.now()}`;
-
     const defaultPermissions = {
       canVerifyIncidents: true,
       canUpdateStatus: true,
@@ -379,6 +669,8 @@ export async function registerAuthority(req, res) {
       canExportDossiers: true,
       isActive: true,
     };
+
+    const hashedPassword = hashPassword(password || 'Officer@Aravalli2026!');
 
     const newOfficer = {
       uid: officerUid,
@@ -388,13 +680,12 @@ export async function registerAuthority(req, res) {
       designation,
       role: 'authority',
       badge: 'Authorized Enforcement Officer',
-      password: password || 'Officer@Aravalli2026!',
-      token: sessionToken,
+      password: hashedPassword,
+      rawPassword: password || 'Officer@Aravalli2026!',
       permissions: defaultPermissions,
       verifiedAt: new Date().toISOString(),
     };
 
-    // Save to MongoDB if connected
     if (isMongoDBConnected()) {
       try {
         await Officer.findOneAndUpdate(
@@ -407,29 +698,7 @@ export async function registerAuthority(req, res) {
       }
     }
 
-    // Register officer in server-side registry
     officerRegistry.set(normalizedEmail, newOfficer);
-
-    // Register active session in token store
-    localTokenSessionStore.set(sessionToken, {
-      uid: newOfficer.uid,
-      email: newOfficer.email,
-      name: newOfficer.name,
-      department: newOfficer.department,
-      designation: newOfficer.designation,
-      role: 'authority',
-      badge: newOfficer.badge,
-    });
-
-    // If real Firebase Admin is connected, apply server-controlled custom claims
-    if (isRealFirebaseConnected()) {
-      try {
-        const auth = getAuth();
-        await auth.setCustomUserClaims(officerUid, { role: 'authority', department });
-      } catch (fbErr) {
-        console.warn('⚠️ Could not set Firebase custom claims:', fbErr.message);
-      }
-    }
 
     const userProfile = {
       uid: newOfficer.uid,
@@ -440,6 +709,27 @@ export async function registerAuthority(req, res) {
       role: 'authority',
       badge: newOfficer.badge,
     };
+
+    const sessionToken = signJWT({
+      uid: userProfile.uid,
+      email: userProfile.email,
+      name: userProfile.name,
+      role: 'authority',
+      department: userProfile.department,
+      designation: userProfile.designation,
+    });
+
+    localTokenSessionStore.set(sessionToken, userProfile);
+
+    // If real Firebase Admin is connected, apply server-controlled custom claims
+    if (isRealFirebaseConnected()) {
+      try {
+        const auth = getAuth();
+        await auth.setCustomUserClaims(officerUid, { role: 'authority', department });
+      } catch (fbErr) {
+        console.warn('⚠️ Could not set Firebase custom claims:', fbErr.message);
+      }
+    }
 
     return res.status(201).json({
       success: true,
@@ -455,6 +745,9 @@ export async function registerAuthority(req, res) {
   }
 }
 
+/**
+ * USER PROFILE VERIFICATION
+ */
 export async function getProfile(req, res) {
   if (!req.user) {
     return res.status(401).json({ success: false, error: 'Not authenticated' });
@@ -471,4 +764,5 @@ export default {
   registerAuthority,
   resetPassword,
   getProfile,
+  syncBootstrapOfficer,
 };

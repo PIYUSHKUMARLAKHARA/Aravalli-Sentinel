@@ -26,6 +26,7 @@ export const ThreatCategoryEnum = z.string().refine(
 );
 
 export const createReportSchema = z.object({
+  title: z.string().max(200).optional(),
   threatCategory: ThreatCategoryEnum,
   description: z.string()
     .min(10, 'Description must be at least 10 characters long to provide actionable context.')
@@ -38,12 +39,37 @@ export const createReportSchema = z.object({
 });
 
 export const updateReportStatusSchema = z.object({
-  status: z.string().transform(v => v.toLowerCase().trim()).pipe(
-    z.enum(['pending', 'under_review', 'verified', 'resolved', 'rejected'])
+  status: z.string().transform(v => v.toLowerCase().trim().replace(/\s+/g, '_')).pipe(
+    z.enum([
+      'pending',
+      'under_review',
+      'investigation_in_progress',
+      'action_taken',
+      'verified',
+      'resolved',
+      'rejected',
+      'invalid',
+    ])
   ),
-  actionNotes: z.string().min(5, 'Action notes must provide at least 5 characters of context for the audit trail.').max(1000),
+  actionNotes: z.string().min(5, 'Action notes must provide at least 5 characters of context for the audit trail.').max(2000).optional(),
+  resolutionSummary: z.string().max(2000).optional(),
+  actionTaken: z.string().max(2000).optional(),
+  officerRemarks: z.string().max(2000).optional(),
+  resolutionDate: z.string().optional(),
   assignedOfficer: z.string().optional(),
-});
+}).refine(
+  (data) => {
+    if (data.status === 'resolved') {
+      return typeof data.resolutionSummary === 'string' && data.resolutionSummary.trim().length >= 5;
+    }
+    // For non-resolved updates, require actionNotes with >= 5 chars
+    return typeof data.actionNotes === 'string' && data.actionNotes.trim().length >= 5;
+  },
+  {
+    message: 'Resolution Summary is required and must be at least 5 characters long when marking a case as resolved.',
+    path: ['resolutionSummary'],
+  }
+);
 
 export const authorityInviteSchema = z.object({
   email: z.string().email('Please provide a valid official government or agency email address.'),
@@ -83,9 +109,10 @@ export function validateUpdateStatus(req, res, next) {
     next();
   } catch (err) {
     if (err instanceof z.ZodError) {
+      const mainError = err.errors[0]?.message || 'Validation failed for status update';
       return res.status(400).json({
         success: false,
-        error: 'Validation failed for status update',
+        error: mainError,
         details: err.errors.map(e => ({ field: e.path.join('.'), message: e.message })),
       });
     }

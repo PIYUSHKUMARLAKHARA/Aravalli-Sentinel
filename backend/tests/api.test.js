@@ -670,4 +670,80 @@ describe('Aravalli Sentinel API - Integration Tests', () => {
     expect(res.body.incidents).toHaveProperty('total');
     expect(res.body.database).toHaveProperty('status');
   });
+
+  it('GET /api/notifications requires authentication and lists notifications for authenticated citizen', async () => {
+    const unauthRes = await request(app).get('/api/notifications');
+    expect(unauthRes.status).toBe(401);
+
+    const res = await request(app)
+      .get('/api/notifications')
+      .set('Authorization', 'Bearer demo-token-citizen-valid');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.notifications)).toBe(true);
+    expect(typeof res.body.unreadCount).toBe('number');
+  });
+
+  it('PATCH /api/reports/:id/status rejects marking RESOLVED without meaningful resolution summary', async () => {
+    const res = await request(app)
+      .patch('/api/reports/rep-aravalli-2026-001/status')
+      .set('Authorization', 'Bearer demo-token-authority-valid')
+      .send({
+        status: 'resolved',
+        actionNotes: 'Investigation completed',
+        resolutionSummary: '',
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toContain('Resolution Summary');
+  });
+
+  it('PATCH /api/reports/:id/status with valid resolution marks case as RESOLVED and dispatches citizen notification', async () => {
+    const res = await request(app)
+      .patch('/api/reports/rep-aravalli-2026-001/status')
+      .set('Authorization', 'Bearer demo-token-authority-valid')
+      .send({
+        status: 'resolved',
+        actionNotes: 'Field team seized 2 earth excavators and filed FIR under PLPA Sec 4.',
+        resolutionSummary: 'Illegal quarrying completely sealed and machinery confiscated.',
+        actionTaken: 'Seized equipment, sealed excavation crater, deployed permanent border picket.',
+        officerRemarks: 'Site verified free of violators. Permanent patrol route scheduled.',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.report.status).toBe('resolved');
+    expect(res.body.report.resolution).toBeDefined();
+    expect(res.body.report.resolution.summary).toContain('Illegal quarrying completely sealed');
+
+    // Verify notification was dispatched for the citizen
+    const notifRes = await request(app)
+      .get('/api/notifications')
+      .set('Authorization', 'Bearer demo-token-citizen-valid');
+    expect(notifRes.status).toBe(200);
+    const resolvedNotif = notifRes.body.notifications.find(n => n.reportId === 'rep-aravalli-2026-001' && n.status === 'resolved');
+    expect(resolvedNotif).toBeDefined();
+    expect(resolvedNotif.resolution).toBeDefined();
+    expect(resolvedNotif.resolution.summary).toContain('Illegal quarrying');
+  });
+
+  it('GET /api/reports/:id denies a citizen access to another citizen private report (TEST 11)', async () => {
+    // Submit a report by a different citizen
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', 'Bearer demo-token-admin-valid')
+      .field('threatCategory', 'Illegal Mining & Quarrying')
+      .field('description', 'Illegal blasting near private farmhouse ridge.')
+      .field('latitude', 27.8)
+      .field('longitude', 76.5)
+      .field('locationName', 'Private Ridge Segment');
+    expect(createRes.status).toBe(201);
+    const privateReportId = createRes.body.report.id;
+
+    // Now try to view this report as demo citizen (different uid)
+    const accessRes = await request(app)
+      .get(`/api/reports/${privateReportId}`)
+      .set('Authorization', 'Bearer demo-token-citizen-valid');
+    expect(accessRes.status).toBe(403);
+    expect(accessRes.body.error).toContain('Citizens can only inspect their own submitted reports');
+  });
 });

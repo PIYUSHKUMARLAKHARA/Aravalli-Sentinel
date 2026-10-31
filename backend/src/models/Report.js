@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const reportSchema = new mongoose.Schema(
   {
     id: { type: String, required: true, unique: true, index: true },
+    title: { type: String },
     threatCategory: { type: String, required: true, index: true },
     description: { type: String, required: true },
     latitude: { type: Number, required: true },
@@ -13,10 +14,27 @@ const reportSchema = new mongoose.Schema(
     incidentTime: { type: String },
     status: {
       type: String,
-      enum: ['pending', 'under_review', 'verified', 'resolved', 'rejected'],
+      enum: [
+        'pending',
+        'under_review',
+        'investigation_in_progress',
+        'action_taken',
+        'verified',
+        'resolved',
+        'rejected',
+        'invalid',
+      ],
       default: 'pending',
       index: true,
     },
+    resolution: {
+      summary: { type: String },
+      actionTaken: { type: String },
+      officerRemarks: { type: String },
+      resolvedBy: { type: String },
+      resolvedAt: { type: String },
+    },
+    lastUpdatedDate: { type: String },
     citizenId: { type: String, index: true },
     citizenEmail: { type: String },
     citizenName: { type: String },

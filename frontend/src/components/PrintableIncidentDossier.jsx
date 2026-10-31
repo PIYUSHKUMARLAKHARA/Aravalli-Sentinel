@@ -18,7 +18,11 @@ export function PrintableIncidentDossier({ dossier, onClose }) {
         {/* Controls Bar (Hidden in Print) */}
         <div className="no-print bg-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-emerald-400" />
+            <img
+              src="/aravalli-sentinel-logo.png"
+              alt="Aravalli Sentinel Logo"
+              className="w-5 h-5 object-contain"
+            />
             <span className="text-sm font-bold text-white font-mono">{dossier.dossierId}</span>
           </div>
           <div className="flex items-center gap-3">
@@ -44,6 +48,11 @@ export function PrintableIncidentDossier({ dossier, onClose }) {
           <div className="border-b-2 border-slate-700 pb-5 flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
+                <img
+                  src="/aravalli-sentinel-logo.png"
+                  alt="Aravalli Sentinel Logo"
+                  className="w-8 h-8 object-contain"
+                />
                 <span className="font-extrabold text-xl tracking-tight text-white">ARAVALLI SENTINEL</span>
                 <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono border border-slate-700">
                   DECISION-SUPPORT DOSSIER
@@ -246,6 +255,39 @@ export function PrintableIncidentDossier({ dossier, onClose }) {
               </table>
             </div>
           </div>
+
+          {/* Section 5: Official Case Resolution & Enforcement Outcomes */}
+          {(dossier.resolution || incidentSummary.currentStatus === 'RESOLVED') && (
+            <div className="space-y-3 p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/40">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-bold flex items-center gap-2">
+                <CheckSquare className="w-4 h-4 text-emerald-400" />
+                <span>5. Statutory Case Resolution & Verified Remediation</span>
+              </h3>
+              <div className="space-y-2 text-xs">
+                <p className="text-emerald-300 font-semibold">
+                  Your environmental report has been reviewed and marked as resolved by the authorized officer.
+                </p>
+                {dossier.resolution?.summary && (
+                  <p className="text-slate-200">
+                    <strong className="text-emerald-400 font-mono">Resolution Summary:</strong> {dossier.resolution.summary}
+                  </p>
+                )}
+                {dossier.resolution?.actionTaken && (
+                  <p className="text-slate-300">
+                    <strong className="text-slate-400 font-mono">Action Taken:</strong> {dossier.resolution.actionTaken}
+                  </p>
+                )}
+                {dossier.resolution?.officerRemarks && (
+                  <p className="text-slate-300">
+                    <strong className="text-slate-400 font-mono">Officer Remarks:</strong> {dossier.resolution.officerRemarks}
+                  </p>
+                )}
+                <p className="text-[11px] text-slate-400 font-mono">
+                  <strong>Updated On:</strong> {new Date(dossier.resolution?.resolutionDate || dossier.lastUpdatedDate || dossier.generatedAt).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Official Sign-off & Verification Block */}
           <div className="pt-6 border-t border-slate-700 grid grid-cols-2 gap-8 text-xs font-mono">

@@ -126,11 +126,11 @@ export async function loginAuthority(email, password) {
   return data;
 }
 
-export async function resetCitizenPassword(email) {
+export async function resetCitizenPassword(email, newPassword) {
   const res = await fetch(`${BASE_URL}/auth/reset-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, newPassword }),
   });
   return res.json();
 }
@@ -249,6 +249,29 @@ export async function fetchAdminSystemStats() {
   return res.json();
 }
 
+export async function fetchNotifications() {
+  const res = await fetch(`${BASE_URL}/notifications`, {
+    headers: { ...getAuthHeader() },
+  });
+  return res.json();
+}
+
+export async function markNotificationRead(id) {
+  const res = await fetch(`${BASE_URL}/notifications/${id}/read`, {
+    method: 'PATCH',
+    headers: { ...getAuthHeader() },
+  });
+  return res.json();
+}
+
+export async function markAllNotificationsRead() {
+  const res = await fetch(`${BASE_URL}/notifications/read-all`, {
+    method: 'PATCH',
+    headers: { ...getAuthHeader() },
+  });
+  return res.json();
+}
+
 export function logoutUser() {
   localStorage.removeItem('aravalli_auth_token');
   localStorage.removeItem('aravalli_auth_user');
@@ -273,5 +296,8 @@ export default {
   registerAuthority,
   resetCitizenPassword,
   generateAreaProblemStatement,
+  fetchNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
   logoutUser,
 };
