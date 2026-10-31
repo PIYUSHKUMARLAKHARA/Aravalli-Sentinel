@@ -29,26 +29,34 @@ export const createReportSchema = z.object({
   title: z.string().max(200).optional(),
   threatCategory: ThreatCategoryEnum,
   description: z.string()
-    .min(10, 'Description must be at least 10 characters long to provide actionable context.')
-    .max(2000, 'Description cannot exceed 2000 characters.'),
+    .min(5, 'Description must provide at least 5 characters.')
+    .max(2000, 'Description cannot exceed 2000 characters.')
+    .optional()
+    .default('AI-analyzed ecological observation submitted via citizen portal.'),
   latitude: z.coerce.number().min(-90).max(90, 'Latitude must be between -90 and 90.'),
   longitude: z.coerce.number().min(-180).max(180, 'Longitude must be between -180 and 180.'),
-  locationName: z.string().min(2, 'Location name or landmark is required.').max(200),
+  locationName: z.string().max(200).optional().default('Aravalli Ecological Zone'),
   zoneId: z.string().optional(),
   incidentTime: z.string().optional(),
+  videoUrl: z.string().optional(),
+  mediaType: z.enum(['image', 'video', 'audio', 'none']).optional(),
+  voiceTranscript: z.string().max(2000).optional(),
 });
 
 export const updateReportStatusSchema = z.object({
   status: z.string().transform(v => v.toLowerCase().trim().replace(/\s+/g, '_')).pipe(
     z.enum([
+      'submitted',
       'pending',
       'under_review',
+      'verified',
+      'under_investigation',
       'investigation_in_progress',
       'action_taken',
-      'verified',
       'resolved',
       'rejected',
       'invalid',
+      'needs_more_information',
     ])
   ),
   actionNotes: z.string().min(5, 'Action notes must provide at least 5 characters of context for the audit trail.').max(2000).optional(),

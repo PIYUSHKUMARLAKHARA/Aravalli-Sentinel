@@ -1,48 +1,58 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 
 // Pages
-import { LandingLoginPage } from './pages/LandingLoginPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { CitizenDashboardPage } from './pages/CitizenDashboardPage';
-import { AuthorityDashboardPage } from './pages/AuthorityDashboardPage';
 import { RiskMapPage } from './pages/RiskMapPage';
 import { ReportThreatPage } from './pages/ReportThreatPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { CaseTrackingPage } from './pages/CaseTrackingPage';
+import { RewardWalletPage } from './pages/RewardWalletPage';
 import { IncidentDossierPage } from './pages/IncidentDossierPage';
 import { AboutPage } from './pages/AboutPage';
+import { LoginPage } from './pages/LoginPage';
 import { AccessDeniedPage } from './pages/AccessDeniedPage';
-import { RequireAuth, RequireAuthority, RequireAdmin } from './components/ProtectedRoute';
+import { RequireAuth, RequireAuthority } from './components/ProtectedRoute';
+
+function RootRoute() {
+  const { user, isAuthority, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] text-xs font-mono text-[#526A59]">
+        <div className="w-5 h-5 border-2 border-[#1B5E3B] border-t-transparent rounded-full animate-spin mr-2" />
+        <span>Initializing Aravalli Sentinel Security Portal...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  if (isAuthority) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return <Navigate to="/dashboard" replace />;
+}
 
 export function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-white">
+        <div className="min-h-screen flex flex-col bg-[#F5F7F0] text-[#26382D] selection:bg-[#1B5E3B] selection:text-white">
           <Navbar />
           <main className="flex-1">
             <Routes>
-              {/* Starting Page — Landing & Dual-Portal Selection Screen */}
-              <Route path="/" element={<LandingLoginPage />} />
+              {/* Root starting point: Professional Portal Login or Role-Redirect */}
+              <Route path="/" element={<RootRoute />} />
+              <Route path="/login" element={<LoginPage />} />
 
-              {/* Portal Dedicated Sub-Routes */}
-              <Route path="/login" element={<LandingLoginPage />} />
-              <Route path="/citizen/login" element={<LandingLoginPage />} />
-              <Route path="/citizen/register" element={<LandingLoginPage />} />
-              <Route path="/officer/login" element={<LandingLoginPage />} />
-
-              {/* Citizen Routes */}
-              <Route
-                path="/citizen/dashboard"
-                element={
-                  <RequireAuth>
-                    <CitizenDashboardPage />
-                  </RequireAuth>
-                }
-              />
+              {/* Citizen Portal Routes (Standard & Contest /user/ Aliases) */}
               <Route
                 path="/dashboard"
                 element={
@@ -51,7 +61,6 @@ export function App() {
                   </RequireAuth>
                 }
               />
-              <Route path="/overview" element={<Navigate to="/citizen/dashboard" replace />} />
               <Route
                 path="/report"
                 element={
@@ -60,63 +69,88 @@ export function App() {
                   </RequireAuth>
                 }
               />
+              <Route
+                path="/user/report"
+                element={
+                  <RequireAuth>
+                    <ReportThreatPage />
+                  </RequireAuth>
+                }
+              />
+              <Route path="/track" element={<CaseTrackingPage />} />
+              <Route path="/user/track-case" element={<CaseTrackingPage />} />
+              <Route
+                path="/rewards"
+                element={
+                  <RequireAuth>
+                    <RewardWalletPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/user/rewards"
+                element={
+                  <RequireAuth>
+                    <RewardWalletPage />
+                  </RequireAuth>
+                }
+              />
 
-              {/* Forest Authority & Officer Routes */}
-              <Route
-                path="/officer/dashboard"
-                element={
-                  <RequireAuthority>
-                    <AuthorityDashboardPage />
-                  </RequireAuthority>
-                }
-              />
-              <Route
-                path="/authority"
-                element={
-                  <RequireAuthority>
-                    <Navigate to="/officer/dashboard" replace />
-                  </RequireAuthority>
-                }
-              />
+              {/* Geospatial & Authority Routes */}
+              <Route path="/map" element={<RiskMapPage />} />
+              
+              {/* Forest Authority Command Center Routes */}
               <Route
                 path="/admin"
                 element={
                   <RequireAuthority>
-                    <AdminDashboardPage />
+                    <AdminDashboardPage initialTab="dashboard" />
                   </RequireAuthority>
                 }
               />
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <RequireAuthority>
+                    <AdminDashboardPage initialTab="dashboard" />
+                  </RequireAuthority>
+                }
+              />
+              <Route
+                path="/admin/map"
+                element={
+                  <RequireAuthority>
+                    <AdminDashboardPage initialTab="map" />
+                  </RequireAuthority>
+                }
+              />
+              <Route
+                path="/admin/triage"
+                element={
+                  <RequireAuthority>
+                    <AdminDashboardPage initialTab="triage" />
+                  </RequireAuthority>
+                }
+              />
+              <Route
+                path="/admin/dossier"
+                element={
+                  <RequireAuthority>
+                    <AdminDashboardPage initialTab="dossier" />
+                  </RequireAuthority>
+                }
+              />
+              <Route path="/authority" element={<Navigate to="/admin?tab=triage" replace />} />
 
-              {/* Authenticated Internal Routes */}
-              <Route
-                path="/map"
-                element={
-                  <RequireAuth>
-                    <RiskMapPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/incident/:id"
-                element={
-                  <RequireAuth>
-                    <IncidentDossierPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/about"
-                element={
-                  <RequireAuth>
-                    <AboutPage />
-                  </RequireAuth>
-                }
-              />
+              {/* Legal Dossier & Static */}
+              <Route path="/incident/:id" element={<IncidentDossierPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/access-denied" element={<AccessDeniedPage />} />
 
-              {/* Legacy Aliases & Fallbacks */}
-              <Route path="/ask" element={<Navigate to="/about" replace />} />
-              <Route path="/dataset" element={<Navigate to="/about" replace />} />
+              {/* Safety Fallbacks */}
+              <Route path="/overview" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/ask" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dataset" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

@@ -19,6 +19,9 @@ import aiRoutes from './routes/aiRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import notificationsRoutes from './routes/notificationsRoutes.js';
+import weatherRoutes from './routes/weatherRoutes.js';
+import satelliteRoutes from './routes/satelliteRoutes.js';
+import rewardsRoutes from './routes/rewardsRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -122,6 +125,9 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/weather', weatherRoutes);
+app.use('/api/satellite', satelliteRoutes);
+app.use('/api/rewards', rewardsRoutes);
 
 // Root informational endpoint
 app.get('/', (req, res) => {

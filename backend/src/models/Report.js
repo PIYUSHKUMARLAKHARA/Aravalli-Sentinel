@@ -15,16 +15,19 @@ const reportSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
+        'submitted',
         'pending',
         'under_review',
+        'verified',
+        'under_investigation',
         'investigation_in_progress',
         'action_taken',
-        'verified',
         'resolved',
         'rejected',
         'invalid',
+        'needs_more_information',
       ],
-      default: 'pending',
+      default: 'submitted',
       index: true,
     },
     resolution: {
@@ -40,12 +43,26 @@ const reportSchema = new mongoose.Schema(
     citizenName: { type: String },
     citizenContactRedacted: { type: Boolean, default: true },
     imageUrl: { type: String },
+    videoUrl: { type: String },
+    mediaType: { type: String, enum: ['image', 'video', 'audio'], default: 'image' },
+    voiceTranscript: { type: String },
     fallbackImageUrl: { type: String },
     imagePath: { type: String },
     sourceType: { type: String },
     evidenceMetadata: { type: mongoose.Schema.Types.Mixed },
     evidenceAnalysis: { type: mongoose.Schema.Types.Mixed },
     riskAssessment: { type: mongoose.Schema.Types.Mixed },
+    satelliteAnalysis: { type: mongoose.Schema.Types.Mixed },
+    weatherSnapshot: { type: mongoose.Schema.Types.Mixed },
+    pointsAwarded: { type: Boolean, default: false },
+    internalNotes: [
+      {
+        note: { type: String, required: true },
+        officerId: { type: String },
+        officerName: { type: String },
+        timestamp: { type: String, default: () => new Date().toISOString() },
+      },
+    ],
     auditTrail: [
       {
         action: { type: String },

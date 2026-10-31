@@ -118,8 +118,8 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const forgotPassword = async (email, newPassword) => {
-    return await resetCitizenPassword(email, newPassword);
+  const forgotPassword = async (email) => {
+    return await resetCitizenPassword(email);
   };
 
   const logout = () => {

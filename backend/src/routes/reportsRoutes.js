@@ -5,6 +5,8 @@ import {
   getReportById,
   updateReportStatus,
   generateIncidentDossier,
+  getReportForTracking,
+  addInternalOfficerNote,
 } from '../controllers/reportsController.js';
 import { uploadEvidence } from '../middleware/upload.js';
 import { optionalAuth, authenticateUser, requireAuthority } from '../middleware/auth.js';
@@ -14,6 +16,9 @@ const router = express.Router();
 
 // GET all reports (with optional status/category/zone filters)
 router.get('/', optionalAuth, getAllReports);
+
+// GET case tracking details by Case ID (Public / Citizen friendly)
+router.get('/track/:id', getReportForTracking);
 
 // GET single report by ID
 router.get('/:id', optionalAuth, getReportById);
@@ -37,6 +42,14 @@ router.patch(
   requireAuthority,
   validateUpdateStatus,
   updateReportStatus
+);
+
+// POST internal officer note (Authority only)
+router.post(
+  '/:id/notes',
+  authenticateUser,
+  requireAuthority,
+  addInternalOfficerNote
 );
 
 export default router;

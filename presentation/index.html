@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aravalli Sentinel — GDG Udaipur Hackathon Presentation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #1a241f;
+      color: #26382D;
+    }
+    .slide-aspect {
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      max-width: 1200px;
+    }
+    @media print {
+      body { background: white; }
+      .no-print { display: none !important; }
+      .slide-container { page-break-after: always; margin: 0; box-shadow: none; border: none; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-4 sm:p-8">
+
+  <!-- Top Controller Bar (No Print) -->
+  <header class="no-print w-full max-w-6xl mb-6 flex flex-wrap items-center justify-between gap-4 bg-white/95 backdrop-blur px-6 py-3.5 rounded-2xl border border-[#DCC8A3] shadow-lg">
+    <div class="flex items-center gap-3">
+      <span class="w-3.5 h-3.5 rounded-full bg-[#1B5E3B] animate-pulse"></span>
+      <div>
+        <h1 class="text-sm font-bold text-[#1B5E3B] tracking-wide uppercase">Aravalli Sentinel — GDG Udaipur</h1>
+        <p class="text-xs text-[#806044]">ABC — Aravali Build Championship Presentation</p>
+      </div>
+    </div>
+    
+    <!-- Slide Controls -->
+    <div class="flex items-center gap-3">
+      <button onclick="prevSlide()" class="p-2.5 rounded-xl border border-[#DCC8A3] hover:bg-[#F5F7F0] text-[#1B5E3B] transition font-semibold flex items-center gap-1.5 text-xs">
+        <i class="fa-solid fa-chevron-left"></i> Prev
+      </button>
+      <span id="slideIndicator" class="text-xs font-bold text-[#1B5E3B] px-3 py-1 bg-[#F5F7F0] rounded-lg border border-[#DCC8A3]">
+        Slide 1 of 7
+      </span>
+      <button onclick="nextSlide()" class="p-2.5 rounded-xl border border-[#DCC8A3] hover:bg-[#F5F7F0] text-[#1B5E3B] transition font-semibold flex items-center gap-1.5 text-xs">
+        Next <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2">
+      <a href="./Aravalli_Sentinel_Presentation.pptx" download class="px-4 py-2 bg-[#1B5E3B] hover:bg-[#2E8B57] text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm">
+        <i class="fa-solid fa-download"></i> Download PPTX (1.0 MB)
+      </a>
+      <button onclick="window.print()" class="px-3.5 py-2 border border-[#DCC8A3] bg-white hover:bg-[#F5F7F0] text-[#806044] rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+        <i class="fa-solid fa-print"></i> PDF
+      </button>
+      <button onclick="toggleFullscreen()" class="px-3.5 py-2 border border-[#DCC8A3] bg-white hover:bg-[#F5F7F0] text-[#26382D] rounded-xl text-xs font-bold transition">
+        <i class="fa-solid fa-expand"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Slide Stage -->
+  <main id="slideStage" class="slide-aspect bg-[#F5F7F0] rounded-3xl border-2 border-[#DCC8A3] shadow-2xl relative overflow-hidden flex flex-col justify-between p-8 sm:p-10 select-none">
+    
+    <!-- SLIDE 1: Cover -->
+    <section id="slide-1" class="slide-content h-full flex flex-col justify-between">
+      <div class="flex items-center justify-between border-b border-[#DCC8A3] pb-3">
+        <div class="flex items-center gap-2 bg-white px-4 py-1.5 rounded-full border border-[#DCC8A3] text-xs font-bold text-[#1B5E3B]">
+          <span class="w-2 h-2 rounded-full bg-[#34A853]"></span> ABC — Aravali Build Championship
+        </div>
+        <div class="text-xs font-bold text-[#806044] tracking-wider uppercase">
+          GDG UDAIPUR • BUILD CHALLENGE
+        </div>
+      </div>
+
+      <div class="my-auto bg-white/90 backdrop-blur rounded-2xl p-7 border-2 border-[#DCC8A3] shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-extrabold px-3 py-1 rounded-full bg-[#1B5E3B]/10 text-[#1B5E3B] uppercase tracking-wider">
+            Ecological Early-Warning & Satellite Action
+          </span>
+          <span class="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+            ⭐ Google Cloud & Gemini AI Track
+          </span>
+        </div>
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-[#1B5E3B] tracking-tight mb-2">
+          ARAVALLI SENTINEL
+        </h1>
+        <p class="text-base sm:text-lg font-bold text-[#806044] mb-4">
+          Combating Deforestation, Illegal Mining & Environmental Crimes Across the Aravalli Range
+        </p>
+
+        <div class="p-3.5 bg-[#F5F7F0] rounded-xl border border-[#A3B18A]/40 text-xs sm:text-sm text-[#26382D] leading-relaxed mb-4">
+          <strong class="text-[#1B5E3B]">Problem Statement:</strong> Rapid illegal quarrying and tree felling threaten the 3.2-billion-year-old Aravalli green barrier. Aravalli Sentinel connects citizen multimodal reporting (photos/vernacular voice) with Google Gemini AI forensics and Sentinel-2 satellite NDVI verification to trigger enforceable forest actions.
+        </div>
+      </div>
+
+      <!-- Metadata Box (Team, Track, Members) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-4 rounded-xl border border-[#DCC8A3]">
+        <div>
+          <span class="text-[10px] font-bold text-[#806044] uppercase tracking-wider block">TEAM</span>
+          <p class="text-sm font-extrabold text-[#1B5E3B]">Team Sentinel</p>
+          <span class="text-xs text-[#647469]">[Aravali Guardians]</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold text-[#806044] uppercase tracking-wider block">TRACK</span>
+          <p class="text-sm font-bold text-[#26382D]">Sustainability & AI</p>
+          <span class="text-xs text-[#647469]">Google Cloud Technologies</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold text-[#806044] uppercase tracking-wider block">MEMBERS</span>
+          <p class="text-xs font-semibold text-[#26382D]">Lead: Full-Stack Architect</p>
+          <p class="text-xs font-semibold text-[#26382D]">Member 2: AI & Satellite Telemetry</p>
+          <p class="text-xs font-semibold text-[#26382D]">Member 3: UI/UX & Mobile Systems</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-[11px] text-[#647469] pt-2 border-t border-[#DCC8A3]/60">
+        <span>ABC — Aravali Build Championship by GDG Udaipur</span>
+        <span class="font-bold text-[#1B5E3B]">Slide 1 / 7</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: Problem in Daily Life -->
+    <section id="slide-2" class="slide-content h-full flex flex-col justify-between hidden">
+      <div class="flex items-center justify-between border-b border-[#DCC8A3] pb-2">
+        <div>
+          <h2 class="text-xl font-extrabold text-[#1B5E3B]">PROBLEM STATEMENT — Everyday Environmental Crises</h2>
+          <p class="text-xs text-[#647469]">Citizens witness ecological crimes daily, but encounter broken helplines, fear of retaliation, and zero tracking.</p>
+        </div>
+        <span class="text-xs font-bold text-[#806044] bg-white px-3 py-1 rounded-full border border-[#DCC8A3]">
+          GDG Udaipur • Problem Analysis
+        </span>
+      </div>
+
+      <!-- 4 Daily Life Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-auto">
+        <!-- Problem 1 -->
+        <div class="bg-white rounded-xl border border-[#DCC8A3] overflow-hidden flex flex-col justify-between shadow-sm">
+          <img src="assets_gen/problem_deforestation.jpg" alt="Deforestation" class="h-28 w-full object-cover">
+          <div class="p-3">
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase inline-block mb-1">
+              ⚠️ No Helpline Access
+            </span>
+            <h3 class="text-xs font-bold text-[#1B5E3B] mb-1">1. Tree Felling & Kilns</h3>
+            <p class="text-[10px] text-[#647469] leading-tight">
+              Commuters see mature Dhau trees cut and illegal charcoal kilns smoking, but don't know who the local beat guard is.
+            </p>
+          </div>
+        </div>
+
+        <!-- Problem 2 -->
+        <div class="bg-white rounded-xl border border-[#DCC8A3] overflow-hidden flex flex-col justify-between shadow-sm">
+          <img src="assets_gen/problem_mining.jpg" alt="Mining" class="h-28 w-full object-cover">
+          <div class="p-3">
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-red-50 text-red-800 border border-red-200 uppercase inline-block mb-1">
+              ⚠️ Fear of Retaliation
+            </span>
+            <h3 class="text-xs font-bold text-red-700 mb-1">2. Dynamite Blasting</h3>
+            <p class="text-[10px] text-[#647469] leading-tight">
+              Explosive quarrying shakes rural homes and generates silica dust. Citizens fear reporting without anonymity.
+            </p>
+          </div>
+        </div>
+
+        <!-- Problem 3 -->
+        <div class="bg-white rounded-xl border border-[#DCC8A3] overflow-hidden flex flex-col justify-between shadow-sm">
+          <img src="assets_gen/problem_dumping.jpg" alt="Waste Dumping" class="h-28 w-full object-cover">
+          <div class="p-3">
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 uppercase inline-block mb-1">
+              ⚠️ Night Ravine Dumping
+            </span>
+            <h3 class="text-xs font-bold text-amber-700 mb-1">3. Toxic Slurry Dumping</h3>
+            <p class="text-[10px] text-[#647469] leading-tight">
+              Chemical tankers unload toxic waste into dry streams overnight, leaching into aquifers and village drinking wells.
+            </p>
+          </div>
+        </div>
+
+        <!-- Problem 4 -->
+        <div class="bg-white rounded-xl border border-[#DCC8A3] overflow-hidden flex flex-col justify-between shadow-sm">
+          <img src="assets_gen/problem_water_delay.jpg" alt="Complaint Black Hole" class="h-28 w-full object-cover">
+          <div class="p-3">
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200 uppercase inline-block mb-1">
+              ⚠️ Zero Accountability
+            </span>
+            <h3 class="text-xs font-bold text-purple-700 mb-1">4. Complaint 'Black Hole'</h3>
+            <p class="text-[10px] text-[#647469] leading-tight">
+              When citizens tweet or call helplines, reports vanish without a Case ID, progress updates, or satellite proof.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Target Users Banner -->
+      <div class="bg-[#F0F8F2] border border-[#2E8B57] p-2.5 rounded-xl text-center">
+        <span class="text-xs font-extrabold text-[#1B5E3B]">🎯 TARGET USERS:</span>
+        <span class="text-xs text-[#26382D] ml-2">
+          Daily Commuters & Hikers • Rural Villagers • Forest Beat Guards • District Forest Officers (DFOs) • Environmental NGOs
+        </span>
+      </div>
+
+      <div class="flex items-center justify-between text-[11px] text-[#647469] pt-2 border-t border-[#DCC8A3]/60">
+        <span>ABC — Aravali Build Championship by GDG Udaipur</span>
+        <span class="font-bold text-[#1B5E3B]">Slide 2 / 7</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: Workflow & Idea -->
+    <section id="slide-3" class="slide-content h-full flex flex-col justify-between hidden">
+      <div class="flex items-center justify-between border-b border-[#DCC8A3] pb-2">
+        <div>
+          <h2 class="text-xl font-extrabold text-[#1B5E3B]">SOLUTION & WORKFLOW — The Ecological Defense Pipeline</h2>
+          <p class="text-xs text-[#647469]">End-to-end assisted reporting: from vernacular voice capture to satellite verification.</p>
+        </div>
+        <span class="text-xs font-bold text-[#1B5E3B] bg-white px-3 py-1 rounded-full border border-[#DCC8A3]">
+          💡 Solution Architecture
+        </span>
+      </div>
+
+      <!-- Solution Overview -->
+      <div class="bg-white p-3 rounded-xl border border-[#2E8B57] shadow-sm">
+        <p class="text-xs text-[#26382D] leading-relaxed">
+          <strong class="text-[#1B5E3B]">Our Idea:</strong> A dual-portal web intelligence system that removes manual reporting friction (no lengthy text forms) through <strong>multilingual voice-first AI</strong>, automatic GPS & weather context ingestion, and official triage backed by <strong>Sentinel-2 NDVI spectral telemetry</strong>.
+        </p>
+      </div>
+
+      <!-- 6-Stage Process Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 my-auto">
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between text-center">
+          <div class="w-7 h-7 rounded-full bg-[#1B5E3B] text-white font-extrabold text-xs mx-auto flex items-center justify-center mb-1">1</div>
+          <h4 class="text-xs font-bold text-[#1B5E3B] mb-1">Evidence Capture</h4>
+          <p class="text-[9.5px] text-[#647469]">Photo, Video or Multilingual Voice Note (Hindi/English/Hinglish).</p>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between text-center">
+          <div class="w-7 h-7 rounded-full bg-[#2E8B57] text-white font-extrabold text-xs mx-auto flex items-center justify-center mb-1">2</div>
+          <h4 class="text-xs font-bold text-[#2E8B57] mb-1">Auto-Telemetry</h4>
+          <p class="text-[9.5px] text-[#647469]">Instant browser GPS + ambient temperature, rain & wind context.</p>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between text-center">
+          <div class="w-7 h-7 rounded-full bg-purple-700 text-white font-extrabold text-xs mx-auto flex items-center justify-center mb-1">3</div>
+          <h4 class="text-xs font-bold text-purple-700 mb-1">Gemini AI Triage</h4>
+          <p class="text-[9.5px] text-[#647469]">Visual damage forensic analysis & threat severity scoring.</p>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between text-center">
+          <div class="w-7 h-7 rounded-full bg-[#806044] text-white font-extrabold text-xs mx-auto flex items-center justify-center mb-1">4</div>
+          <h4 class="text-xs font-bold text-[#806044] mb-1">Docket Created</h4>
+          <p class="text-[9.5px] text-[#647469]">Collision-safe ARV-2026 ID + private internal officer note dockets.</p>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between text-center">
+          <div class="w-7 h-7 rounded-full bg-blue-600 text-white font-extrabold text-xs mx-auto flex items-center justify-center mb-1">5</div>
+          <h4 class="text-xs font-bold text-blue-600 mb-1">Satellite Verification</h4>
+          <p class="text-[9.5px] text-[#647469]">Sentinel-2 MSI NDVI vegetation change detection: (B8-B4)/(B8+B4).</p>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between text-center">
+          <div class="w-7 h-7 rounded-full bg-emerald-600 text-white font-extrabold text-xs mx-auto flex items-center justify-center mb-1">6</div>
+          <h4 class="text-xs font-bold text-emerald-600 mb-1">Track & Rewards</h4>
+          <p class="text-[9.5px] text-[#647469]">Public milestone tracking (/track) & verified Eco-Points wallet (/rewards).</p>
+        </div>
+      </div>
+
+      <!-- Feature Badges -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+        <span class="bg-white px-3 py-1.5 rounded-lg border border-[#DCC8A3] font-bold text-[#1B5E3B]">
+          🎤 Voice-First Vernacular Reporting
+        </span>
+        <span class="bg-white px-3 py-1.5 rounded-lg border border-[#DCC8A3] font-bold text-blue-700">
+          🛰️ Sentinel-2 NDVI Spectral Scan
+        </span>
+        <span class="bg-white px-3 py-1.5 rounded-lg border border-[#DCC8A3] font-bold text-[#806044]">
+          🔒 Strict Dual-Portal RBAC
+        </span>
+        <span class="bg-white px-3 py-1.5 rounded-lg border border-[#DCC8A3] font-bold text-emerald-700">
+          🏆 Verified Eco-Reward Wallet
+        </span>
+      </div>
+
+      <div class="flex items-center justify-between text-[11px] text-[#647469] pt-2 border-t border-[#DCC8A3]/60">
+        <span>ABC — Aravali Build Championship by GDG Udaipur</span>
+        <span class="font-bold text-[#1B5E3B]">Slide 3 / 7</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: Google Agents & Technologies Used -->
+    <section id="slide-4" class="slide-content h-full flex flex-col justify-between hidden">
+      <div class="flex items-center justify-between border-b border-[#DCC8A3] pb-2">
+        <div>
+          <h2 class="text-xl font-extrabold text-[#1B5E3B]">GOOGLE ECOSYSTEM INTEGRATION — Core Technologies & Roles</h2>
+          <p class="text-xs text-[#647469]">Comprehensive integration of Google AI, Earth Observation, Cloud, and Maps APIs.</p>
+        </div>
+        <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+          ⭐ GDG Preferred Google Tech
+        </span>
+      </div>
+
+      <!-- 5 Google Tech Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-5 gap-2.5 my-auto">
+        <!-- 1. Gemini -->
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between shadow-sm">
+          <div class="text-center">
+            <img src="assets_gen/google_gemini.png" alt="Gemini" class="w-12 h-12 mx-auto mb-1.5">
+            <h3 class="text-xs font-bold text-[#1B5E3B]">Google Gemini AI</h3>
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase inline-block my-1">
+              Multimodal Vision & Voice
+            </span>
+          </div>
+          <ul class="text-[9.5px] text-[#647469] space-y-1 mt-2">
+            <li>• <strong>Visual Forensics:</strong> Identifies illegal kilns, earthmovers, cut logs.</li>
+            <li>• <strong>Speech-to-Text:</strong> Transcribes Hindi & Hinglish voice notes.</li>
+            <li>• <strong>Legal Tagging:</strong> Suggests Indian Forest Act violations.</li>
+          </ul>
+        </div>
+
+        <!-- 2. GEE -->
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between shadow-sm">
+          <div class="text-center">
+            <img src="assets_gen/google_earth_engine.png" alt="Earth Engine" class="w-12 h-12 mx-auto mb-1.5">
+            <h3 class="text-xs font-bold text-emerald-800">Google Earth Engine</h3>
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase inline-block my-1">
+              Satellite Telemetry
+            </span>
+          </div>
+          <ul class="text-[9.5px] text-[#647469] space-y-1 mt-2">
+            <li>• <strong>Sentinel-2 MSI:</strong> Ingests 10m multispectral reflectance bands.</li>
+            <li>• <strong>NDVI Index:</strong> Calculates (B8-B4)/(B8+B4) vegetation canopy index.</li>
+            <li>• <strong>Change Alerts:</strong> Flags rapid deforestation with field checks.</li>
+          </ul>
+        </div>
+
+        <!-- 3. Maps -->
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between shadow-sm">
+          <div class="text-center">
+            <img src="assets_gen/google_maps.png" alt="Maps" class="w-12 h-12 mx-auto mb-1.5">
+            <h3 class="text-xs font-bold text-red-700">Google Maps Platform</h3>
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 uppercase inline-block my-1">
+              Geospatial GIS & Geocoding
+            </span>
+          </div>
+          <ul class="text-[9.5px] text-[#647469] space-y-1 mt-2">
+            <li>• <strong>GIS Risk Heatmap:</strong> Visualizes incident pins and hazard zones.</li>
+            <li>• <strong>Polygon Boundaries:</strong> Sariska & Sajjangarh eco-sensitive lines.</li>
+            <li>• <strong>Reverse Geocoding:</strong> Translates GPS coordinates to landmarks.</li>
+          </ul>
+        </div>
+
+        <!-- 4. Cloud Run -->
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between shadow-sm">
+          <div class="text-center">
+            <img src="assets_gen/google_cloud_run.png" alt="Cloud Run" class="w-12 h-12 mx-auto mb-1.5">
+            <h3 class="text-xs font-bold text-blue-700">Google Cloud Run</h3>
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase inline-block my-1">
+              Serverless Microservices
+            </span>
+          </div>
+          <ul class="text-[9.5px] text-[#647469] space-y-1 mt-2">
+            <li>• <strong>Auto-Scaling APIs:</strong> Containerized Node.js backend with low latency.</li>
+            <li>• <strong>Cloud Storage:</strong> Tamper-proof encrypted evidence storage.</li>
+            <li>• <strong>High SLA:</strong> 99.9% uptime with enterprise TLS security.</li>
+          </ul>
+        </div>
+
+        <!-- 5. Health Connect -->
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] flex flex-col justify-between shadow-sm">
+          <div class="text-center">
+            <img src="assets_gen/android_health_connect.png" alt="Health Connect" class="w-12 h-12 mx-auto mb-1.5">
+            <h3 class="text-xs font-bold text-teal-700">Android Health Connect</h3>
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200 uppercase inline-block my-1">
+              Mobile Citizen Health
+            </span>
+          </div>
+          <ul class="text-[9.5px] text-[#647469] space-y-1 mt-2">
+            <li>• <strong>Eco-Patrol Tracking:</strong> Measures foot-patrol step distance.</li>
+            <li>• <strong>Green Rewards:</strong> Converts physical eco-walks to Eco-Points.</li>
+            <li>• <strong>Honest Disclosure:</strong> Clear architectural web-to-native disclosure.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-[11px] text-[#647469] pt-2 border-t border-[#DCC8A3]/60">
+        <span>ABC — Aravali Build Championship by GDG Udaipur</span>
+        <span class="font-bold text-[#1B5E3B]">Slide 4 / 7</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Technology Stack -->
+    <section id="slide-5" class="slide-content h-full flex flex-col justify-between hidden">
+      <div class="flex items-center justify-between border-b border-[#DCC8A3] pb-2">
+        <div>
+          <h2 class="text-xl font-extrabold text-[#1B5E3B]">TECH STACK — Full-Stack Production Architecture</h2>
+          <p class="text-xs text-[#647469]">Engineered for high reliability, zero dummy data, and verified by 72 automated Vitest tests.</p>
+        </div>
+        <span class="text-xs font-bold text-[#1B5E3B] bg-white px-3 py-1 rounded-full border border-[#DCC8A3]">
+          ⚙️ Architecture Overview
+        </span>
+      </div>
+
+      <!-- 5 Stack Columns -->
+      <div class="grid grid-cols-1 sm:grid-cols-5 gap-2.5 my-auto">
+        <div class="bg-white p-3.5 rounded-xl border border-[#DCC8A3] shadow-sm">
+          <div class="bg-[#1B5E3B] text-white text-center py-1 rounded-lg text-xs font-bold mb-2">FRONTEND</div>
+          <p class="text-[10px] font-bold text-[#26382D] text-center mb-2">Interactive UI / UX</p>
+          <ul class="text-[10px] text-[#647469] space-y-1.5">
+            <li>✔ React 18 + Vite</li>
+            <li>✔ Tailwind CSS (Light Nature)</li>
+            <li>✔ Leaflet & Google Maps JS</li>
+            <li>✔ Lucide React Icons</li>
+            <li>✔ HTML5 Voice & Media Stream</li>
+          </ul>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-[#DCC8A3] shadow-sm">
+          <div class="bg-[#2E8B57] text-white text-center py-1 rounded-lg text-xs font-bold mb-2">BACKEND</div>
+          <p class="text-[10px] font-bold text-[#26382D] text-center mb-2">REST Microservices</p>
+          <ul class="text-[10px] text-[#647469] space-y-1.5">
+            <li>✔ Node.js (v18+) & Express</li>
+            <li>✔ RESTful Architecture</li>
+            <li>✔ Multer Multipart Upload</li>
+            <li>✔ JWT & Role-Based Auth</li>
+            <li>✔ Helmet & Rate Limiting</li>
+          </ul>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-[#DCC8A3] shadow-sm">
+          <div class="bg-[#806044] text-white text-center py-1 rounded-lg text-xs font-bold mb-2">DATABASE</div>
+          <p class="text-[10px] font-bold text-[#26382D] text-center mb-2">Geospatial Storage</p>
+          <ul class="text-[10px] text-[#647469] space-y-1.5">
+            <li>✔ MongoDB Atlas & Mongoose</li>
+            <li>✔ 2dsphere Spatial Indexing</li>
+            <li>✔ GeoJSON Forest Polygons</li>
+            <li>✔ Collision-Safe Case IDs</li>
+            <li>✔ Confidential Notes Dockets</li>
+          </ul>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-[#DCC8A3] shadow-sm">
+          <div class="bg-purple-700 text-white text-center py-1 rounded-lg text-xs font-bold mb-2">AI & SATELLITE</div>
+          <p class="text-[10px] font-bold text-[#26382D] text-center mb-2">Ecological Intel</p>
+          <ul class="text-[10px] text-[#647469] space-y-1.5">
+            <li>✔ Google Gemini 1.5 SDK</li>
+            <li>✔ Sentinel-2 MSI Spectral Engine</li>
+            <li>✔ NDVI Math: (B8-B4)/(B8+B4)</li>
+            <li>✔ Open-Meteo Weather API</li>
+            <li>✔ Multilingual Speech Parser</li>
+          </ul>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-[#DCC8A3] shadow-sm">
+          <div class="bg-blue-600 text-white text-center py-1 rounded-lg text-xs font-bold mb-2">DEPLOY & QA</div>
+          <p class="text-[10px] font-bold text-[#26382D] text-center mb-2">DevOps & Testing</p>
+          <ul class="text-[10px] text-[#647469] space-y-1.5">
+            <li>✔ Google Cloud Run / Docker</li>
+            <li>✔ Vercel CDN Hosting</li>
+            <li>✔ Vitest Suite (72 Tests)</li>
+            <li>✔ 100% Passing Backend Tests</li>
+            <li>✔ Clean Production Vite Build</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Test Metrics Banner -->
+      <div class="bg-[#F0F8F2] border border-[#2E8B57] p-2.5 rounded-xl text-center">
+        <span class="text-xs font-extrabold text-[#1B5E3B]">🧪 QA VERIFICATION:</span>
+        <span class="text-xs text-[#26382D] ml-2">
+          72 / 72 Automated Unit & Integration Tests Passing (100%) • Sub-50ms API Telemetry • Zero Mock/Dummy Fallback Dependencies
+        </span>
+      </div>
+
+      <div class="flex items-center justify-between text-[11px] text-[#647469] pt-2 border-t border-[#DCC8A3]/60">
+        <span>ABC — Aravali Build Championship by GDG Udaipur</span>
+        <span class="font-bold text-[#1B5E3B]">Slide 5 / 7</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: Future Scopes & Scalability -->
+    <section id="slide-6" class="slide-content h-full flex flex-col justify-between hidden">
+      <div class="flex items-center justify-between border-b border-[#DCC8A3] pb-2">
+        <div>
+          <h2 class="text-xl font-extrabold text-[#1B5E3B]">IMPACT & SCALABILITY — From Udaipur Ridges to a Pan-India Shield</h2>
+          <p class="text-xs text-[#647469]">Proven local impact with an adaptable architecture ready for national scale.</p>
+        </div>
+        <span class="text-xs font-bold text-[#1B5E3B] bg-white px-3 py-1 rounded-full border border-[#DCC8A3]">
+          📈 Roadmap & Scalability
+        </span>
+      </div>
+
+      <!-- 3 Pillars (Real Impact, More Users, Built to Scale) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="bg-white p-3 rounded-xl border border-[#2E8B57]">
+          <h3 class="text-xs font-extrabold text-[#1B5E3B] uppercase mb-1">🌟 Real Impact</h3>
+          <p class="text-[10px] text-[#647469]">
+            Protects 3.2-billion-year-old rock formations, prevents groundwater depletion, and protects native Dhau forest flora.
+          </p>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-emerald-500">
+          <h3 class="text-xs font-extrabold text-emerald-700 uppercase mb-1">👥 More Users</h3>
+          <p class="text-[10px] text-[#647469]">
+            Vernacular voice reporting in Hindi & Hinglish eliminates tech hurdles for rural farmers and forest-fringe communities.
+          </p>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-blue-500">
+          <h3 class="text-xs font-extrabold text-blue-700 uppercase mb-1">🚀 Built to Scale</h3>
+          <p class="text-[10px] text-[#647469]">
+            Event-driven microservices, indexed geospatial queries, and serverless satellite APIs designed to handle nationwide reporting.
+          </p>
+        </div>
+      </div>
+
+      <!-- 3 Geographic Tiers (UDAIPUR, RAJASTHAN, INDIA) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-auto">
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] shadow-sm">
+          <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-[#1B5E3B] border border-emerald-200 uppercase inline-block mb-1">
+            UDAIPUR — Local Impact
+          </span>
+          <ul class="text-[10px] text-[#647469] space-y-1">
+            <li>• Safeguards Pichola, Fateh Sagar & Badi lake catchment hills.</li>
+            <li>• Monitors Sajjangarh Sanctuary buffer zone.</li>
+            <li>• Flags Sukher & Gogunda marble slurry dumping.</li>
+          </ul>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] shadow-sm">
+          <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 uppercase inline-block mb-1">
+            RAJASTHAN — Regional Wall
+          </span>
+          <ul class="text-[10px] text-[#647469] space-y-1">
+            <li>• Defends the 692 km barrier stopping Thar Desert expansion.</li>
+            <li>• Protects Sariska & Ranthambore wildlife crossings.</li>
+            <li>• Connects Jaipur, Alwar, Rajsamand & Sirohi forest beats.</li>
+          </ul>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-[#DCC8A3] shadow-sm">
+          <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200 uppercase inline-block mb-1">
+            INDIA — National Vision
+          </span>
+          <ul class="text-[10px] text-[#647469] space-y-1">
+            <li>• Replicable for Western Ghats, Shivaliks & Central forests.</li>
+            <li>• Unified interface for Ministry of Environment & Forests (MoEFCC).</li>
+            <li>• Empowers millions of citizens as verified ecological guardians.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Future Roadmap Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+        <div class="bg-[#F0F8F2] p-2 rounded-lg border border-[#A3B18A]">
+          <strong class="text-[#1B5E3B] block text-[10px]">🚁 Autonomous Drones</strong>
+          <span class="text-[9px] text-[#647469]">Edge AI aerial surveys for inaccessible high ridges.</span>
+        </div>
+        <div class="bg-[#F0F8F2] p-2 rounded-lg border border-[#A3B18A]">
+          <strong class="text-[#1B5E3B] block text-[10px]">💬 WhatsApp / Telegram</strong>
+          <span class="text-[9px] text-[#647469]">Zero-app reporting via conversational messaging bot.</span>
+        </div>
+        <div class="bg-[#F0F8F2] p-2 rounded-lg border border-[#A3B18A]">
+          <strong class="text-[#1B5E3B] block text-[10px]">⚖️ Automated Legal FIRs</strong>
+          <span class="text-[9px] text-[#647469]">Mapped to Indian Forest Act & NGT directives.</span>
+        </div>
+        <div class="bg-[#F0F8F2] p-2 rounded-lg border border-[#A3B18A]">
+          <strong class="text-[#1B5E3B] block text-[10px]">🌱 Carbon Credit Ledger</strong>
+          <span class="text-[9px] text-[#647469]">Redeem citizen Eco-Points with local green partners.</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-[11px] text-[#647469] pt-2 border-t border-[#DCC8A3]/60">
+        <span>ABC — Aravali Build Championship by GDG Udaipur</span>
+        <span class="font-bold text-[#1B5E3B]">Slide 6 / 7</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: College Name & Team Members Photo -->
+    <section id="slide-7" class="slide-content h-full flex flex-col justify-between hidden">
+      <div class="flex items-center justify-between border-b border-[#DCC8A3] pb-2">
+        <div>
+          <h2 class="text-xl font-extrabold text-[#1B5E3B]">OUR INSTITUTION & TEAM — Aravali Guardians</h2>
+          <p class="text-xs text-[#647469]">Built with dedication for the Aravali Build Championship by GDG Udaipur.</p>
+        </div>
+        <span class="text-xs font-bold text-[#806044] bg-white px-3 py-1 rounded-full border border-[#DCC8A3]">
+          🎓 Team Showcase
+        </span>
+      </div>
+
+      <!-- College Banner -->
+      <div class="bg-white p-3.5 rounded-xl border border-[#DCC8A3] flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+          <img src="assets_gen/college_emblem.png" alt="College Emblem" class="w-12 h-12 object-contain">
+          <div>
+            <h3 class="text-sm font-extrabold text-[#1B5E3B]">COLLEGE OF TECHNOLOGY AND ENGINEERING (CTAE), UDAIPUR</h3>
+            <p class="text-xs text-[#647469]">Department of Computer Science & Engineering | MPUAT Udaipur</p>
+          </div>
+        </div>
+        <div class="hidden sm:block">
+          <img src="assets_gen/gdg_udaipur_badge.png" alt="GDG Badge" class="h-10 object-contain">
+        </div>
+      </div>
+
+      <!-- 3 Team Member Cards with Photo Placeholders -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-auto">
+        <!-- Lead -->
+        <div class="bg-white p-3.5 rounded-xl border border-[#DCC8A3] shadow-sm flex flex-col justify-between">
+          <div class="flex items-center gap-3 mb-2">
+            <img src="assets_gen/team_avatar_lead.png" alt="Team Lead" class="w-14 h-14 rounded-full border-2 border-[#1B5E3B] object-cover">
+            <div>
+              <h4 class="text-xs font-extrabold text-[#26382D]">[Team Lead Name]</h4>
+              <p class="text-[10px] font-bold text-[#1B5E3B]">Team Lead & Full-Stack Architect</p>
+              <span class="text-[9px] text-[#647469]">B.Tech CSE</span>
+            </div>
+          </div>
+          <ul class="text-[10px] text-[#647469] space-y-1">
+            <li>• System Architecture & React UI</li>
+            <li>• Node.js REST API & MongoDB</li>
+            <li>• Dual-Portal RBAC & Security</li>
+            <li>• 72 Automated Test Suite</li>
+          </ul>
+          <div class="mt-2 pt-2 border-t border-[#DCC8A3]/50 text-[9.5px] text-[#806044]">
+            GitHub: @teamlead • LinkedIn: /in/teamlead
+          </div>
+        </div>
+
+        <!-- AI Member -->
+        <div class="bg-white p-3.5 rounded-xl border border-[#DCC8A3] shadow-sm flex flex-col justify-between">
+          <div class="flex items-center gap-3 mb-2">
+            <img src="assets_gen/team_avatar_ai.png" alt="AI Member" class="w-14 h-14 rounded-full border-2 border-purple-700 object-cover">
+            <div>
+              <h4 class="text-xs font-extrabold text-[#26382D]">[Member 2 Name]</h4>
+              <p class="text-[10px] font-bold text-purple-700">AI & Satellite Engineer</p>
+              <span class="text-[9px] text-[#647469]">B.Tech CSE / AI</span>
+            </div>
+          </div>
+          <ul class="text-[10px] text-[#647469] space-y-1">
+            <li>• Google Gemini 1.5 Multimodal SDK</li>
+            <li>• Sentinel-2 MSI NDVI Spectral Engine</li>
+            <li>• Open-Meteo Weather API Integration</li>
+            <li>• Multilingual Speech-to-Text</li>
+          </ul>
+          <div class="mt-2 pt-2 border-t border-[#DCC8A3]/50 text-[9.5px] text-[#806044]">
+            GitHub: @ai-engineer • LinkedIn: /in/ai-engineer
+          </div>
+        </div>
+
+        <!-- UI/UX Member -->
+        <div class="bg-white p-3.5 rounded-xl border border-[#DCC8A3] shadow-sm flex flex-col justify-between">
+          <div class="flex items-center gap-3 mb-2">
+            <img src="assets_gen/team_avatar_design.png" alt="UX Lead" class="w-14 h-14 rounded-full border-2 border-amber-700 object-cover">
+            <div>
+              <h4 class="text-xs font-extrabold text-[#26382D]">[Member 3 Name]</h4>
+              <p class="text-[10px] font-bold text-amber-700">UI/UX & Mobile Systems</p>
+              <span class="text-[9px] text-[#647469]">B.Tech IT / Design</span>
+            </div>
+          </div>
+          <ul class="text-[10px] text-[#647469] space-y-1">
+            <li>• Nature Light Environmental System</li>
+            <li>• Public Case Tracking Portal (/track)</li>
+            <li>• Android Health Connect Integration</li>
+            <li>• Responsive Mobile Citizen Flows</li>
+          </ul>
+          <div class="mt-2 pt-2 border-t border-[#DCC8A3]/50 text-[9.5px] text-[#806044]">
+            GitHub: @ux-lead • LinkedIn: /in/ux-lead
+          </div>
+        </div>
+      </div>
+
+      <!-- Closing Thank You Quote -->
+      <div class="bg-[#F0F8F2] border border-[#2E8B57] p-2.5 rounded-xl text-center">
+        <p class="text-xs font-bold text-[#1B5E3B]">
+          🌿 "Protecting the Aravalli is not just conservation — it is securing the water, air, and climate of North India."
+        </p>
+        <span class="text-[10px] text-[#806044]">Thank you GDG Udaipur & Google Developer Groups!</span>
+      </div>
+
+      <div class="flex items-center justify-between text-[11px] text-[#647469] pt-2 border-t border-[#DCC8A3]/60">
+        <span>ABC — Aravali Build Championship by GDG Udaipur</span>
+        <span class="font-bold text-[#1B5E3B]">Slide 7 / 7</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Interactive Slide Navigation Script -->
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 7;
+
+    function showSlide(index) {
+      if (index < 1) index = 1;
+      if (index > totalSlides) index = totalSlides;
+      currentSlide = index;
+
+      for (let i = 1; i <= totalSlides; i++) {
+        const el = document.getElementById(`slide-${i}`);
+        if (el) {
+          if (i === currentSlide) {
+            el.classList.remove('hidden');
+          } else {
+            el.classList.add('hidden');
+          }
+        }
+      }
+
+      document.getElementById('slideIndicator').innerText = `Slide ${currentSlide} of ${totalSlides}`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        showSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        showSlide(currentSlide - 1);
+      }
+    }
+
+    function toggleFullscreen() {
+      const stage = document.getElementById('slideStage');
+      if (!document.fullscreenElement) {
+        stage.requestFullscreen().catch(err => alert(`Fullscreen error: ${err.message}`));
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // Keyboard Arrow Controls
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      }
+    });
+  </script>
+</body>
+</html>

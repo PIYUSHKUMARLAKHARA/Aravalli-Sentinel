@@ -1,4 +1,4 @@
-import { analyzeEvidence, askAravalliAssistant } from '../services/geminiService.js';
+import { analyzeEvidence, askAravalliAssistant, draftReportFromVoice } from '../services/geminiService.js';
 import { aravalliZones } from '../data/aravalliZones.js';
 import { seedReports } from '../data/seedReports.js';
 import { getFirestore } from '../config/firebase.js';
@@ -25,6 +25,28 @@ export async function analyzeUploadedEvidence(req, res) {
     return res.json({
       success: true,
       analysis,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function voiceReportDraft(req, res) {
+  try {
+    const { transcript, location } = req.body;
+
+    if (!transcript || transcript.trim().length === 0) {
+      return res.status(400).json({ success: false, error: 'Voice transcript is required.' });
+    }
+
+    const draftResult = await draftReportFromVoice({ transcript, location });
+
+    return res.json({
+      success: true,
+      transcript: draftResult.transcript,
+      draft: draftResult.draft,
+      suggestedCategory: draftResult.draft.threatCategory,
+      ...draftResult.draft,
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });

@@ -278,15 +278,16 @@ c:\Users\dlakh\Desktop\ARAVALLI SENTINEL/
         ├── services/
         │   └── api.js                 # Centralized fetch API client
         ├── pages/
-        │   ├── LandingLoginPage.jsx       # Starting dual-portal selection & login screen (/)
+        │   ├── LandingPage.jsx            # Public crisis overview & 4-step workflow
         │   ├── CitizenDashboardPage.jsx   # Citizen reports feed, stats & Recharts graphs
-        │   ├── AuthorityDashboardPage.jsx # Role-gated case triage & audit note logger
-        │   ├── DashboardPage.jsx          # Unified dashboard interface shell
         │   ├── RiskMapPage.jsx            # Interactive geospatial satellite risk map
         │   ├── ReportThreatPage.jsx       # Geotagged threat reporting form & AI preview
+        │   ├── AuthorityDashboardPage.jsx # Role-gated case triage & audit note logger
         │   ├── IncidentDossierPage.jsx    # Official printable legal incident dossier
+        │   ├── AskAravalliPage.jsx        # Conversational AI legal & ecological assistant
+        │   ├── DatasetMethodologyPage.jsx # Open datasets browser, charts & validation
         │   ├── AboutPage.jsx              # Supreme Court mandate, limitations & SDGs
-        │   └── LoginPage.jsx              # Backward-compatible portal login alias
+        │   └── LoginPage.jsx              # Demo persona switcher & registration
         └── components/
             ├── AIAnalysisCard.jsx     # Visual indicators, limitations, ranger checklist
             ├── Footer.jsx             # Regulatory references, credits, legal notice
@@ -361,10 +362,6 @@ cp .env.example frontend/.env
 | `MONGODB_URI` | `backend/.env` | MongoDB connection URI (Local or Atlas cluster) | Optional* | `mongodb://localhost:27017/aravalli_sentinel` (Uses High-Fidelity Local Store if empty) |
 | `DATABASE_TYPE` | `backend/.env` | Database provider indicator | Optional | `mongodb` |
 | `FIREBASE_PROJECT_ID` | `backend/.env` | Firebase project ID | Yes | `aravalli-sentinel-demo` |
-| `INITIAL_OFFICER_NAME` | `backend/.env` | Pre-authorized officer name (Environment provisioning) | Optional | `Ranger Sunita Rao` |
-| `INITIAL_OFFICER_EMAIL` | `backend/.env` | Pre-authorized officer email (Environment provisioning) | Optional | `officer@forest.rajasthan.gov.in` |
-| `INITIAL_OFFICER_PASSWORD` | `backend/.env` | Pre-authorized officer password (hashed on save) | Optional | `SecurePass2026!` |
-| `JWT_SECRET` | `backend/.env` | Cryptographic secret for HMAC-SHA256 JWT tokens | Yes | Strong 32+ char secret |
 | `AUTHORITY_INVITE_SECRET` | `backend/.env` | Server-held secret to provision Forest Authority accounts | Yes | `AravalliEnforce2025SecureToken` |
 | `DEMO_BOOTSTRAP_ENABLED` | `backend/.env` | Pre-seeds evaluation officer in non-prod environments | Yes | `true` (`false` in production) |
 | `VITE_API_URL` | `frontend/.env` | Backend API proxy path | Yes | `/api` |
@@ -372,28 +369,19 @@ cp .env.example frontend/.env
 
 *\*Note: The application operates completely out-of-the-box in **Demonstration Mode** with zero external API keys required!*
 
-### Dual-Portal Architecture & Forest Authority Role Security
-1. **Starting Page (`/`):**
-   - The root URL opens the **Aravalli Sentinel Starting Page** featuring an atmospheric, Aravalli-inspired rocky mountain landscape and two prominent portal cards:
-     - **PUBLIC CITIZEN PORTAL:** Open registration and login for citizens to report suspected environmental hazards (illegal mining, deforestation, toxic dumping), upload evidence, share GPS coordinates, and track their cases.
-     - **FOREST AUTHORITY PORTAL:** Restricted portal for verified Forest Department and Task Force officers to review evidence, examine geospatial maps, inspect risk scores, and log field verifications.
-2. **Strict Citizen / Officer Separation & Privilege Escalation Block:**
-   - Public users can only register as `citizen` via `/api/auth/register-citizen`. Client-provided roles (`officer`, `admin`) are strictly rejected/ignored on the server.
-   - **Cross-Portal Defense (TEST 4):** If a citizen account attempts to log in through the Forest Authority Portal, the server rejects the request with HTTP 403 Forbidden: *"Access Denied: This portal is restricted to authorized Forest Authority officers."*
-   - Inactive or suspended officers are rejected with HTTP 403 Forbidden.
-3. **Dual-Path Authority Officer Provisioning:**
-   - **Method A — Environment Variable Provisioning (Automated Setup):**
-     Configure `INITIAL_OFFICER_NAME`, `INITIAL_OFFICER_EMAIL`, and `INITIAL_OFFICER_PASSWORD` in `backend/.env`. On startup, the server automatically hashes the password using scrypt/salt and creates the authorized officer in MongoDB / officer registry without overwriting existing accounts on restart.
-   - **Method B — Administrative Invitation Token (`POST /api/auth/register-authority`):**
-     Authorized administrators provision officers using the secret `AUTHORITY_INVITE_SECRET`.
-   - **Method C — Demo Bootstrap Mode (Evaluators & Judges):**
-     When `DEMO_BOOTSTRAP_ENABLED=true`, the system pre-provisions:
-     - **Officer Email:** `officer.sharma@forest.haryana.gov.in`
-     - **Officer Password:** `Officer@Aravalli2026!`
-     - **Citizen Email:** `citizen@aravalli.sentinel`
-     - **Citizen Password:** `Citizen@Aravalli2026!`
-     - **Admin Email:** `admin@aravalli.sentinel`
-     - **Admin Password:** `Admin@Aravalli2026!`
+### Forest Authority Role Security & Provisioning Architecture
+1. **Strict Citizen / Officer Separation:**
+   - Public users can only register as `citizen` via `/api/auth/register-citizen`. Client-provided roles are strictly ignored.
+   - Authority status cannot be obtained via query parameters, local storage mutation, or public signup.
+2. **Dual-Path Authority Authentication:**
+   - **Officer Sign In (`POST /api/auth/login-authority`):** For existing/provisioned officers using official email and password. Does not require the invitation secret once provisioned.
+   - **Officer Provisioning (`POST /api/auth/register-authority`):** Requires the verified `AUTHORITY_INVITE_SECRET` configured on the server. Provisions the officer into the server-side officer registry and issues verified `authority` session tokens.
+3. **Demo Bootstrap Mode:**
+   - For hackathon evaluation, `DEMO_BOOTSTRAP_ENABLED=true` seeds a demonstration officer:
+     - **Email:** `officer.sharma@forest.haryana.gov.in`
+     - **Password:** `Officer@Aravalli2026!`
+     - **Demo Secret:** `AravalliEnforce2025SecureToken`
+   - In production environments, set `DEMO_BOOTSTRAP_ENABLED=false` to disable bootstrap accounts and enforce strict administrator provisioning.
 4. **Statutory Non-Government Notice:**
    - *Aravalli Sentinel is an independent academic, civic, and hackathon project. It is not an official portal of the Ministry of Environment, Forest and Climate Change (MoEFCC) or State Forest Departments.*
 

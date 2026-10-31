@@ -1,21 +1,28 @@
 /**
- * ARAVALLI SENTINEL - Explainable Ecological Risk Engine
+ * ARAVALLI SENTINEL: GOOGLE COMMUNITY CONTEST EDITION
+ * riskEngine.js — Deterministic, Explainable Multi-Factor Ecological Risk Engine
  * 
- * Computes an explainable ecological risk score (0-100) using normalized inputs:
- * - Mining risk: 30%
- * - Vegetation loss: 25%
- * - Water stress: 20%
- * - Citizen evidence: 15%
- * - Historical change: 10%
+ * Supports both:
+ * 1. Six-Factor Ecological Risk Formula (Phase 11 Specification):
+ *    Score = 0.25M + 0.20N + 0.15A + 0.15W + 0.15C + 0.10R
+ *    - 25% Mining Forensics (M)
+ *    - 20% NDVI Loss (N)
+ *    - 15% Aquifer Stress (A)
+ *    - 15% Weather Hazard (W)
+ *    - 15% Evidence Quality & Citizen Credibility (C)
+ *    - 10% Sector Recurrence (R)
  * 
- * Formula:
- * overallScore = (miningRisk * 0.30) + 
- *                (vegetationLoss * 0.25) + 
- *                (waterStress * 0.20) + 
- *                (citizenEvidence * 0.15) + 
- *                (historicalChange * 0.10)
+ * 2. Five-Factor Backward Compatibility Formula:
+ *    Score = 0.30M + 0.25V + 0.20W + 0.15C + 0.10H
+ * 
+ * Risk Classifications (Phase 11):
+ * - CRITICAL: 85–100
+ * - HIGH:     70–84.99
+ * - MEDIUM:   50–69.99
+ * - LOW:      0–49.99
  */
 
+// 5-Factor legacy weights (backward compatibility)
 export const WEIGHTS = {
   miningRisk: 0.30,
   vegetationLoss: 0.25,
@@ -24,12 +31,59 @@ export const WEIGHTS = {
   historicalChange: 0.10,
 };
 
+// 6-Factor Contest Edition weights (Phase 11 specification)
+export const SIX_FACTOR_WEIGHTS = {
+  miningForensics: 0.25,
+  ndviLoss: 0.20,
+  aquiferStress: 0.15,
+  weatherHazard: 0.15,
+  evidenceCredibility: 0.15,
+  sectorRecurrence: 0.10,
+};
+
+// Phase 11 Risk Classification Bands
+export const CONTEST_RISK_BANDS = {
+  LOW: {
+    level: 'LOW',
+    min: 0,
+    max: 49.99,
+    color: '#2E8B57', // Emerald
+    label: 'Low Environmental Impact',
+    recommendedAction: 'Continue baseline satellite telemetry and routine periodic monitoring.',
+  },
+  MEDIUM: {
+    level: 'MEDIUM',
+    min: 50,
+    max: 69.99,
+    color: '#D97706', // Amber/Sandstone
+    label: 'Moderate Ecological Concern',
+    recommendedAction: 'Deploy drone reconnaissance and schedule ranger field inspection within 7 days.',
+  },
+  HIGH: {
+    level: 'HIGH',
+    min: 70,
+    max: 84.99,
+    color: '#EA580C', // Orange
+    label: 'High Threat Level',
+    recommendedAction: 'Mobilize district task force, issue field inspection notice, and alert district authorities.',
+  },
+  CRITICAL: {
+    level: 'CRITICAL',
+    min: 85,
+    max: 100,
+    color: '#DC2626', // Red
+    label: 'Critical Environmental Crime',
+    recommendedAction: 'Immediate enforcement raid required. Supreme Court mining ban enforcement and legal FIR filing.',
+  },
+};
+
+// Legacy risk levels (for backward compatibility with existing tests)
 export const RISK_LEVELS = {
   SAFE: {
     level: 'SAFE',
     min: 0,
     max: 30,
-    color: '#10b981', // Emerald
+    color: '#10b981',
     label: 'Ecological Equilibrium',
     severity: 'low',
     recommendedAction: 'Continue baseline satellite telemetry and periodic ecological surveys.',
@@ -38,7 +92,7 @@ export const RISK_LEVELS = {
     level: 'WATCH',
     min: 31,
     max: 50,
-    color: '#f59e0b', // Amber
+    color: '#f59e0b',
     label: 'Early Warning',
     severity: 'moderate',
     recommendedAction: 'Deploy drone reconnaissance and schedule joint forest ranger patrol within 7 days.',
@@ -47,7 +101,7 @@ export const RISK_LEVELS = {
     level: 'HIGH RISK',
     min: 51,
     max: 75,
-    color: '#f97316', // Orange
+    color: '#f97316',
     label: 'Elevated Threat',
     severity: 'high',
     recommendedAction: 'Issue formal inspection notice, mobilize field task force, and alert district magistrate.',
@@ -56,7 +110,7 @@ export const RISK_LEVELS = {
     level: 'CRITICAL',
     min: 76,
     max: 100,
-    color: '#ef4444', // Red
+    color: '#ef4444',
     label: 'Imminent Destruction',
     severity: 'critical',
     recommendedAction: 'Immediate enforcement raid required. Supreme Court ban enforcement, machinery seizure, and FIR filing.',
@@ -81,7 +135,7 @@ export function validateFactor(value, factorName) {
 }
 
 /**
- * Determines the risk level object given a score between 0 and 100
+ * Determines risk level for legacy 5-factor engine
  */
 export function getRiskLevel(score) {
   const rounded = Math.round(Math.max(0, Math.min(100, score)));
@@ -92,13 +146,170 @@ export function getRiskLevel(score) {
 }
 
 /**
- * Calculates the comprehensive explainable risk score
- * 
- * @param {Object} factors - { miningRisk, vegetationLoss, waterStress, citizenEvidence, historicalChange }
- * @param {Object} metadata - Optional metadata about data provenance (sources, dates, isDemo)
- * @returns {Object} Comprehensive calculation result with breakdown and explanations
+ * Determines risk level for Phase 11 Contest 6-Factor bands
+ */
+export function getContestRiskClassification(score) {
+  const s = Math.max(0, Math.min(100, Number(score) || 0));
+  if (s >= 85) return CONTEST_RISK_BANDS.CRITICAL;
+  if (s >= 70) return CONTEST_RISK_BANDS.HIGH;
+  if (s >= 50) return CONTEST_RISK_BANDS.MEDIUM;
+  return CONTEST_RISK_BANDS.LOW;
+}
+
+/**
+ * Calculates the Phase 11 Explainable Six-Factor Risk Score
+ * Formula: Score = 0.25M + 0.20N + 0.15A + 0.15W + 0.15C + 0.10R
+ */
+export function calculateSixFactorRiskScore(factors = {}, metadata = {}) {
+  const factorKeys = ['miningForensics', 'ndviLoss', 'aquiferStress', 'weatherHazard', 'evidenceCredibility', 'sectorRecurrence'];
+
+  // Map from legacy/alternative keys if provided
+  const normalizedInputs = {
+    miningForensics: factors.miningForensics ?? factors.miningRisk,
+    ndviLoss: factors.ndviLoss ?? factors.vegetationLoss,
+    aquiferStress: factors.aquiferStress ?? factors.waterStress,
+    weatherHazard: factors.weatherHazard ?? factors.weatherStress ?? 25,
+    evidenceCredibility: factors.evidenceCredibility ?? factors.citizenEvidence,
+    sectorRecurrence: factors.sectorRecurrence ?? factors.historicalChange,
+  };
+
+  const validatedFactors = {};
+  const missingFactors = [];
+  let availableWeightSum = 0;
+
+  for (const key of factorKeys) {
+    const rawVal = normalizedInputs[key];
+    const validation = validateFactor(rawVal, key);
+
+    if (validation.valid) {
+      validatedFactors[key] = validation.value;
+      availableWeightSum += SIX_FACTOR_WEIGHTS[key];
+    } else {
+      missingFactors.push({
+        factor: key,
+        expectedWeight: SIX_FACTOR_WEIGHTS[key],
+        reason: validation.reason,
+      });
+    }
+  }
+
+  const isComplete = missingFactors.length === 0;
+  const completenessPercent = Math.round(availableWeightSum * 100);
+
+  if (availableWeightSum === 0) {
+    return {
+      success: false,
+      error: 'Cannot calculate risk score: All six factors are missing.',
+      missingFactors,
+      dataCompleteness: '0%',
+    };
+  }
+
+  let overallScore = 0;
+  const factorBreakdown = {};
+
+  for (const key of factorKeys) {
+    const rawWeight = SIX_FACTOR_WEIGHTS[key];
+    if (validatedFactors[key] !== undefined) {
+      const val = validatedFactors[key];
+      // When data is incomplete, re-normalize across available weight transparently
+      const adjustedWeight = rawWeight / availableWeightSum;
+      const contribution = Number((val * adjustedWeight).toFixed(2));
+      overallScore += contribution;
+
+      factorBreakdown[key] = {
+        value: val,
+        rawWeight,
+        adjustedWeight: Number(adjustedWeight.toFixed(4)),
+        weightPercent: `${Math.round(adjustedWeight * 100)}%`,
+        contribution,
+        status: 'MEASURED',
+        explanation: getSixFactorExplanation(key, val),
+      };
+    } else {
+      factorBreakdown[key] = {
+        value: null,
+        rawWeight,
+        adjustedWeight: 0,
+        weightPercent: '0% (missing)',
+        contribution: 0,
+        status: 'DATA_UNAVAILABLE',
+        explanation: 'Factor data missing; omitted from proportional calculation.',
+      };
+    }
+  }
+
+  const finalScore = Number(Math.min(100, Math.max(0, overallScore)).toFixed(1));
+  const classification = getContestRiskClassification(finalScore);
+
+  return {
+    success: true,
+    score: finalScore,
+    classification: classification.level,
+    color: classification.color,
+    label: classification.label,
+    recommendedAction: classification.recommendedAction,
+    formula: 'Score = 0.25M + 0.20N + 0.15A + 0.15W + 0.15C + 0.10R',
+    dataCompleteness: `${completenessPercent}%`,
+    isComplete,
+    missingFactors,
+    factors: factorBreakdown,
+    confidence: isComplete ? 'HIGH' : (completenessPercent >= 60 ? 'MODERATE' : 'LOW_PROVISIONAL'),
+    recommendedHumanReview: finalScore >= 70 || !isComplete,
+    statutoryNotice: 'Risk score is an investigative prioritization aid, not a judicial finding of guilt.',
+    timestamp: new Date().toISOString(),
+  };
+}
+
+function getSixFactorExplanation(key, val) {
+  if (key === 'miningForensics') {
+    if (val >= 75) return 'Active earthmoving machinery, pit excavation, or blasting signatures identified.';
+    if (val >= 45) return 'Moderate proximity to known stone crusher hubs or historical quarry leases.';
+    return 'Minimal or no mechanical excavation indicators detected.';
+  }
+  if (key === 'ndviLoss') {
+    if (val >= 75) return 'Severe multispectral NDVI drop; significant canopy loss compared to baseline pass.';
+    if (val >= 45) return 'Noticeable scrub decline or seasonal moisture stress on hill slopes.';
+    return 'Stable vegetative cover consistent with native dry-deciduous Aravalli flora.';
+  }
+  if (key === 'aquiferStress') {
+    if (val >= 75) return 'Severe groundwater table depression and critical recharge zone disturbance.';
+    if (val >= 45) return 'Moderate reduction in surface check-dam water storage and nala flow.';
+    return 'Stable hydrological balance in local catchment aquifer.';
+  }
+  if (key === 'weatherHazard') {
+    if (val >= 75) return 'High wind speeds generating severe downwind silica dust plumes or intense rain-wash risk.';
+    if (val >= 45) return 'Moderate atmospheric conditions with potential for localized dust migration.';
+    return 'Calm weather conditions with low particulate dispersal risk.';
+  }
+  if (key === 'evidenceCredibility') {
+    if (val >= 75) return 'High-resolution geotagged imagery corroborated by multiple citizen testimonies.';
+    if (val >= 45) return 'Single citizen submission with verified GPS ground coordinates.';
+    return 'Preliminary or unverified citizen evidence sample.';
+  }
+  if (key === 'sectorRecurrence') {
+    if (val >= 75) return 'Chronic violation hotspot with repeated historical mining or tree felling alerts.';
+    if (val >= 45) return 'Occasional past alerts logged in this forest division.';
+    return 'Historically preserved zone with low incidence recurrence.';
+  }
+  return `Factor evaluated at ${val}/100.`;
+}
+
+/**
+ * Legacy 5-factor calculateRiskScore preserved for full backward compatibility
  */
 export function calculateRiskScore(factors = {}, metadata = {}) {
+  // If user passed the 6-factor keys, delegate to 6-factor calculation
+  if (factors.miningForensics !== undefined || factors.weatherHazard !== undefined) {
+    const res = calculateSixFactorRiskScore(factors, metadata);
+    // Format to match legacy expectations if needed
+    return {
+      ...res,
+      riskLevel: res.classification === 'CRITICAL' ? 'CRITICAL' : (res.classification === 'HIGH' ? 'HIGH RISK' : 'WATCH'),
+      severity: res.classification.toLowerCase(),
+    };
+  }
+
   const factorKeys = ['miningRisk', 'vegetationLoss', 'waterStress', 'citizenEvidence', 'historicalChange'];
   
   const validatedFactors = {};
@@ -124,13 +335,11 @@ export function calculateRiskScore(factors = {}, metadata = {}) {
     }
   }
 
-  // Handle transparent missing data
   const isComplete = missingFactors.length === 0;
   let overallScore = 0;
   const contributions = {};
 
   if (isComplete) {
-    // Standard formula: direct weighted sum
     for (const key of factorKeys) {
       const weight = WEIGHTS[key];
       const val = validatedFactors[key];
@@ -146,7 +355,6 @@ export function calculateRiskScore(factors = {}, metadata = {}) {
       overallScore += contribution;
     }
   } else if (availableWeightSum > 0) {
-    // Proportional re-normalization with explicit transparency
     for (const key of factorKeys) {
       if (validatedFactors[key] !== undefined) {
         const rawWeight = WEIGHTS[key];
@@ -176,7 +384,6 @@ export function calculateRiskScore(factors = {}, metadata = {}) {
       }
     }
   } else {
-    // All missing
     return {
       success: false,
       error: 'Cannot calculate risk score: All input factors are missing or invalid.',
@@ -188,7 +395,6 @@ export function calculateRiskScore(factors = {}, metadata = {}) {
   const roundedInt = Math.round(finalScore);
   const riskClassification = getRiskLevel(roundedInt);
 
-  // Identify primary risk driver
   const sortedContributions = Object.entries(contributions)
     .filter(([_, data]) => data.value !== null)
     .sort((a, b) => b[1].contribution - a[1].contribution);
@@ -270,8 +476,12 @@ function getFactorExplanation(key, value) {
 
 export default {
   WEIGHTS,
+  SIX_FACTOR_WEIGHTS,
+  CONTEST_RISK_BANDS,
   RISK_LEVELS,
   validateFactor,
   getRiskLevel,
+  getContestRiskClassification,
   calculateRiskScore,
+  calculateSixFactorRiskScore,
 };

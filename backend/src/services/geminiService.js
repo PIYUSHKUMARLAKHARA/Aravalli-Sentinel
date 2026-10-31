@@ -2,29 +2,36 @@ import { getGeminiClient, isGeminiLive, getActiveModelName } from '../config/gem
 
 const SYSTEM_PROMPT_EVIDENCE = `
 You are the Senior Geospatial and Ecological Evidence Analyst for ARAVALLI SENTINEL.
-Your task is to analyze user-submitted photographs and environmental descriptions from the Aravalli Ecological Range in India (spanning Gujarat, Rajasthan, Haryana, and Delhi NCR).
+Your task is to analyze user-submitted photographs, videos, audio/voice transcripts, and environmental coordinates from the Aravalli Ecological Range in India (spanning Gujarat, Rajasthan, Haryana, and Delhi NCR).
 
 CRITICAL LEGAL & ETHICAL CONSTRAINTS:
-1. You MUST NEVER state that an image legally proves an offence or illegal mining.
-2. Frame all findings strictly as an "AI Ecological Assessment" and "suspected visual indicators".
-3. Ground verification by forest rangers, mining officers, or state pollution control boards is always required.
+1. You MUST NEVER state that an image or video legally proves an offence or illegal mining.
+2. Frame all findings strictly as an "AI Ecological Observation" and "suspected visual indicators".
+3. Ground verification by forest rangers, mining officers, or state authorities is always mandatory.
 4. Highlight technical limitations such as optical resolution, lack of elevation data, seasonal drying, or perspective bias.
 
 OUTPUT FORMAT:
 You MUST respond with valid JSON matching this schema ONLY (no Markdown fences, no extraneous preamble):
 {
+  "suggestedTitle": "Short 4-8 word descriptive incident title",
+  "suggestedCategory": "Illegal Mining & Quarrying | Deforestation / Tree Felling | Encroachment & Construction | Toxic Waste Dumping | Ground Water Depletion / Deep Boring | Land Degradation | Other Ecological Threat",
+  "possibleThreatCategory": "Same as suggestedCategory",
+  "summary": "Clear, objective, scientific explanation of observed landscape changes.",
+  "explanation": "Same as summary",
   "observedVisualIndicators": ["item 1", "item 2", "item 3"],
-  "possibleThreatCategory": "Illegal Mining | Deforestation / Tree Felling | Encroachment & Construction | Toxic Waste Dumping | Ground Water Depletion / Quarrying | Low / Inconclusive Evidence",
-  "explanation": "Clear, objective, scientific explanation of observed landscape changes.",
-  "uncertaintyAndLimitations": "Explicit notes on optical ambiguity, seasonal variance, and non-conclusive nature of photographs alone.",
+  "potentialEnvironmentalImpact": "Estimated scientific impact on biodiversity, water table, or forest corridor.",
+  "suggestedPriority": "CRITICAL | HIGH | MEDIUM | LOW",
   "confidenceEstimate": "High | Medium | Low",
+  "uncertaintyAndLimitations": "Explicit notes on optical ambiguity, seasonal variance, and non-conclusive nature of media alone.",
+  "uncertainties": "Same as uncertaintyAndLimitations",
+  "humanReviewRequirement": "Mandatory on-site field verification required by Forest Department personnel under Indian Forest Act.",
   "recommendedVerificationSteps": [
     "Step 1: Check cadastral revenue map for ridge/forest notification status",
     "Step 2: Dispatch drone survey or field ranger team with GPS tracker",
-    "Step 3: Cross-reference regional satellite NDVI change"
+    "Step 3: Cross-reference regional satellite Sentinel-2 NDVI change"
   ],
-  "preliminaryRiskScoreImpact": 65, // Suggested factor input score from 0 to 100
-  "legalDisclaimer": "This is an AI ecological assessment and does NOT constitute official legal proof or judicial evidence. Field verification by authorized government authorities is mandatory under Indian environmental laws."
+  "preliminaryRiskScoreImpact": 65,
+  "legalDisclaimer": "This is an AI ecological observation and does NOT constitute official legal proof or judicial evidence. Field verification by authorized government authorities is mandatory."
 }
 `;
 
@@ -163,12 +170,32 @@ function generateSimulatedAnalysis(threatCategory = 'Illegal Mining', userDescri
     explanation = 'Preliminary photographic review shows localized environmental alteration requiring ground-truthing by forest officials.';
   }
 
+  const titles = {
+    'Illegal Mining & Quarrying': 'Mechanized Ridge Quarrying & Stone Excavation',
+    'Deforestation / Tree Felling': 'Canopy Clearance & Native Dhau Felling',
+    'Toxic Waste Dumping': 'Unregulated Debris & Chemical Dumping Basin',
+    'Encroachment & Construction': 'Structural Boundary Construction on Forest Land',
+    'Ground Water Depletion / Deep Boring': 'Unauthorized Heavy Borewell Extraction Grid',
+  };
+
+  const priority = scoreImpact >= 75 ? 'CRITICAL' : scoreImpact >= 60 ? 'HIGH' : 'MEDIUM';
+
   return {
-    observedVisualIndicators: indicators,
+    suggestedTitle: titles[possibleThreat] || `${possibleThreat} Activity Observed`,
+    suggestedCategory: possibleThreat,
     possibleThreatCategory: possibleThreat,
+    summary: explanation,
     explanation,
+    observedVisualIndicators: indicators,
+    potentialEnvironmentalImpact:
+      scoreImpact >= 70
+        ? 'Severe disruption to regional groundwater recharge zone and loss of critical wildlife corridor buffer.'
+        : 'Localized flora degradation and accelerated topsoil erosion along rocky escarpments.',
+    suggestedPriority: priority,
+    confidenceEstimate: 'High',
     uncertaintyAndLimitations: `Assessment derived using ecological computer vision heuristics. ${reason ? `[Note: ${reason}]` : ''} High-resolution aerial LIDAR, land revenue records, and GPS field verification are mandatory to determine legal non-compliance.`,
-    confidenceEstimate: 'Medium',
+    uncertainties: `Optical indicators are decision-support clues. Ground-truthing required under Forest Conservation Act.`,
+    humanReviewRequirement: 'Mandatory field verification required by authorized Forest Authority officers before statutory enforcement.',
     recommendedVerificationSteps: [
       'Verify land classification in District Revenue / Forest Department Records (Punjab Land Preservation Act / Forest Conservation Act notifications)',
       'Dispatch field task force equipped with handheld DGPS for boundary demarcation',
@@ -176,11 +203,51 @@ function generateSimulatedAnalysis(threatCategory = 'Illegal Mining', userDescri
       'Examine whether valid mining lease or environmental clearance (EC) exists for this survey number',
     ],
     preliminaryRiskScoreImpact: scoreImpact,
-    legalDisclaimer: 'This is an AI ecological assessment and does NOT constitute official legal proof or judicial evidence. Field verification by authorized government authorities is mandatory under Indian environmental laws.',
+    legalDisclaimer: 'This is an AI ecological observation and does NOT constitute official legal proof or judicial evidence. Field verification by authorized government authorities is mandatory under Indian environmental laws.',
     source: 'Aravalli Sentinel Ecological Assessment Engine (Demo Fallback)',
     model: 'Rule-Guided Ecological Heuristic v1.2',
     isSimulated: true,
     analyzedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Drafts an environmental incident report from voice transcripts (Hindi, English, Hinglish)
+ */
+export async function draftReportFromVoice({ transcript, location }) {
+  if (!transcript || transcript.trim().length === 0) {
+    throw new Error('Voice transcript is empty.');
+  }
+
+  const text = transcript.toLowerCase();
+  let threatCategory = 'Other Ecological Threat';
+
+  if (text.includes('mining') || text.includes('khanan') || text.includes('patthar') || text.includes('quarry') || text.includes('blasting')) {
+    threatCategory = 'Illegal Mining & Quarrying';
+  } else if (text.includes('tree') || text.includes('ped') || text.includes('katayi') || text.includes('jungle') || text.includes('deforest')) {
+    threatCategory = 'Deforestation / Tree Felling';
+  } else if (text.includes('kachra') || text.includes('dump') || text.includes('waste') || text.includes('plastic') || text.includes('toxic')) {
+    threatCategory = 'Toxic Waste Dumping';
+  } else if (text.includes('kabza') || text.includes('encroach') || text.includes('wall') || text.includes('deewar') || text.includes('building')) {
+    threatCategory = 'Encroachment & Construction';
+  } else if (text.includes('paani') || text.includes('water') || text.includes('boring') || text.includes('borewell') || text.includes('aquifer')) {
+    threatCategory = 'Ground Water Depletion / Deep Boring';
+  }
+
+  const simulated = generateSimulatedAnalysis(threatCategory, transcript, 'Voice input transcribed');
+
+  return {
+    success: true,
+    transcript,
+    draft: {
+      title: `${threatCategory} reported via Voice Sentinel`,
+      threatCategory,
+      summary: transcript,
+      aiObservations: simulated.observedVisualIndicators,
+      suggestedPriority: simulated.suggestedPriority,
+      location: location || null,
+      disclaimer: 'AI-drafted from spoken testimony. Citizen confirmation required before official case registration.',
+    },
   };
 }
 

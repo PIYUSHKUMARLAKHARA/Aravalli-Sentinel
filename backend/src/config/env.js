@@ -35,12 +35,6 @@ export const env = {
   FIREBASE_SERVICE_ACCOUNT_JSON: process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '',
   // Forest Authority Invitation Secret Token (used strictly by trusted admins to provision official officer accounts)
   AUTHORITY_INVITE_SECRET: process.env.AUTHORITY_INVITE_SECRET || 'AravalliEnforce2025SecureToken',
-  // Pre-authorized initial officer provisioning from environment variables
-  INITIAL_OFFICER_NAME: process.env.INITIAL_OFFICER_NAME || '',
-  INITIAL_OFFICER_EMAIL: process.env.INITIAL_OFFICER_EMAIL || '',
-  INITIAL_OFFICER_PASSWORD: process.env.INITIAL_OFFICER_PASSWORD || '',
-  // JWT Session Secret
-  JWT_SECRET: process.env.JWT_SECRET || 'aravalli-sentinel-jwt-secret-key-2026-production',
   // Demo Bootstrap Administrator toggle (allows restricted pre-seeded evaluation officer in non-production environments)
   DEMO_BOOTSTRAP_ENABLED: process.env.DEMO_BOOTSTRAP_ENABLED !== 'false',
   ENVIRONMENTAL_DATA_MODE: process.env.ENVIRONMENTAL_DATA_MODE || 'demo',

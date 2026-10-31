@@ -9,6 +9,7 @@ import { analyzeEvidence } from '../services/geminiService.js';
 import { calculateRiskScore } from '../services/riskEngine.js';
 import { aravalliZones, getZoneById } from '../data/aravalliZones.js';
 import { seedReports } from '../data/seedReports.js';
+import { getWeatherData } from '../services/weatherService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -207,8 +208,22 @@ export function getAllStoredReports() {
 
 export async function submitReport(req, res) {
   try {
-    const { threatCategory, description, latitude, longitude, locationName, zoneId, incidentTime } = req.body;
+    const {
+      threatCategory,
+      description,
+      latitude,
+      longitude,
+      locationName,
+      zoneId,
+      incidentTime,
+      videoUrl,
+      mediaType,
+      voiceTranscript,
+    } = req.body;
     const user = req.user || { uid: 'guest-sentinel', name: 'Citizen Sentinel (Anonymous)', role: 'citizen' };
+
+    const effectiveDescription = description || voiceTranscript || `AI-analyzed ecological observation of ${threatCategory || 'ecological threat'}.`;
+    const effectiveLocationName = locationName || `Aravalli Coords (${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)})`;
 
     let imageBuffer = null;
     let mimeType = null;
@@ -260,8 +275,8 @@ export async function submitReport(req, res) {
       imageBuffer,
       mimeType,
       threatCategory,
-      userDescription: description,
-      location: { latitude: Number(latitude), longitude: Number(longitude), locationName },
+      userDescription: effectiveDescription,
+      location: { latitude: Number(latitude), longitude: Number(longitude), locationName: effectiveLocationName },
     });
 
     // Step 2: Compute Explainable Risk Score
@@ -295,18 +310,28 @@ export async function submitReport(req, res) {
       isDemo: aiAnalysis.isSimulated,
     });
 
+    // Capture real-time or honest fallback weather snapshot
+    let weatherSnapshot = null;
+    try {
+      weatherSnapshot = await getWeatherData(Number(latitude), Number(longitude));
+    } catch (wErr) {
+      console.warn('Weather snapshot ingest warning:', wErr.message);
+    }
+
     // Generate Collision-Safe Case ID: ARV-2026-000123
     const reportId = generateCollisionSafeCaseId();
     const now = new Date().toISOString();
 
+    const determinedMediaType = mediaType || (videoUrl ? 'video' : (req.file ? 'image' : (voiceTranscript ? 'audio' : 'image')));
+
     const newReport = {
       id: reportId,
-      title: req.body.title || `${threatCategory} at ${locationName}`,
+      title: req.body.title || `${threatCategory} at ${effectiveLocationName}`,
       threatCategory,
-      description,
+      description: effectiveDescription,
       latitude: Number(latitude),
       longitude: Number(longitude),
-      locationName,
+      locationName: effectiveLocationName,
       zoneId: matchedZone ? matchedZone.id : 'zone-unassigned',
       zoneName: matchedZone ? matchedZone.name : 'Aravalli Regional Sector',
       incidentTime: incidentTime || now,
@@ -320,6 +345,12 @@ export async function submitReport(req, res) {
       citizenContactRedacted: true,
       imageUrl,
       fallbackImageUrl: ECOLOGICAL_FALLBACK_IMAGES[threatCategory] || ECOLOGICAL_FALLBACK_IMAGES['Illegal Mining'],
+      videoUrl: videoUrl || null,
+      mediaType: determinedMediaType,
+      voiceTranscript: voiceTranscript || null,
+      weatherSnapshot: weatherSnapshot || undefined,
+      pointsAwarded: false,
+      internalNotes: [],
       evidenceMetadata,
       evidenceAnalysis: aiAnalysis,
       riskAssessment: {
@@ -335,7 +366,7 @@ export async function submitReport(req, res) {
           by: user.name || 'Citizen Sentinel',
           role: user.role || 'citizen',
           timestamp: now,
-          notes: 'Citizen submitted threat report with photographic evidence and coordinates.',
+          notes: 'Citizen submitted threat report with field evidence and coordinates.',
         },
       ],
     };
@@ -667,6 +698,20 @@ export async function updateReportStatus(req, res) {
       inMemoryReports[memIdx] = { ...report };
     }
 
+    // Award citizen Environmental Contribution Points on official verification or resolution
+    if ((status === 'verified' || status === 'resolved') && !report.pointsAwarded) {
+      try {
+        const { awardPointsForVerification } = await import('./rewardsController.js');
+        await awardPointsForVerification(report, authorityUser);
+        report.pointsAwarded = true;
+        if (isMongoDBConnected()) {
+          await Report.updateOne({ id }, { $set: { pointsAwarded: true } });
+        }
+      } catch (awardErr) {
+        console.warn('⚠️ [Rewards] Error awarding verification points:', awardErr.message);
+      }
+    }
+
     // Dispatch in-app notification to reporting citizen (Step F)
     try {
       const { createReportNotification } = await import('./notificationsController.js');
@@ -777,11 +822,129 @@ export async function generateIncidentDossier(req, res) {
   }
 }
 
+// Internal officer note on a case (Authority only)
+export async function addInternalOfficerNote(req, res) {
+  try {
+    const { id } = req.params;
+    const { note } = req.body;
+    const officerUser = req.user;
+
+    if (!note || note.trim().length < 2) {
+      return res.status(400).json({ success: false, error: 'Officer note cannot be empty.' });
+    }
+
+    let report = null;
+    if (isMongoDBConnected()) {
+      report = await Report.findOne({ id });
+    }
+    if (!report) {
+      report = inMemoryReports.find(r => r.id === id);
+    }
+    if (!report) {
+      return res.status(404).json({ success: false, error: `Report ${id} not found.` });
+    }
+
+    const noteObj = {
+      note: note.trim(),
+      officerId: officerUser?.uid || 'officer-01',
+      officerName: officerUser?.name || 'Forest Authority Officer',
+      timestamp: new Date().toISOString(),
+    };
+
+    report.internalNotes = report.internalNotes || [];
+    report.internalNotes.push(noteObj);
+
+    if (isMongoDBConnected()) {
+      try {
+        await Report.findOneAndUpdate(
+          { id },
+          { $push: { internalNotes: noteObj } }
+        );
+      } catch (mongoErr) {
+        console.warn('⚠️ [MongoDB] Update note error:', mongoErr.message);
+      }
+    }
+
+    const memIdx = inMemoryReports.findIndex(r => r.id === id);
+    if (memIdx !== -1) {
+      inMemoryReports[memIdx].internalNotes = report.internalNotes;
+    }
+
+    return res.json({
+      success: true,
+      message: 'Internal officer note recorded.',
+      internalNotes: report.internalNotes,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+// Clean case tracking view for citizens (milestone progress, no internal officer notes)
+export async function getReportForTracking(req, res) {
+  try {
+    const { id } = req.params;
+    const normalizedId = (id || '').trim();
+
+    let report = null;
+    if (isMongoDBConnected()) {
+      report = await Report.findOne({ id: { $regex: new RegExp(`^${normalizedId}$`, 'i') } }).lean();
+    }
+    if (!report) {
+      report = inMemoryReports.find(r => r.id?.toLowerCase() === normalizedId.toLowerCase());
+    }
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        error: `No case found matching ID '${normalizedId}'. Please verify your Case ID and try again.`,
+      });
+    }
+
+    const trackingData = {
+      id: report.id,
+      threatCategory: report.threatCategory,
+      title: report.title,
+      locationName: report.locationName,
+      latitude: report.latitude,
+      longitude: report.longitude,
+      status: report.status,
+      createdAt: report.createdAt,
+      updatedAt: report.updatedAt || report.lastUpdatedDate,
+      imageUrl: report.imageUrl,
+      videoUrl: report.videoUrl,
+      mediaType: report.mediaType,
+      weatherSnapshot: report.weatherSnapshot,
+      evidenceAnalysis: {
+        summary: report.evidenceAnalysis?.summary || report.description,
+        suggestedCategory: report.evidenceAnalysis?.suggestedCategory,
+        confidenceEstimate: report.evidenceAnalysis?.confidenceEstimate,
+        legalDisclaimer: report.evidenceAnalysis?.legalDisclaimer,
+      },
+      resolution: report.resolution || null,
+      timeline: (report.auditTrail || []).map(entry => ({
+        action: entry.action,
+        timestamp: entry.timestamp,
+        notes: entry.notes,
+        by: entry.role === 'citizen' ? 'Citizen Sentinel' : 'Forest Authority Officer',
+      })),
+    };
+
+    return res.json({
+      success: true,
+      case: trackingData,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
 // Helpers
 function sanitizeReportForPublic(report) {
   const clone = { ...report };
   delete clone.citizenId;
   delete clone.citizenPhone;
+  delete clone.citizenEmail;
+  delete clone.internalNotes; // Internal officer notes strictly confidential
   clone.citizenName = 'Anonymous Citizen Sentinel';
   clone.citizenContactRedacted = true;
   return clone;
@@ -810,4 +973,6 @@ export default {
   getReportById,
   updateReportStatus,
   generateIncidentDossier,
+  addInternalOfficerNote,
+  getReportForTracking,
 };

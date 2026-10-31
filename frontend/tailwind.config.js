@@ -7,29 +7,37 @@ export default {
   theme: {
     extend: {
       colors: {
-        aravalli: {
-          50: '#f2f9f4',
-          100: '#e1f2e6',
-          200: '#c5e4ce',
-          300: '#9bcdab',
-          400: '#69b081',
-          500: '#43945d',
-          600: '#327749',
-          700: '#295e3c',
-          800: '#244b32',
-          900: '#1e3e2b',
-          950: '#0c2215',
+        nature: {
+          bg: '#F5F7F0',
+          card: '#FFFFFF',
+          text: '#26382D',
+          primary: '#1B5E3B',
+          forest: '#1B5E3B',
+          emerald: '#2E8B57',
+          sandstone: '#DCC8A3',
+          earthBrown: '#806044',
+          softOlive: '#A3B18A',
+          border: '#DCC8A3',
+          muted: '#526A59',
         },
-        stoneplate: {
-          850: '#1a1f26',
-          900: '#12161c',
-          950: '#0a0d11',
+        aravalli: {
+          50: '#F5F7F0',
+          100: '#E8EFE3',
+          200: '#D5E2CC',
+          300: '#A3B18A',
+          400: '#588157',
+          500: '#3A5A40',
+          600: '#2E8B57',
+          700: '#1B5E3B',
+          800: '#15472C',
+          900: '#26382D',
+          950: '#121F17',
         },
         risk: {
-          safe: '#10b981',       // Emerald
-          watch: '#f59e0b',      // Amber
-          high: '#f97316',       // Orange
-          critical: '#ef4444',   // Red
+          safe: '#2E8B57',       // Emerald
+          watch: '#D97706',      // Amber
+          high: '#EA580C',       // Orange
+          critical: '#DC2626',   // Red
         }
       },
       fontFamily: {

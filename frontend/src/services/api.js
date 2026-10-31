@@ -98,6 +98,8 @@ export async function askAravalli(question) {
   return res.json();
 }
 
+export const askAiAssistant = askAravalli;
+
 export async function loginCitizen(email, password) {
   const res = await fetch(`${BASE_URL}/auth/login-citizen`, {
     method: 'POST',
@@ -272,6 +274,68 @@ export async function markAllNotificationsRead() {
   return res.json();
 }
 
+export async function trackCaseById(caseId) {
+  const res = await fetch(`${BASE_URL}/reports/track/${encodeURIComponent(caseId)}`);
+  return res.json();
+}
+
+export async function addOfficerInternalNote(reportId, note) {
+  const res = await fetch(`${BASE_URL}/reports/${reportId}/notes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify({ note }),
+  });
+  return res.json();
+}
+
+export async function fetchWeather(lat, lng) {
+  const res = await fetch(`${BASE_URL}/weather/current?lat=${lat}&lng=${lng}`, {
+    headers: { ...getAuthHeader() },
+  });
+  return res.json();
+}
+
+export async function fetchSatelliteAnalysis(caseId) {
+  const res = await fetch(`${BASE_URL}/satellite/analysis/${encodeURIComponent(caseId)}`, {
+    headers: { ...getAuthHeader() },
+  });
+  return res.json();
+}
+
+export async function fetchRewardWallet() {
+  const res = await fetch(`${BASE_URL}/rewards/wallet`, {
+    headers: { ...getAuthHeader() },
+  });
+  return res.json();
+}
+
+export async function claimChallengeReward(challengeId, stepsCount) {
+  const res = await fetch(`${BASE_URL}/rewards/challenges/claim`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify({ challengeId, stepsCount }),
+  });
+  return res.json();
+}
+
+export async function draftVoiceReport(transcript, location) {
+  const res = await fetch(`${BASE_URL}/ai/draft-voice`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify({ transcript, location }),
+  });
+  return res.json();
+}
+
 export function logoutUser() {
   localStorage.removeItem('aravalli_auth_token');
   localStorage.removeItem('aravalli_auth_user');
@@ -299,5 +363,12 @@ export default {
   fetchNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  trackCaseById,
+  addOfficerInternalNote,
+  fetchWeather,
+  fetchSatelliteAnalysis,
+  fetchRewardWallet,
+  claimChallengeReward,
+  draftVoiceReport,
   logoutUser,
 };
