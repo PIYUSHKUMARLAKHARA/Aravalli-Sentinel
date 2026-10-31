@@ -2,6 +2,8 @@
 
 > **See the Threat. Predict the Risk. Protect the Aravallis.**  
 > *An AI-Assisted Environmental Threat Reporting & Explainable Ecological Risk Platform for the Aravalli Range.*
+>
+> Live Project Link: https://aravalli-sentinel.vercel.app
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Tests: Vitest](https://img.shields.io/badge/Tests-50%20Passed-success.svg)](TESTING.md)
