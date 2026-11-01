@@ -406,16 +406,29 @@ export function LoginPage() {
                 </form>
 
                 {/* Presentation Demo Auto-Fill */}
-                <div className="pt-2 border-t border-[#DCC8A3]/50 flex items-center justify-between text-[11px]">
-                  <span className="text-[#526A59]">Hackathon Evaluator?</span>
-                  <button
-                    type="button"
-                    onClick={handleQuickDemoCitizen}
-                    className="text-[#1B5E3B] font-bold hover:underline inline-flex items-center gap-1"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Instant Citizen Demo Login</span>
-                  </button>
+                <div className="pt-2 border-t border-[#DCC8A3]/50 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                  <span className="text-[#526A59]">Contest Evaluator?</span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCitizenEmail('user@aravalli.sentinel');
+                        setCitizenPassword('User@Aravalli2026!');
+                        setCitizenMode('signin');
+                      }}
+                      className="text-[#526A59] hover:text-[#1B5E3B] font-medium underline"
+                    >
+                      Fill Test Login
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleQuickDemoCitizen}
+                      className="text-[#1B5E3B] font-bold hover:underline inline-flex items-center gap-1 bg-[#EAEFE4] px-2.5 py-1 rounded-lg"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Instant Demo Login</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -503,16 +516,28 @@ export function LoginPage() {
                 </form>
 
                 {/* Presentation Demo Auto-Fill */}
-                <div className="pt-2 border-t border-[#DCC8A3]/50 flex items-center justify-between text-[11px]">
+                <div className="pt-2 border-t border-[#DCC8A3]/50 flex flex-wrap items-center justify-between gap-2 text-[11px]">
                   <span className="text-[#526A59]">Live Presentation Evaluation?</span>
-                  <button
-                    type="button"
-                    onClick={handleQuickDemoOfficer}
-                    className="text-[#806044] font-bold hover:underline inline-flex items-center gap-1"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Instant Officer Demo Login (DFO Sharma)</span>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfficerEmail('admin@aravalli.sentinel');
+                        setOfficerPassword('Admin@Aravalli2026!');
+                      }}
+                      className="text-[#526A59] hover:text-[#806044] font-medium underline"
+                    >
+                      Fill Admin Login
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleQuickDemoOfficer}
+                      className="text-[#806044] font-bold hover:underline inline-flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-lg"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Instant Officer Login</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
