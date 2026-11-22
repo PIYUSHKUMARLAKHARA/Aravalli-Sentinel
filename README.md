@@ -12,6 +12,8 @@
 
 ---
 
+Live Link  https://aravalli-sentinel.vercel.app
+
 ## 1. Project Title
 **ARAVALLI SENTINEL: AI-Assisted Environmental Threat Reporting & Risk-Prioritization Platform**
 
